@@ -14,11 +14,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ResultCombiner", "ResultCom
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Metis", "Metis\Metis.vcxproj", "{20D94662-8914-4B08-A8FB-C3DDB307BB50}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{71267330-9673-4874-91CE-23C157154C91}"
-	ProjectSection(ProjectDependencies) = postProject
-		{20D94662-8914-4B08-A8FB-C3DDB307BB50} = {20D94662-8914-4B08-A8FB-C3DDB307BB50}
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0229153B-875B-466F-AB5F-2D0FBBD00FB5}"
 EndProject
 Global
@@ -55,12 +50,6 @@ Global
 		{20D94662-8914-4B08-A8FB-C3DDB307BB50}.Release|Win32.ActiveCfg = Release|Win32
 		{20D94662-8914-4B08-A8FB-C3DDB307BB50}.Release|Win32.Build.0 = Release|Win32
 		{20D94662-8914-4B08-A8FB-C3DDB307BB50}.Release|x64.ActiveCfg = Release|Win32
-		{71267330-9673-4874-91CE-23C157154C91}.Debug|Win32.ActiveCfg = Debug|Win32
-		{71267330-9673-4874-91CE-23C157154C91}.Debug|Win32.Build.0 = Debug|Win32
-		{71267330-9673-4874-91CE-23C157154C91}.Debug|x64.ActiveCfg = Debug|Win32
-		{71267330-9673-4874-91CE-23C157154C91}.Release|Win32.ActiveCfg = Release|Win32
-		{71267330-9673-4874-91CE-23C157154C91}.Release|Win32.Build.0 = Release|Win32
-		{71267330-9673-4874-91CE-23C157154C91}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
