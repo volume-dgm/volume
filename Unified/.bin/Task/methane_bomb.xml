@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "2">
+  <Mesh fileName="meshes/methane_bomb[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01">
+    <MediumParams>
+      <PerSubmesh fileName = "meshes/methane_bomb[<domain>].params">
+        <Submesh index="0"  pSpeed = "2000.0" sSpeed = "1414.0" rho = "2500.0" internalContactType = "0" />
+        <Submesh index="1"  pSpeed = "2500.0" sSpeed = "1768.0" rho = "2500.0" internalContactType = "0" />
+        <Submesh index="2"  pSpeed = "2750.0" sSpeed = "1944.0" rho = "2500.0" internalContactType = "0" />
+        <Submesh index="3"  pSpeed = "4000.0" sSpeed = "2829.0" rho = "2500.0" internalContactType = "0" />
+      </PerSubmesh>  
+    </MediumParams>
+
+    <Boundaries>
+      <Absorb interactionType= "0" /> <!-- side-->
+      <Absorb interactionType= "1" /> <!-- bottom-->
+      <Free interactionType= "2"> <!-- top-->
+<!--         <ExternalForce>
+          <BoxFunctor boxPoint1= "25.0 -200.0" boxPoint2= "30.0 0" value="0 -1"/> 
+        </ExternalForce> -->
+      </Free>
+      <Free interactionType= "3" /> <!-- hole-->
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" /> <!-- internal contacts -->
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <!-- <Period frames="50" /> -->
+    <Period time="1e-3"/>
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true" writeWaves="true" >
+      <Box    boxPoint1 = "-210 -210" boxPoint2 = "210 0" />
+      <Resolution resolution="1000 500"/>
+    </Data>
+    <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
+    <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+  </Snapshot>
+
+
+  <Detectors fileName="out/detectors[<domain>]<detector>.csv" />
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  </Schedule>
+
+  <Task destinationTime = "3e-1">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "5000 5000" velocity = "0.0 -1.0" /> -->
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "0 5000" velocity = "1.0 0.0" /> -->
+      <!-- <BoxState boxPoint1 = "-1.0 -1.0" boxPoint2 = "0.0 1.0" velocity = "-1.0 0.0" /> -->
+      <!-- <BoxState boxPoint1 = "0.0 -1.0" boxPoint2 = "1.0 1.0" velocity = "1.0 0.0" /> -->
+      <BoxState boxPoint1= "25.0 -15.0" boxPoint2= "30.0 -5" velocity = "0.0 -1.0" />
+
+      <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
+      <!-- <BerlageWave point= "0.0 0.0" waveVector= "0 -1" waveLength= "20"/> -->
+      <!-- <AcousticPlaneWave point= "0.0 0.20" waveVector= "0 -0.01" waveLength= "0.2"/> -->
+      <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
+    </IniState>
+    <PointSources>
+      <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+    </PointSources>  
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="Trapezoid"
+   -->
+
+  <Solver polynomialsOrder="4" precision="double" integrator="DormandPrince"
+        tolerance="1e-3" maxScale="3e-3" maxTimeStep="1e-2" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        velocityErrorMult="1e-3" tensionErrorMult="1e-9" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>
