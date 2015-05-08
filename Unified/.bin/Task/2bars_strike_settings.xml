@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings>
+<Settings dimsCount = "2">
   <Mesh fileName="meshes/2bars_strike[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.02">
     <MediumParams>
       <!-- <Uniform pSpeed = "5700" sSpeed = "3100" rho = "7800" />  -->
