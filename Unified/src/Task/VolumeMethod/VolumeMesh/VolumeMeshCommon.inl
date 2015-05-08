@@ -384,7 +384,7 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::
               cellError += mult * fabs(
                 (coords0[targetCellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex] -
                  coords1[targetCellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex])
-                * sqrt(cellVolumeIntegrals[functionsCount * functionIndex + functionIndex]));
+                * sqrt(cellVolumeIntegrals(functionIndex, functionIndex)));
             }
           }
           if (writeErrors) errors[cellIndex] = cellError;

@@ -36,13 +36,13 @@ public:
   }
 
   void BuildDetectors(MeshIO<Space>* const mesh)
-  {
+  {/*
     const Scalar Distance = 50;
     const int DetectorsCount = 131;
     for (int detectorIndex = -DetectorsCount / 2; detectorIndex <= DetectorsCount / 2; ++detectorIndex)
     {
       mesh->detectorsPositions.push_back(Vector(Distance * detectorIndex, Scalar(-1)));
-    }
+    }*/
   }
 
 private:

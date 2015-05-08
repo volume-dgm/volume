@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings>
+<Settings dimsCount = "2">
   <Mesh fileName="meshes/test2_cube[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.001">
     <MediumParams>
     <PerSubmesh fileName = "meshes/test2_cube[<domain>].params">

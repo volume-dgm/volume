@@ -144,6 +144,8 @@ private:
       elasticMults[valueIndex] = mult;
     }
   }
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 template<typename Space, typename FunctionSpace>

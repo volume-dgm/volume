@@ -117,166 +117,107 @@ void ElasticSystemCommon<Space3>::ValueTypeCommon::MakeDimension(
 }
 
 template <>
-void ElasticSystemCommon<Space2>::BuildXMatrix(const MediumParameters& mediumParameters, Scalar* xMatrix)
+void ElasticSystemCommon<Space2>::BuildXMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xMatrix)
 {
-  std::fill_n(xMatrix, dimsCount * dimsCount, Scalar(0.0));
-
-  xMatrix[3 ] = -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju);
-  xMatrix[8 ] = -mediumParameters.lambda;
-  xMatrix[14] = -mediumParameters.mju;
-  xMatrix[15] = -mediumParameters.invRho;
-  xMatrix[22] = -mediumParameters.invRho;
-
-  for (int row = 0; row < dimsCount; ++row)
-  {
-    // diagonal elements
-    xMatrix[row + row * dimsCount] += mediumParameters.flowVelocity.x;
-  }
+  xMatrix << 
+    mediumParameters.flowVelocity.x,                               0,                               0, -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju),                               0,
+                                  0, mediumParameters.flowVelocity.x,                               0,                                        -mediumParameters.lambda,                               0,
+                                  0,                               0, mediumParameters.flowVelocity.x,                                                               0,           -mediumParameters.mju,
+           -mediumParameters.invRho,                               0,                               0,                                 mediumParameters.flowVelocity.x,                               0,
+                                  0,                               0,        -mediumParameters.invRho,                                                               0, mediumParameters.flowVelocity.x;
 }
 
 template <>
-void ElasticSystemCommon<Space3>::BuildXMatrix(const MediumParameters& mediumParameters, Scalar* xMatrix)
+void ElasticSystemCommon<Space3>::BuildXMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xMatrix)
 {
-  std::fill_n(xMatrix, dimsCount * dimsCount, Scalar(0.0));
-
-  xMatrix[ 6] = -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju);
-  xMatrix[15] = -mediumParameters.lambda;
-  xMatrix[24] = -mediumParameters.lambda;
-  xMatrix[34] = -mediumParameters.mju;
-  xMatrix[53] = -mediumParameters.mju;
-  xMatrix[54] = -mediumParameters.invRho;
-  xMatrix[66] = -mediumParameters.invRho;
-  xMatrix[77] = -mediumParameters.invRho;
-
-  for (int row = 0; row < dimsCount; ++row)
-  {
-    // diagonal elements
-    xMatrix[row + row * dimsCount] += mediumParameters.flowVelocity.x;
-  }
+  xMatrix <<
+    mediumParameters.flowVelocity.x,                               0,                               0,                               0,                               0,                               0, -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju),                               0,                               0,
+                                  0, mediumParameters.flowVelocity.x,                               0,                               0,                               0,                               0,  -mediumParameters.lambda                                      ,                               0,                               0,
+                                  0,                               0, mediumParameters.flowVelocity.x,                               0,                               0,                               0,  -mediumParameters.lambda                                      ,                               0,                               0,
+                                  0,                               0,                               0, mediumParameters.flowVelocity.x,                               0,                               0,                                                               0,           -mediumParameters.mju,                               0,
+                                  0,                               0,                               0,                               0, mediumParameters.flowVelocity.x,                               0,                                                               0,                               0,                               0,
+                                  0,                               0,                               0,                               0,                               0, mediumParameters.flowVelocity.x,                                                               0,                               0,           -mediumParameters.mju,
+           -mediumParameters.invRho,                               0,                               0,                               0,                               0,                               0,                                 mediumParameters.flowVelocity.x,                               0,                               0,
+                                  0,                               0,                               0,        -mediumParameters.invRho,                               0,                               0,                                                               0, mediumParameters.flowVelocity.x,                               0,
+                                  0,                               0,                               0,                               0,                               0,        -mediumParameters.invRho,                                                               0,                               0, mediumParameters.flowVelocity.x;
 }
 
 template <>
-void ElasticSystemCommon<Space2>::BuildYMatrix(const MediumParameters& mediumParameters, Scalar* yMatrix)
+void ElasticSystemCommon<Space2>::BuildYMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& yMatrix)
 {
-  std::fill_n(yMatrix, dimsCount * dimsCount, Scalar(0.0));
-
-  yMatrix[4 ] = -mediumParameters.lambda;
-  yMatrix[9 ] = -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju);
-  yMatrix[13] = -mediumParameters.mju;
-  yMatrix[17] = -mediumParameters.invRho;
-  yMatrix[21] = -mediumParameters.invRho;
-
-  for (int row = 0; row < dimsCount; ++row)
-  {
-    // diagonal elements
-    yMatrix[row + row * dimsCount] += mediumParameters.flowVelocity.y;
-  }
+  yMatrix <<
+    mediumParameters.flowVelocity.y,                               0,                               0,                               0,                                        -mediumParameters.lambda,
+                                  0, mediumParameters.flowVelocity.y,                               0,                               0, -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju),
+                                  0,                               0, mediumParameters.flowVelocity.y,           -mediumParameters.mju,                                                               0,
+                                  0,                               0,        -mediumParameters.invRho, mediumParameters.flowVelocity.y,                                                               0,
+                                  0,        -mediumParameters.invRho,                               0,                               0,                                 mediumParameters.flowVelocity.y;
 }
 
 template <>
-void ElasticSystemCommon<Space3>::BuildYMatrix(const MediumParameters& mediumParameters, Scalar* yMatrix)
+void ElasticSystemCommon<Space3>::BuildYMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& yMatrix)
 {
-  std::fill_n(yMatrix, dimsCount * dimsCount, Scalar(0.0));
-
-  yMatrix[ 7] = -mediumParameters.lambda;
-  yMatrix[16] = -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju);
-  yMatrix[25] = -mediumParameters.lambda;
-  yMatrix[33] = -mediumParameters.mju;
-  yMatrix[44] = -mediumParameters.mju;
-  yMatrix[57] = -mediumParameters.invRho;
-  yMatrix[64] = -mediumParameters.invRho;
-  yMatrix[76] = -mediumParameters.invRho;
-
-  for (int row = 0; row < dimsCount; ++row)
-  {
-    // diagonal elements
-    yMatrix[row + row * dimsCount] += mediumParameters.flowVelocity.y;
-  }
+  yMatrix <<
+    mediumParameters.flowVelocity.y,                               0,                               0,                               0,                               0,                               0,                               0,  -mediumParameters.lambda                                      ,                               0,
+                                  0, mediumParameters.flowVelocity.y,                               0,                               0,                               0,                               0,                               0, -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju),                               0,
+                                  0,                               0, mediumParameters.flowVelocity.y,                               0,                               0,                               0,                               0,  -mediumParameters.lambda                                      ,                               0,
+                                  0,                               0,                               0, mediumParameters.flowVelocity.y,                               0,                               0,           -mediumParameters.mju,                                                               0,                               0,
+                                  0,                               0,                               0,                               0, mediumParameters.flowVelocity.y,                               0,                               0,                                                               0,           -mediumParameters.mju,
+                                  0,                               0,                               0,                               0,                               0, mediumParameters.flowVelocity.y,                               0,                                                               0,                               0,
+                                  0,                               0,                               0,        -mediumParameters.invRho,                               0,                               0, mediumParameters.flowVelocity.y,                                                               0,                               0,
+                                  0,        -mediumParameters.invRho,                               0,                               0,                               0,                               0,                               0,                                 mediumParameters.flowVelocity.y,                               0,
+                                  0,                               0,                               0,                               0,        -mediumParameters.invRho,                               0,                               0,                                                               0, mediumParameters.flowVelocity.y;
 }
 
 template <>
 void ElasticSystemCommon<Space2>::BuildRMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters, 
-  Scalar *rMatrix)
+  Eigen::Matrix<Scalar, dimsCount, dimsCount>& rMatrix)
 {
-  std::fill_n(rMatrix, dimsCount * dimsCount, Scalar(0.0));
-  rMatrix[0]  = interiorMediumParameters.lambda + 2 * interiorMediumParameters.mju;
-  rMatrix[5]  = interiorMediumParameters.lambda;
-  rMatrix[15] = interiorMediumParameters.GetPSpeed();
-
-  rMatrix[11] = interiorMediumParameters.mju;
-  rMatrix[21] = interiorMediumParameters.GetSSpeed();
-
-  rMatrix[7]  = 1;
-
-  rMatrix[13] = exteriorMediumParameters.mju;
-  rMatrix[23] = -exteriorMediumParameters.GetSSpeed();
-
-  rMatrix[4]  = exteriorMediumParameters.lambda + 2 * exteriorMediumParameters.mju;
-  rMatrix[9]  = exteriorMediumParameters.lambda;
-  rMatrix[19] = -exteriorMediumParameters.GetPSpeed();
+  rMatrix << 
+    interiorMediumParameters.lambda + 2 * interiorMediumParameters.mju,                                    0, 0,                                     0, exteriorMediumParameters.lambda + 2 * exteriorMediumParameters.mju,
+    interiorMediumParameters.lambda                                   ,                                    0, 1,                                     0, exteriorMediumParameters.lambda                                   ,
+                                                                     0,         interiorMediumParameters.mju, 0,          exteriorMediumParameters.mju,                                                                  0,
+                                  interiorMediumParameters.GetPSpeed(),                                    0, 0,                                     0,                              -exteriorMediumParameters.GetPSpeed(),
+                                                                     0, interiorMediumParameters.GetSSpeed(), 0, -exteriorMediumParameters.GetSSpeed(),                                                                  0;
 }
 
 template <>
 void ElasticSystemCommon<Space3>::BuildRMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters, 
-  Scalar *rMatrix)
+  Eigen::Matrix<Scalar, dimsCount, dimsCount>& rMatrix)
 {
-  std::fill(rMatrix, rMatrix + dimsCount * dimsCount, Scalar(0.0));
-
-  rMatrix[0]  = interiorMediumParameters.lambda + 2 * interiorMediumParameters.mju;
-  rMatrix[9]  = interiorMediumParameters.lambda;
-  rMatrix[18] = interiorMediumParameters.lambda;
-  rMatrix[54] = interiorMediumParameters.GetPSpeed();
-
-  rMatrix[28] = interiorMediumParameters.mju;
-  rMatrix[64] = interiorMediumParameters.GetSSpeed();
-
-  rMatrix[47] = interiorMediumParameters.mju;
-  rMatrix[74] = interiorMediumParameters.GetSSpeed();
-
-  rMatrix[39] = Scalar(1.0);
-  rMatrix[13] = Scalar(1.0);
-  rMatrix[23] = Scalar(1.0);
-
-  rMatrix[51] =  exteriorMediumParameters.mju;
-  rMatrix[78] = -exteriorMediumParameters.GetSSpeed();
-
-  rMatrix[34] = exteriorMediumParameters.mju;
-  rMatrix[70] = -exteriorMediumParameters.GetSSpeed();
-
-  rMatrix[8] = exteriorMediumParameters.lambda + 2 * exteriorMediumParameters.mju;
-  rMatrix[17] = exteriorMediumParameters.lambda;
-  rMatrix[26] = exteriorMediumParameters.lambda;
-  rMatrix[62] = -exteriorMediumParameters.GetPSpeed();
+  rMatrix <<
+    interiorMediumParameters.lambda + 2 * interiorMediumParameters.mju,                                    0,                                    0, 0, 0, 0,                                     0,                                     0, exteriorMediumParameters.lambda + 2 * exteriorMediumParameters.mju,
+    interiorMediumParameters.lambda                                   ,                                    0,                                    0, 0, 1, 0,                                     0,                                     0, exteriorMediumParameters.lambda                                   ,
+    interiorMediumParameters.lambda                                   ,                                    0,                                    0, 0, 0, 1,                                     0,                                     0, exteriorMediumParameters.lambda                                   ,
+                                                                     0,         interiorMediumParameters.mju,                                    0, 0, 0, 0,                                     0,          exteriorMediumParameters.mju,                                                                  0,
+                                                                     0,                                    0,                                    0, 1, 0, 0,                                     0,                                     0,                                                                  0,
+                                                                     0,                                    0,         interiorMediumParameters.mju, 0, 0, 0,          exteriorMediumParameters.mju,                                     0,                                                                  0,
+                                  interiorMediumParameters.GetPSpeed(),                                    0,                                    0, 0, 0, 0,                                     0,                                     0,                              -exteriorMediumParameters.GetPSpeed(),
+                                                                     0, interiorMediumParameters.GetSSpeed(),                                    0, 0, 0, 0,                                     0, -exteriorMediumParameters.GetSSpeed(),                                                                  0,
+                                                                     0,                                    0, interiorMediumParameters.GetSSpeed(), 0, 0, 0, -exteriorMediumParameters.GetSSpeed(),                                     0,                                                                  0;
 }
 
 template <>
 void ElasticSystemCommon<Space2>::BuildXnAuxMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  Scalar* xnAuxMatrix)
-{
-/*  
-  Scalar rMatrix[dimsCount * dimsCount];
+  Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnAuxMatrix)
+{  
+/*
+  Eigen::Matrix<Scalar, dimsCount, dimsCount> rMatrix;
   BuildRMatrix(interiorMediumParameters, exteriorMediumParameters, rMatrix);
 
-  Scalar invRMatrix[dimsCount * dimsCount];
-  MatrixInverse(rMatrix, invRMatrix, dimsCount);
-
-  Scalar lambdaMatrix[dimsCount * dimsCount];
-  std::fill(lambdaMatrix, lambdaMatrix + dimsCount * dimsCount, Scalar(0.0));
-  lambdaMatrix[0]  = interiorMediumParameters.GetPSpeed();
-  lambdaMatrix[6]  = interiorMediumParameters.GetSSpeed();
-
-  Scalar tmpMatrix[dimsCount * dimsCount];
-  MatrixMulMatrix(rMatrix, lambdaMatrix, tmpMatrix, dimsCount, dimsCount, dimsCount);
-  MatrixMulMatrix(tmpMatrix, invRMatrix, xnAuxMatrix, dimsCount, dimsCount, dimsCount);
+  Eigen::Matrix<Scalar, 1, dimsCount> lambdaMatrix;
+  lambdaMatrix << 
+    interiorMediumParameters.GetPSpeed(), 
+    interiorMediumParameters.GetSSpeed(), 0, 0, 0;
+  
+  xnAuxMatrix.noalias() = rMatrix * lambdaMatrix.asDiagonal() * rMatrix.inverse();
 */
 
-  std::fill_n(xnAuxMatrix, dimsCount * dimsCount, Scalar(0.0));
   Scalar cpInt = interiorMediumParameters.GetPSpeed();
   Scalar cpExt = exteriorMediumParameters.GetPSpeed();
   Scalar csInt = interiorMediumParameters.GetSSpeed();
@@ -298,43 +239,33 @@ void ElasticSystemCommon<Space2>::BuildXnAuxMatrix(
     coeffS = csInt / (zsInt + zsExt);
   }
 
-  xnAuxMatrix[0]  = coeffP * zpInt * cpInt;
-  xnAuxMatrix[3]  = coeffP * zpInt * zpExt * cpInt;
-  xnAuxMatrix[5]  = coeffP * interiorMediumParameters.lambda;
-  xnAuxMatrix[8]  = coeffP * interiorMediumParameters.lambda * zpExt;
-  xnAuxMatrix[12] = coeffS * zsInt;
-  xnAuxMatrix[14] = coeffS * zsInt * zsExt;
-  xnAuxMatrix[15] = coeffP * cpInt;
-  xnAuxMatrix[18] = coeffP * cpInt * zpExt;
-  xnAuxMatrix[22] = coeffS;
-  xnAuxMatrix[24] = coeffS * zsExt;
+  xnAuxMatrix << 
+                      coeffP * zpInt * cpInt, 0,              0,                   coeffP * zpInt * zpExt * cpInt,                      0,
+    coeffP * interiorMediumParameters.lambda, 0,              0, coeffP * interiorMediumParameters.lambda * zpExt,                      0,
+                                           0, 0, coeffS * zsInt,                                                0, coeffS * zsInt * zsExt,
+                              coeffP * cpInt, 0,              0,                           coeffP * cpInt * zpExt,                      0,
+                                           0, 0,         coeffS,                                                0,         coeffS * zsExt;
 }
 
 template <>
 void ElasticSystemCommon<Space3>::BuildXnAuxMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  Scalar* xnAuxMatrix)
+  Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnAuxMatrix)
 {
 /*
-  Scalar rMatrix[dimsCount * dimsCount];
+  Eigen::Matrix<Scalar, dimsCount, dimsCount> rMatrix;
   BuildRMatrix(interiorMediumParameters, exteriorMediumParameters, rMatrix);
 
-  Scalar invRMatrix[dimsCount * dimsCount];
-  MatrixInverse(rMatrix, invRMatrix, dimsCount);
+  Eigen::Matrix<Scalar, 1, dimsCount> lambdaMatrix;
+  lambdaMatrix << interiorMediumParameters.GetPSpeed(),
+                  interiorMediumParameters.GetSSpeed(),
+                  interiorMediumParameters.GetSSpeed(),
+                  0, 0, 0, 0, 0, 0;
 
-  Scalar lambdaMatrix[dimsCount * dimsCount];
-  std::fill_n(lambdaMatrix, dimsCount * dimsCount, Scalar(0.0));
-  lambdaMatrix[0]  = interiorMediumParameters.GetPSpeed();
-  lambdaMatrix[10] = interiorMediumParameters.GetSSpeed();
-  lambdaMatrix[20] = interiorMediumParameters.GetSSpeed();
-
-  Scalar tmpMatrix[dimsCount * dimsCount];
-  MatrixMulMatrix(rMatrix, lambdaMatrix, tmpMatrix, dimsCount, dimsCount, dimsCount);
-  MatrixMulMatrix(tmpMatrix, invRMatrix, xnAuxMatrix, dimsCount, dimsCount, dimsCount);
+  xnAuxMatrix.noalias() = rMatrix * lambdaMatrix.asDiagonal() * rMatrix.inverse();
 */
 
-  std::fill_n(xnAuxMatrix, dimsCount * dimsCount, Scalar(0.0));
   Scalar cpInt = interiorMediumParameters.GetPSpeed();
   Scalar cpExt = exteriorMediumParameters.GetPSpeed();
   Scalar csInt = interiorMediumParameters.GetSSpeed();
@@ -356,47 +287,38 @@ void ElasticSystemCommon<Space3>::BuildXnAuxMatrix(
     coeffS = csInt / (zsInt + zsExt);
   }
 
-  xnAuxMatrix[ 0] = coeffP * zpInt * cpInt;
-  xnAuxMatrix[ 9] = 
-  xnAuxMatrix[18] = coeffP * interiorMediumParameters.lambda;
-  xnAuxMatrix[54] = coeffP * cpInt;
-
-  xnAuxMatrix[30] =
-  xnAuxMatrix[50] = coeffS * zsInt;
-
-  xnAuxMatrix[66] = 
-  xnAuxMatrix[77] = coeffS;
-
-  xnAuxMatrix[ 6] = coeffP * zpInt * zpExt * cpInt;
-  xnAuxMatrix[15] = 
-  xnAuxMatrix[24] = coeffP * zpExt * interiorMediumParameters.lambda;
-
-  xnAuxMatrix[60] = coeffP * zpExt * cpInt;
-  xnAuxMatrix[34] = 
-  xnAuxMatrix[53] = coeffS * zsInt * zsExt;
-  xnAuxMatrix[70] = 
-  xnAuxMatrix[80] = coeffS * zsExt;
+  xnAuxMatrix <<
+                      coeffP * zpInt * cpInt, 0, 0,              0, 0,              0,                   coeffP * zpInt * zpExt * cpInt,                      0,                      0,
+    coeffP * interiorMediumParameters.lambda, 0, 0,              0, 0,              0, coeffP * zpExt * interiorMediumParameters.lambda,                      0,                      0,
+    coeffP * interiorMediumParameters.lambda, 0, 0,              0, 0,              0, coeffP * zpExt * interiorMediumParameters.lambda,                      0,                      0,
+                                           0, 0, 0, coeffS * zsInt, 0,              0,                                                0, coeffS * zsInt * zsExt,                      0,
+                                           0, 0, 0,              0, 0,              0,                                                0,                      0,                      0,
+                                           0, 0, 0,              0, 0, coeffS * zsInt,                                                0,                      0, coeffS * zsInt * zsExt,
+                              coeffP * cpInt, 0, 0,              0, 0,              0,                           coeffP * zpExt * cpInt,                      0,                      0,
+                                           0, 0, 0,         coeffS, 0,              0,                                                0,         coeffS * zsExt,                      0,
+                                           0, 0, 0,              0, 0,         coeffS,                                                0,                      0,         coeffS * zsExt;
 }
 
 template <>
 void ElasticSystemCommon<Space2>::BuildXnInteriorMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  const Vector& edgeNormal, Scalar* xnInteriorMatrix)
+  const Vector& edgeNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnInteriorMatrix)
 {
   BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnInteriorMatrix);
   
-  xnInteriorMatrix[3 ] -= interiorMediumParameters.lambda + Scalar(2.0) * interiorMediumParameters.mju;
-  xnInteriorMatrix[8 ] -= interiorMediumParameters.lambda;
-  xnInteriorMatrix[14] -= interiorMediumParameters.mju;
-  xnInteriorMatrix[15] -= interiorMediumParameters.invRho;
-  xnInteriorMatrix[22] -= interiorMediumParameters.invRho;
+  // XMatrix
+  xnInteriorMatrix(0, 3) -= interiorMediumParameters.lambda + Scalar(2.0) * interiorMediumParameters.mju;
+  xnInteriorMatrix(1, 3) -= interiorMediumParameters.lambda;
+  xnInteriorMatrix(2, 4) -= interiorMediumParameters.mju;
+  xnInteriorMatrix(3, 0) -= interiorMediumParameters.invRho;
+  xnInteriorMatrix(4, 2) -= interiorMediumParameters.invRho;
 
+  Scalar un = interiorMediumParameters.flowVelocity * edgeNormal;
   for (int row = 0; row < dimsCount; ++row)
   {
     // diagonal elements
-    Scalar un = interiorMediumParameters.flowVelocity * edgeNormal;
-    xnInteriorMatrix[row + row * dimsCount] += (un + fabs(un)) * Scalar(0.5);
+    xnInteriorMatrix(row, row) += (un + fabs(un)) * Scalar(0.5);
   }
 }
 
@@ -404,24 +326,25 @@ template <>
 void ElasticSystemCommon<Space3>::BuildXnInteriorMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  const Vector& faceNormal, Scalar* xnInteriorMatrix)
+  const Vector& faceNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnInteriorMatrix)
 {
   BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnInteriorMatrix);
 
-  xnInteriorMatrix[ 6] -= interiorMediumParameters.lambda + Scalar(2.0) * interiorMediumParameters.mju;
-  xnInteriorMatrix[15] -= interiorMediumParameters.lambda;
-  xnInteriorMatrix[24] -= interiorMediumParameters.lambda;
-  xnInteriorMatrix[34] -= interiorMediumParameters.mju;
-  xnInteriorMatrix[53] -= interiorMediumParameters.mju;
-  xnInteriorMatrix[54] -= interiorMediumParameters.invRho;
-  xnInteriorMatrix[66] -= interiorMediumParameters.invRho;
-  xnInteriorMatrix[77] -= interiorMediumParameters.invRho;
+  // XMatrix
+  xnInteriorMatrix(0, 6) -= interiorMediumParameters.lambda + Scalar(2.0) * interiorMediumParameters.mju;
+  xnInteriorMatrix(1, 6) -= interiorMediumParameters.lambda;
+  xnInteriorMatrix(2, 6) -= interiorMediumParameters.lambda;
+  xnInteriorMatrix(3, 7) -= interiorMediumParameters.mju;
+  xnInteriorMatrix(5, 8) -= interiorMediumParameters.mju;
+  xnInteriorMatrix(6, 0) -= interiorMediumParameters.invRho;
+  xnInteriorMatrix(7, 3) -= interiorMediumParameters.invRho;
+  xnInteriorMatrix(8, 5) -= interiorMediumParameters.invRho;
 
+  Scalar un = interiorMediumParameters.flowVelocity * faceNormal;
   for (int row = 0; row < dimsCount; ++row)
   {
     // diagonal elements
-    Scalar un = interiorMediumParameters.flowVelocity * faceNormal;
-    xnInteriorMatrix[row + row * dimsCount] += (un + fabs(un)) * Scalar(0.5);
+    xnInteriorMatrix(row, row) += (un + fabs(un)) * Scalar(0.5);
   }
 }
 
@@ -429,24 +352,22 @@ template <typename Space>
 void ElasticSystemCommon<Space>::BuildXnExteriorMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  const Vector& normal, Scalar* xnExteriorMatrix)
+  const Vector& normal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnExteriorMatrix)
 {
   BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnExteriorMatrix);
-  MatrixMulScalar(xnExteriorMatrix, Scalar(-1.0), dimsCount, dimsCount);
+  xnExteriorMatrix *= Scalar(-1.0);
 
+  Scalar un = interiorMediumParameters.flowVelocity * normal;
   for (int row = 0; row < dimsCount; ++row)
   {
     // diagonal elements
-    Scalar un = interiorMediumParameters.flowVelocity * normal;
-    xnExteriorMatrix[row + row * dimsCount] += (un - fabs(un)) * Scalar(0.5);
+    xnExteriorMatrix(row, row) += (un - fabs(un)) * Scalar(0.5);
   }
 }
 
 template <>
-void ElasticSystemCommon<Space2>::BuildBoundaryMatrix(IndexType interactionType, Scalar* boundaryMatrix)
+void ElasticSystemCommon<Space2>::BuildBoundaryMatrix(IndexType interactionType, Eigen::Matrix<Scalar, 1, dimsCount>& boundaryMatrix)
 {
-  std::fill_n(boundaryMatrix, dimsCount * dimsCount, Scalar(0.0));
-
   IndexType boundaryType = boundaryDescriptions[interactionType].type;
   Scalar reflectionCoeff = boundaryDescriptions[interactionType].reflectionCoeff;
 
@@ -454,43 +375,39 @@ void ElasticSystemCommon<Space2>::BuildBoundaryMatrix(IndexType interactionType,
   {
     case BoundaryConditions::Absorb:
     {
-      boundaryMatrix[0 ] = 0;
-      boundaryMatrix[6 ] = 0;
-      boundaryMatrix[12] = 0;
-      boundaryMatrix[18] = 0;
-      boundaryMatrix[24] = 0;
+      boundaryMatrix << 0, 0, 0, 0, 0;
     } break;
     case BoundaryConditions::Free:
     {
-      boundaryMatrix[ 0] = -Scalar(reflectionCoeff);
-      boundaryMatrix[ 6] =  Scalar(reflectionCoeff);
-      boundaryMatrix[12] = -Scalar(reflectionCoeff);
-      boundaryMatrix[18] =  Scalar(reflectionCoeff);
-      boundaryMatrix[24] =  Scalar(reflectionCoeff);
+      boundaryMatrix << -reflectionCoeff, 
+                         reflectionCoeff, 
+                        -reflectionCoeff, 
+                         reflectionCoeff, 
+                         reflectionCoeff;
     } break;
     case BoundaryConditions::Fixed:
     {
-      boundaryMatrix[ 0] =  Scalar(reflectionCoeff);
-      boundaryMatrix[ 6] =  Scalar(reflectionCoeff);
-      boundaryMatrix[12] =  Scalar(reflectionCoeff);
-      boundaryMatrix[18] = -Scalar(reflectionCoeff);
-      boundaryMatrix[24] = -Scalar(reflectionCoeff);
+      boundaryMatrix << reflectionCoeff, 
+                        reflectionCoeff, 
+                        reflectionCoeff, 
+                       -reflectionCoeff, 
+                       -reflectionCoeff;
     } break;
     case BoundaryConditions::Symmetry:
     {
-      boundaryMatrix[0 ] =  Scalar(1.0); 
-      boundaryMatrix[6 ] =  Scalar(1.0);
-      boundaryMatrix[12] = -Scalar(1.0); // sigma.xy
-      boundaryMatrix[18] = -Scalar(1.0); // v.x
-      boundaryMatrix[24] =  Scalar(1.0); 
+      boundaryMatrix << Scalar(1.0),
+                        Scalar(1.0), 
+                       -Scalar(1.0), // sigma.xy 
+                       -Scalar(1.0), // v.x 
+                        Scalar(1.0);
     } break;
     case BoundaryConditions::AntiSymmetry:
     {
-      boundaryMatrix[ 0] = -Scalar(1.0); // sigma.xx
-      boundaryMatrix[ 6] = Scalar(1.0);
-      boundaryMatrix[12] = Scalar(1.0); 
-      boundaryMatrix[18] = Scalar(1.0); 
-      boundaryMatrix[24] = -Scalar(1.0); // v.y
+      boundaryMatrix << -Scalar(1.0), // sigma.xx 
+                         Scalar(1.0), 
+                         Scalar(1.0), 
+                         Scalar(1.0), 
+                        -Scalar(1.0); // v.y
     } break;
     default:
       assert(0);
@@ -499,10 +416,8 @@ void ElasticSystemCommon<Space2>::BuildBoundaryMatrix(IndexType interactionType,
 }
 
 template <>
-void ElasticSystemCommon<Space3>::BuildBoundaryMatrix(IndexType interactionType, Scalar *boundaryMatrix)
+void ElasticSystemCommon<Space3>::BuildBoundaryMatrix(IndexType interactionType, Eigen::Matrix<Scalar, 1, dimsCount>& boundaryMatrix)
 {
-  std::fill_n(boundaryMatrix, dimsCount * dimsCount, Scalar(0.0));
-
   IndexType boundaryType = boundaryDescriptions[interactionType].type;
   Scalar reflectionCoeff = boundaryDescriptions[interactionType].reflectionCoeff;
 
@@ -510,63 +425,59 @@ void ElasticSystemCommon<Space3>::BuildBoundaryMatrix(IndexType interactionType,
   {
     case BoundaryConditions::Absorb:
     {
-      boundaryMatrix[ 0] = 0;
-      boundaryMatrix[10] = 0;
-      boundaryMatrix[20] = 0;
-      boundaryMatrix[30] = 0;
-      boundaryMatrix[40] = 0;
-      boundaryMatrix[50] = 0;
-      boundaryMatrix[60] = 0;
-      boundaryMatrix[70] = 0;
-      boundaryMatrix[80] = 0;
+      boundaryMatrix << 0, 0, 0, 0, 0, 0, 0, 0, 0;
     } break;
     case BoundaryConditions::Free:
     {
-      boundaryMatrix[ 0] = -Scalar(reflectionCoeff);
-      boundaryMatrix[10] =  Scalar(reflectionCoeff);
-      boundaryMatrix[20] =  Scalar(reflectionCoeff);
-      boundaryMatrix[30] = -Scalar(reflectionCoeff);
-      boundaryMatrix[40] =  Scalar(reflectionCoeff);
-      boundaryMatrix[50] = -Scalar(reflectionCoeff);
-      boundaryMatrix[60] =  Scalar(reflectionCoeff);
-      boundaryMatrix[70] =  Scalar(reflectionCoeff);
-      boundaryMatrix[80] =  Scalar(reflectionCoeff);
+      boundaryMatrix << 
+        -reflectionCoeff, // sigma.xx
+         reflectionCoeff,
+         reflectionCoeff,
+        -reflectionCoeff, // sigma.xy
+         reflectionCoeff,
+        -reflectionCoeff, // sigma.xz
+         reflectionCoeff,
+         reflectionCoeff,
+         reflectionCoeff;
     } break;
     case BoundaryConditions::Fixed:
     {
-      boundaryMatrix[ 0] =  Scalar(reflectionCoeff);
-      boundaryMatrix[10] =  Scalar(reflectionCoeff);
-      boundaryMatrix[20] =  Scalar(reflectionCoeff);
-      boundaryMatrix[30] =  Scalar(reflectionCoeff);
-      boundaryMatrix[40] =  Scalar(reflectionCoeff);
-      boundaryMatrix[50] =  Scalar(reflectionCoeff);
-      boundaryMatrix[60] = -Scalar(reflectionCoeff);
-      boundaryMatrix[70] = -Scalar(reflectionCoeff);
-      boundaryMatrix[80] = -Scalar(reflectionCoeff);
+      boundaryMatrix <<
+        reflectionCoeff,
+        reflectionCoeff,
+        reflectionCoeff,
+        reflectionCoeff,
+        reflectionCoeff,
+        reflectionCoeff,
+       -reflectionCoeff, // v.x
+       -reflectionCoeff, // v.y
+       -reflectionCoeff; // v.z
     } break;
     case BoundaryConditions::Symmetry:
     {
-      boundaryMatrix[ 0] =  Scalar(reflectionCoeff);
-      boundaryMatrix[10] =  Scalar(reflectionCoeff);
-      boundaryMatrix[20] =  Scalar(reflectionCoeff);
-      boundaryMatrix[30] = -Scalar(reflectionCoeff); // sigma xy
-      boundaryMatrix[40] = -Scalar(reflectionCoeff); // sigma yz
-      boundaryMatrix[50] = -Scalar(reflectionCoeff); // sigma xz
-      boundaryMatrix[60] = -Scalar(reflectionCoeff); // v.x
-      boundaryMatrix[70] =  Scalar(reflectionCoeff);
-      boundaryMatrix[80] =  Scalar(reflectionCoeff);
+      boundaryMatrix <<
+        reflectionCoeff,
+        reflectionCoeff,
+        reflectionCoeff,
+       -reflectionCoeff, // sigma xy
+       -reflectionCoeff, // sigma yz
+       -reflectionCoeff, // sigma xz
+       -reflectionCoeff, // v.x
+        reflectionCoeff,
+        reflectionCoeff;
     } break;
     case BoundaryConditions::AntiSymmetry:
     {
-      boundaryMatrix[ 0] = -Scalar(reflectionCoeff); // sigma.xx
-      boundaryMatrix[10] = Scalar(reflectionCoeff);
-      boundaryMatrix[20] = Scalar(reflectionCoeff);
-      boundaryMatrix[30] = Scalar(reflectionCoeff); 
-      boundaryMatrix[40] = Scalar(reflectionCoeff); 
-      boundaryMatrix[50] = Scalar(reflectionCoeff); 
-      boundaryMatrix[60] = Scalar(reflectionCoeff); 
-      boundaryMatrix[70] = -Scalar(reflectionCoeff); // v.y
-      boundaryMatrix[80] = -Scalar(reflectionCoeff); // v.z
+      boundaryMatrix <<
+        -reflectionCoeff, // sigma.xx
+         reflectionCoeff,
+         reflectionCoeff,
+         reflectionCoeff,
+         reflectionCoeff,
+         reflectionCoeff,
+         reflectionCoeff,
+        -reflectionCoeff, // v.y
+        -reflectionCoeff; // v.z
     } break;
     default:
       assert(0);
@@ -576,137 +487,53 @@ void ElasticSystemCommon<Space3>::BuildBoundaryMatrix(IndexType interactionType,
 
 template <>
 void ElasticSystemCommon<Space2>::BuildContactMatrices(IndexType interactionType, 
-  Scalar* leftContactMatrix, Scalar* rightContactMatrix)
+  Eigen::Matrix<Scalar, 1, dimsCount>& leftContactMatrix, Eigen::Matrix<Scalar, 1, dimsCount>& rightContactMatrix)
 {
-  std::fill_n(leftContactMatrix,  IndexType(dimsCount * dimsCount), Scalar(0.0));
-  std::fill_n(rightContactMatrix, IndexType(dimsCount * dimsCount), Scalar(0.0));
-
   IndexType contactType = contactDescriptions[interactionType].type;
 
   switch(contactType)
   {
     case ContactConditions::Glue:
     {
-      leftContactMatrix[0 ] = 0;
-      leftContactMatrix[6 ] = 0;
-      leftContactMatrix[12] = 0;
-      leftContactMatrix[18] = 0;
-      leftContactMatrix[24] = 0;
-
-      rightContactMatrix[0 ] = 1;
-      rightContactMatrix[6 ] = 1;
-      rightContactMatrix[12] = 1;
-      rightContactMatrix[18] = 1;
-      rightContactMatrix[24] = 1;
+      leftContactMatrix  << 0, 0, 0, 0, 0;
+      rightContactMatrix << 1, 1, 1, 1, 1;
     } break;
     case ContactConditions::Glide:
     {
       // it`s correct when materials on the both sides of contact are the same 
-      leftContactMatrix[0 ] = 0;
-      leftContactMatrix[6 ] = 1;
-      leftContactMatrix[12] = -1;
-      leftContactMatrix[18] = 0;
-      leftContactMatrix[24] = 1;
-
-      rightContactMatrix[0 ] = 1;
-      rightContactMatrix[6 ] = 0;
-      rightContactMatrix[12] = 0;
-      rightContactMatrix[18] = 1;
-      rightContactMatrix[24] = 0;
+      leftContactMatrix  << 0, 1, -1, 0, 1;
+      rightContactMatrix << 1, 0,  0, 1, 0;
     } break;
     case ContactConditions::Friction:
     {
-      leftContactMatrix[0 ] = 0;
-      leftContactMatrix[6 ] = 0;
-      leftContactMatrix[12] = 0;
-      leftContactMatrix[18] = 0;
-      leftContactMatrix[24] = 0;
-
-      rightContactMatrix[0 ] = 1;
-      rightContactMatrix[6 ] = 1;
-      rightContactMatrix[12] = 1;
-      rightContactMatrix[18] = 1;
-      rightContactMatrix[24] = 1;
+      leftContactMatrix  << 0, 0, 0, 0, 0;
+      rightContactMatrix << 1, 1, 1, 1, 1;
     } break;
   }
 }
 
 template <>
 void ElasticSystemCommon<Space3>::BuildContactMatrices(IndexType interactionType,
-  Scalar* leftContactMatrix, Scalar* rightContactMatrix)
+  Eigen::Matrix<Scalar, 1, dimsCount>& leftContactMatrix, Eigen::Matrix<Scalar, 1, dimsCount>& rightContactMatrix)
 {
-  std::fill_n(leftContactMatrix, IndexType(dimsCount * dimsCount), Scalar(0.0));
-  std::fill_n(rightContactMatrix, IndexType(dimsCount * dimsCount), Scalar(0.0));
-
   IndexType contactType = contactDescriptions[interactionType].type;
 
   switch (contactType)
   {
     case ContactConditions::Glue:
     {
-      leftContactMatrix[0 ] = 0;
-      leftContactMatrix[10] = 0;
-      leftContactMatrix[20] = 0;
-      leftContactMatrix[30] = 0;
-      leftContactMatrix[40] = 0;
-      leftContactMatrix[50] = 0;
-      leftContactMatrix[60] = 0;
-      leftContactMatrix[70] = 0;
-      leftContactMatrix[80] = 0;
-
-      rightContactMatrix[0 ] = 1;
-      rightContactMatrix[10] = 1;
-      rightContactMatrix[20] = 1;
-      rightContactMatrix[30] = 1;
-      rightContactMatrix[40] = 1;
-      rightContactMatrix[50] = 1;
-      rightContactMatrix[60] = 1;
-      rightContactMatrix[70] = 1;
-      rightContactMatrix[80] = 1;
+      leftContactMatrix  << 0, 0, 0, 0, 0, 0, 0, 0, 0;
+      rightContactMatrix << 1, 1, 1, 1, 1, 1, 1, 1, 1;
     } break;
     case ContactConditions::Glide:
     {
-      leftContactMatrix[ 0] = 0;
-      leftContactMatrix[10] = 1;
-      leftContactMatrix[20] = 1;
-      leftContactMatrix[30] = -1;
-      leftContactMatrix[40] = -1;
-      leftContactMatrix[50] = -1;
-      leftContactMatrix[60] = 0;
-      leftContactMatrix[70] = 1;
-      leftContactMatrix[80] = 1;
-
-      rightContactMatrix[ 0] = 1;
-      rightContactMatrix[10] = 0;
-      rightContactMatrix[20] = 0;
-      rightContactMatrix[30] = 0;
-      rightContactMatrix[40] = 0;
-      rightContactMatrix[50] = 0;
-      rightContactMatrix[60] = 1;
-      rightContactMatrix[70] = 0;
-      rightContactMatrix[80] = 0;
+      leftContactMatrix  << 0, 1, 1, -1, -1, -1, 0, 1, 1;
+      rightContactMatrix << 1, 0, 0,  0,  0,  0, 1, 0, 0;
     } break;
     case ContactConditions::Friction:
     {
-      leftContactMatrix[ 0] = 0;
-      leftContactMatrix[10] = 0;
-      leftContactMatrix[20] = 0;
-      leftContactMatrix[30] = 0;
-      leftContactMatrix[40] = 0;
-      leftContactMatrix[50] = 0;
-      leftContactMatrix[60] = 0;
-      leftContactMatrix[70] = 0;
-      leftContactMatrix[80] = 0;
-
-      rightContactMatrix[ 0] = 1;
-      rightContactMatrix[10] = 1;
-      rightContactMatrix[20] = 1;
-      rightContactMatrix[30] = 1;
-      rightContactMatrix[40] = 1;
-      rightContactMatrix[50] = 1;
-      rightContactMatrix[60] = 1;
-      rightContactMatrix[70] = 1;
-      rightContactMatrix[80] = 1;
+      leftContactMatrix << 0, 0, 0, 0, 0, 0, 0, 0, 0;
+      rightContactMatrix << 1, 1, 1, 1, 1, 1, 1, 1, 1;
     } break;
     default:
       assert(0);

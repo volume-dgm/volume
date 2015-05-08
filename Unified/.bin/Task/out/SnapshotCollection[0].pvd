@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
+<Collection>
+<DataSet timestep="0" group="" part="0" file="out/snapshot[000]000000.vti"/>
+<DataSet timestep="5.1" group="" part="0" file="out/snapshot[000]000051.vti"/>
+<DataSet timestep="10.2" group="" part="0" file="out/snapshot[000]000102.vti"/>
+<DataSet timestep="15.3" group="" part="0" file="out/snapshot[000]000153.vti"/>
+<DataSet timestep="20.3" group="" part="0" file="out/snapshot[000]000203.vti"/>
+<DataSet timestep="25.3" group="" part="0" file="out/snapshot[000]000253.vti"/>
+<DataSet timestep="30.3" group="" part="0" file="out/snapshot[000]000303.vti"/>
+<DataSet timestep="35.3" group="" part="0" file="out/snapshot[000]000353.vti"/>
+<DataSet timestep="40.3" group="" part="0" file="out/snapshot[000]000403.vti"/>
+<DataSet timestep="45.3" group="" part="0" file="out/snapshot[000]000453.vti"/>
+<DataSet timestep="50.3" group="" part="0" file="out/snapshot[000]000503.vti"/>
+<DataSet timestep="55.3" group="" part="0" file="out/snapshot[000]000553.vti"/>
+<DataSet timestep="60.3" group="" part="0" file="out/snapshot[000]000603.vti"/>
+<DataSet timestep="65.4" group="" part="0" file="out/snapshot[000]000654.vti"/>
+<DataSet timestep="70.5" group="" part="0" file="out/snapshot[000]000705.vti"/>
+<DataSet timestep="75.6" group="" part="0" file="out/snapshot[000]000756.vti"/>
+<DataSet timestep="80.7" group="" part="0" file="out/snapshot[000]000807.vti"/>
+<DataSet timestep="85.8" group="" part="0" file="out/snapshot[000]000858.vti"/>
+<DataSet timestep="90.9" group="" part="0" file="out/snapshot[000]000909.vti"/>
+<DataSet timestep="96" group="" part="0" file="out/snapshot[000]000960.vti"/>
+<DataSet timestep="101.1" group="" part="0" file="out/snapshot[000]001011.vti"/>
+<DataSet timestep="106.2" group="" part="0" file="out/snapshot[000]001062.vti"/>

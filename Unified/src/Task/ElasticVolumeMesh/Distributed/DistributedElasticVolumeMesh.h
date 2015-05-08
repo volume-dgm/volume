@@ -64,6 +64,8 @@ private:
   void UpdateEdgesData(IndexType edgesCount, const EdgeSyncData* const edgesData);
 
   void ComputeSyncDataSizes();
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 #include "DistributedElasticVolumeMesh2.inl"
 
@@ -121,6 +123,8 @@ private:
   void UpdateFacesData(IndexType facesCount, const FaceSyncData* const facesData);
 
   void ComputeSyncDataSizes();
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 #include "DistributedElasticVolumeMesh3.inl"

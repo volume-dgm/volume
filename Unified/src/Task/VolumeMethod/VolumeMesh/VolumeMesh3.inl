@@ -38,70 +38,59 @@ void VolumeMesh<Space3, FunctionSpace, System>::BuildMatrices()
     {
       printf(".");
       fflush (stdout);
-      cellVolumeIntegrals[functionIndex0 * functionsCount + functionIndex1] =
-        functionSpace.ComputeCellVolumeIntegral       (functionIndex1, functionIndex0);
+      cellVolumeIntegrals(functionIndex0, functionIndex1) =
+        functionSpace.ComputeCellVolumeIntegral(functionIndex1, functionIndex0);
 
-      Vector3 derivativeIntegral = functionSpace.ComputeDerivativeVolumeIntegral (functionIndex0, functionIndex1);
-      xDerivativeVolumeIntegrals [functionIndex0 * functionsCount + functionIndex1] = derivativeIntegral.x;
-      yDerivativeVolumeIntegrals [functionIndex0 * functionsCount + functionIndex1] = derivativeIntegral.y;
-      zDerivativeVolumeIntegrals [functionIndex0 * functionsCount + functionIndex1] = derivativeIntegral.z;
+      Vector derivativeIntegral = functionSpace.ComputeDerivativeVolumeIntegral(functionIndex0, functionIndex1);
+      xDerivativeVolumeIntegrals(functionIndex0, functionIndex1) = derivativeIntegral.x;
+      yDerivativeVolumeIntegrals(functionIndex0, functionIndex1) = derivativeIntegral.y;
+      zDerivativeVolumeIntegrals(functionIndex0, functionIndex1) = derivativeIntegral.z;
 
       for(IndexType srcFaceNumber = 0; srcFaceNumber < 4; srcFaceNumber++)
       {
-        outgoingFlux.srcFaces[srcFaceNumber].surfaceIntegral[functionIndex0 * functionsCount + functionIndex1] =
+        outgoingFlux.srcFaces[srcFaceNumber].surfaceIntegral(functionIndex0, functionIndex1) =
           functionSpace.ComputeOutgoingFlux(srcFaceNumber, functionIndex0, functionIndex1);
         for(IndexType dstFaceNumber = 0; dstFaceNumber < 4; dstFaceNumber++)
         {
           for(IndexType orientationNumber = 0; orientationNumber < 3; orientationNumber++)
           {
-            incomingFlux.srcFaces[srcFaceNumber].dstFaces[dstFaceNumber].orientations[orientationNumber].surfaceIntegral[functionIndex0 * functionsCount + functionIndex1] =
+            incomingFlux.srcFaces[srcFaceNumber].dstFaces[dstFaceNumber].orientations[orientationNumber].surfaceIntegral(functionIndex0, functionIndex1) =
               functionSpace.ComputeIncomingFlux(srcFaceNumber, dstFaceNumber, orientationNumber, functionIndex0, functionIndex1);
           }
         }
       }
     }
   }
-  MatrixInverse(cellVolumeIntegrals, cellVolumeIntegralsInv, functionsCount);
+  cellVolumeIntegralsInv = cellVolumeIntegrals.inverse();
 
-  Scalar flux[functionsCount * functionsCount];
-  Scalar derivatives[functionsCount * functionsCount];
-
-  MatrixCopy(xDerivativeVolumeIntegrals, derivatives, functionsCount, functionsCount);
-  MatrixMulMatrix(derivatives, cellVolumeIntegralsInv, xDerivativeVolumeIntegrals, functionsCount, functionsCount, functionsCount);
-
-  MatrixCopy(yDerivativeVolumeIntegrals, derivatives, functionsCount, functionsCount);
-  MatrixMulMatrix(derivatives, cellVolumeIntegralsInv, yDerivativeVolumeIntegrals, functionsCount, functionsCount, functionsCount);
-
-  MatrixCopy(zDerivativeVolumeIntegrals, derivatives, functionsCount, functionsCount);
-  MatrixMulMatrix(derivatives, cellVolumeIntegralsInv, zDerivativeVolumeIntegrals, functionsCount, functionsCount, functionsCount);
+  xDerivativeVolumeIntegrals *= cellVolumeIntegralsInv;
+  yDerivativeVolumeIntegrals *= cellVolumeIntegralsInv;
+  zDerivativeVolumeIntegrals *= cellVolumeIntegralsInv;
 
   for(IndexType srcFaceNumber = 0; srcFaceNumber < 4; srcFaceNumber++)
   {
-    MatrixCopy(outgoingFlux.srcFaces[srcFaceNumber].surfaceIntegral, flux, functionsCount, functionsCount);
-    MatrixMulMatrix(flux, cellVolumeIntegralsInv, outgoingFlux.srcFaces[srcFaceNumber].surfaceIntegral, functionsCount, functionsCount, functionsCount);
-
+    outgoingFlux.srcFaces[srcFaceNumber].surfaceIntegral *= cellVolumeIntegralsInv;
     for(IndexType dstFaceNumber = 0; dstFaceNumber < 4; dstFaceNumber++)
     {
       for(IndexType orientationNumber = 0; orientationNumber < 3; orientationNumber++)
       {
-        MatrixCopy(incomingFlux.srcFaces[srcFaceNumber].dstFaces[dstFaceNumber].orientations[orientationNumber].surfaceIntegral, flux, functionsCount, functionsCount);
-        MatrixMulMatrix(flux, cellVolumeIntegralsInv, incomingFlux.srcFaces[srcFaceNumber].dstFaces[dstFaceNumber].orientations[orientationNumber].surfaceIntegral, functionsCount, functionsCount, functionsCount);
+        incomingFlux.srcFaces[srcFaceNumber].dstFaces[dstFaceNumber].orientations[orientationNumber].surfaceIntegral *= cellVolumeIntegralsInv;
       }
     }
   }
 
-  Scalar testMatrix[functionsCount * functionsCount];
+  Eigen::Matrix<Scalar, functionsCount, functionsCount> testMatrix;
   Scalar err = 0;
 
-  MatrixMulMatrix(cellVolumeIntegrals, cellVolumeIntegralsInv, testMatrix, functionsCount, functionsCount, functionsCount);
+  testMatrix = cellVolumeIntegrals * cellVolumeIntegralsInv;
   for(IndexType i = 0; i < functionsCount; i++)
   {
     for(IndexType j = 0; j < functionsCount; j++)
     {
       if(i == j)
-        err += fabs(testMatrix[i + j * functionsCount] - Scalar(1.0));
+        err += fabs(testMatrix(i, j) - Scalar(1.0));
       else
-        err += fabs(testMatrix[i + j * functionsCount]);
+        err += fabs(testMatrix(i, j));
     }
   }
   printf("\nPrecomputations complete, volume integral matrix error is : %f\n", err);
@@ -121,38 +110,32 @@ void VolumeMesh<Space3, FunctionSpace, System>::
     IndexType offset = threadCellOffsets[stateIndex];
     IndexType targetCellIndex = offset + 0;
 
-    Scalar tmpMatrix0[dimsCount * dimsCount];
-    Scalar tmpMatrix1[dimsCount * dimsCount];
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> currCellValues;
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> correspondingCellValues;
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> timeDerivatives;
 
-    Scalar tmpPhaseVelocityMatrix0[dimsCount * functionsCount];
-    Scalar tmpPhaseVelocityMatrix1[dimsCount * functionsCount];
-    Scalar currCellValues[dimsCount * functionsCount];
-    Scalar correspondingCellValues[dimsCount * functionsCount];
-    Scalar timeDerivatives[dimsCount * functionsCount];
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> faceTransformMatrix;
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> faceTransformMatrixInv;
 
-    Scalar leftPositiveMultMatrix[dimsCount * dimsCount];
-    Scalar leftNegativeMultMatrix[dimsCount * dimsCount];
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> xInteriorMatrix;
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> xExteriorMatrix;
 
-    Scalar faceTransformMatrix[dimsCount * dimsCount];
-    Scalar faceTransformMatrixInv[dimsCount * dimsCount];
+    Eigen::Matrix<Scalar, 1, dimsCount> boundaryMatrix;
+    Eigen::Matrix<Scalar, 1, dimsCount> leftContactMatrix;
+    Eigen::Matrix<Scalar, 1, dimsCount> rightContactMatrix;
 
-    Scalar xMixedMatrix[dimsCount * dimsCount];
-    Scalar yMixedMatrix[dimsCount * dimsCount];
-    Scalar zMixedMatrix[dimsCount * dimsCount];
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> xMatrix;
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> yMatrix;
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> zMatrix;
 
-    Scalar boundaryMatrix[dimsCount * dimsCount];
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> xMixedMatrix;
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> yMixedMatrix;
+    Eigen::Matrix<Scalar, dimsCount, dimsCount> zMixedMatrix;
 
-    Scalar leftContactMatrix[dimsCount * dimsCount];
-    Scalar rightContactMatrix[dimsCount * dimsCount];
-
-    Scalar xMatrix[dimsCount * dimsCount];
-    Scalar yMatrix[dimsCount * dimsCount];
-    Scalar zMatrix[dimsCount * dimsCount];
-
-    Scalar boundaryInfoValues[dimsCount * functionsCount];
-    Scalar ghostValues[dimsCount * functionsCount];
-    Scalar sourceValues[dimsCount * functionsCount];
-    Scalar sourcePointValues[dimsCount * functionsCount];
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> boundaryInfoValues;
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> ghostValues;
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> sourceValues;
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> sourcePointValues;
 
     Vector cellVertices[Space::NodesPerCell];
 
@@ -163,48 +146,23 @@ void VolumeMesh<Space3, FunctionSpace, System>::
       {
         continue;
       }
-      GetCellVertices(cellIndex, cellVertices);
 
-      Scalar invJacobian = Scalar(1.0) / fabs(GetCellDeformJacobian(cellVertices));
-
-      system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
-      system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
-      system.BuildZMatrix(cellMediumParameters[cellIndex], zMatrix);
-
-      Vector refXDerivatives = GetRefXDerivatives(cellVertices) * invJacobian;
-      Vector refYDerivatives = GetRefYDerivatives(cellVertices) * invJacobian;
-      Vector refZDerivatives = GetRefZDerivatives(cellVertices) * invJacobian;
-
-      for (IndexType i = 0; i < dimsCount; i++)
-      {
-        for (IndexType j = 0; j < dimsCount; j++)
-        {
-          xMixedMatrix[i * dimsCount + j] = xMatrix[i * dimsCount + j] * refXDerivatives.x +
-                                            yMatrix[i * dimsCount + j] * refXDerivatives.y +
-                                            zMatrix[i * dimsCount + j] * refXDerivatives.z;
-
-          yMixedMatrix[i * dimsCount + j] = xMatrix[i * dimsCount + j] * refYDerivatives.x +
-                                            yMatrix[i * dimsCount + j] * refYDerivatives.y +
-                                            zMatrix[i * dimsCount + j] * refYDerivatives.z;
-
-          zMixedMatrix[i * dimsCount + j] = xMatrix[i * dimsCount + j] * refZDerivatives.x +
-                                            yMatrix[i * dimsCount + j] * refZDerivatives.y +
-                                            zMatrix[i * dimsCount + j] * refZDerivatives.z;
-        }
-      }
+      timeDerivatives.setZero();
 
       bool useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, true);
       for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
       {
         for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
         {
-          timeDerivatives[valueIndex * functionsCount + functionIndex] = Scalar(0.0);
-          currCellValues[valueIndex * functionsCount + functionIndex] =
+          currCellValues(valueIndex, functionIndex) =
             useHalfStepSolution ?
             halfStepCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] :
             cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
         }
       }
+
+      GetCellVertices(cellIndex, cellVertices);
+      Scalar invJacobian = Scalar(1.0) / fabs(GetCellDeformJacobian(cellVertices));
 
       IndexType cellIncidentNodes[Space::NodesPerCell];
       GetFixedCellIndices(cellIndex, cellIncidentNodes);
@@ -242,7 +200,6 @@ void VolumeMesh<Space3, FunctionSpace, System>::
           if (interactionType == IndexType(-1)) continue;
 
           // interior matrix
-          Scalar xInteriorMatrix[dimsCount * dimsCount];
           system.BuildXnInteriorMatrix(
             cellMediumParameters[cellIndex],
             //cellMediumParameters[cellIndex],
@@ -250,7 +207,6 @@ void VolumeMesh<Space3, FunctionSpace, System>::
             faceNormal, xInteriorMatrix);
 
           // exterior matrix
-          Scalar xExteriorMatrix[dimsCount * dimsCount];
           system.BuildXnExteriorMatrix(
             cellMediumParameters[cellIndex],
             //cellMediumParameters[cellIndex], 
@@ -258,15 +214,8 @@ void VolumeMesh<Space3, FunctionSpace, System>::
             faceNormal, xExteriorMatrix);
 
           // outgoing flux
-          MatrixMulMatrix(faceTransformMatrix, xInteriorMatrix, tmpMatrix0, dimsCount, dimsCount, dimsCount);
-          MatrixMulMatrix(tmpMatrix0, faceTransformMatrixInv, leftPositiveMultMatrix, dimsCount, dimsCount, dimsCount);
-
-          MatrixMulMatrix(leftPositiveMultMatrix, currCellValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-          MatrixMulMatrix(tmpPhaseVelocityMatrix0, outgoingFlux.srcFaces[faceNumber].surfaceIntegral, tmpPhaseVelocityMatrix1,
-            dimsCount, functionsCount, functionsCount);
-
-          MatrixMulScalar(tmpPhaseVelocityMatrix1, faceDeformJacobian * invJacobian, dimsCount, functionsCount);
-          MatrixAddMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+          timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xInteriorMatrix * faceTransformMatrixInv *
+            currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
 
           if (correspondingCellIndex == IndexType(-1))
           {
@@ -276,36 +225,22 @@ void VolumeMesh<Space3, FunctionSpace, System>::
 
             if (!allowDynamicCollisions || dynamicContactType == IndexType(-1))
             {
-              // regular boundary
-              MatrixMulMatrix(faceTransformMatrix, xExteriorMatrix, tmpMatrix0, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(tmpMatrix0, boundaryMatrix, tmpMatrix1, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(tmpMatrix1, faceTransformMatrixInv, leftNegativeMultMatrix, dimsCount, dimsCount, dimsCount);
-
-              MatrixMulMatrix(leftNegativeMultMatrix, currCellValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-              MatrixMulMatrix(tmpPhaseVelocityMatrix0, outgoingFlux.srcFaces[faceNumber].surfaceIntegral,
-                tmpPhaseVelocityMatrix1, dimsCount, functionsCount, functionsCount);
-
-              MatrixMulScalar(tmpPhaseVelocityMatrix1, faceDeformJacobian * invJacobian, dimsCount, functionsCount);
-              MatrixAddMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+              // regular boundary          
+              timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * 
+                boundaryMatrix.asDiagonal() * faceTransformMatrixInv * currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
 
               // external force/velocity 
               BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
+              if (functor)
+              {
+                typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
+                FunctorWrapper wrapper(functor, time, this, cellIndex, faceNumber);
 
-              typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
-              FunctorWrapper wrapper(functor, time, this, cellIndex, faceNumber);
+                functionSpace.template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
 
-              functionSpace.template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues);
-
-              MatrixMulMatrix(faceTransformMatrix, xExteriorMatrix, tmpMatrix0, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(tmpMatrix0, faceTransformMatrixInv, leftNegativeMultMatrix, dimsCount, dimsCount, dimsCount);
-
-              MatrixMulMatrix(leftNegativeMultMatrix, boundaryInfoValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-              MatrixMulMatrix(tmpPhaseVelocityMatrix0, outgoingFlux.srcFaces[faceNumber].surfaceIntegral,
-                tmpPhaseVelocityMatrix1, dimsCount, functionsCount, functionsCount);
-
-              MatrixMulScalar(tmpPhaseVelocityMatrix1, Scalar(2.0) * faceDeformJacobian * invJacobian, dimsCount, functionsCount);
-
-              MatrixAddMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+                timeDerivatives.noalias() += (Scalar(2.0) * faceDeformJacobian * invJacobian) * 
+                  (faceTransformMatrix * xExteriorMatrix * faceTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
+              }
             } else
             {
               // dynamic collisions
@@ -313,35 +248,25 @@ void VolumeMesh<Space3, FunctionSpace, System>::
 
               BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
 
-              Scalar boundaryFaceMatrix[dimsCount * dimsCount];
-              Scalar leftContactFaceMatrix[dimsCount * dimsCount];
-              Scalar rightContactFaceMatrix[dimsCount * dimsCount];
-
-              MatrixMulMatrix(boundaryMatrix, faceTransformMatrixInv, boundaryFaceMatrix, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(leftContactMatrix, faceTransformMatrixInv, leftContactFaceMatrix, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(rightContactMatrix, faceTransformMatrixInv, rightContactFaceMatrix, dimsCount, dimsCount, dimsCount);
+              Eigen::Matrix<Scalar, dimsCount, dimsCount> boundaryFaceMatrix     = boundaryMatrix.asDiagonal()     * faceTransformMatrixInv;
+              Eigen::Matrix<Scalar, dimsCount, dimsCount> leftContactFaceMatrix  = leftContactMatrix.asDiagonal()  * faceTransformMatrixInv;
+              Eigen::Matrix<Scalar, dimsCount, dimsCount> rightContactFaceMatrix = rightContactMatrix.asDiagonal() * faceTransformMatrixInv;
 
               GhostCellFunctionGetter<VolumeMeshT> functionGetter(
                 this,
                 cellIndex,
                 faceGlobalVertices[0], faceNormal,
-                faceTransformMatrixInv,
-                boundaryFaceMatrix,
+                faceTransformMatrixInv.data(),
+                boundaryFaceMatrix.data(),
                 functor,
-                leftContactFaceMatrix,
-                rightContactFaceMatrix,
+                leftContactFaceMatrix.data(),
+                rightContactFaceMatrix.data(),
                 time, dynamicContactType);
 
-              functionSpace.template Decompose<GhostCellFunctionGetter<VolumeMeshT>, dimsCount>(functionGetter, ghostValues);
+              functionSpace.template Decompose<GhostCellFunctionGetter<VolumeMeshT>, dimsCount>(functionGetter, ghostValues.data());
 
-              MatrixMulMatrix(faceTransformMatrix, xExteriorMatrix, tmpMatrix0, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(tmpMatrix0, ghostValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-
-              MatrixMulMatrix(tmpPhaseVelocityMatrix0, outgoingFlux.srcFaces[faceNumber].surfaceIntegral,
-                tmpPhaseVelocityMatrix1, dimsCount, functionsCount, functionsCount);
-
-              MatrixMulScalar(tmpPhaseVelocityMatrix1, faceDeformJacobian * invJacobian, dimsCount, functionsCount);
-              MatrixAddMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+              timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * 
+                ghostValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
             }
           } else
           {
@@ -353,7 +278,7 @@ void VolumeMesh<Space3, FunctionSpace, System>::
             {
               for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
               {
-                correspondingCellValues[valueIndex * functionsCount + functionIndex] =
+                correspondingCellValues(valueIndex, functionIndex) =
                   useHalfStepSolutionForCorrespondingCell ?
                   halfStepCellSolutions[correspondingCellIndex].basisVectors[functionIndex].values[valueIndex] :
                   cellSolutions[correspondingCellIndex].basisVectors[functionIndex].values[valueIndex];
@@ -362,62 +287,45 @@ void VolumeMesh<Space3, FunctionSpace, System>::
 
             system.BuildContactMatrices(interactionType, leftContactMatrix, rightContactMatrix);
             // for glue contact left matrix equals 0
-            bool zeroLeftContactMatrix = true;
-            for (IndexType i = 0; i < dimsCount * dimsCount; ++i)
-            {
-              if (fabs(leftContactMatrix[i]) > std::numeric_limits<Scalar>::epsilon()) zeroLeftContactMatrix = false;
-            }            
-
-            if (!zeroLeftContactMatrix)
+            if (!leftContactMatrix.isZero(std::numeric_limits<Scalar>::epsilon()))
             {
               // interior side contribution
-              MatrixMulMatrix(faceTransformMatrix, xExteriorMatrix, tmpMatrix0, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(tmpMatrix0, leftContactMatrix, tmpMatrix1, dimsCount, dimsCount, dimsCount);
-              MatrixMulMatrix(tmpMatrix1, faceTransformMatrixInv, leftNegativeMultMatrix, dimsCount, dimsCount, dimsCount);
-
-              MatrixMulMatrix(leftNegativeMultMatrix, currCellValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-              MatrixMulMatrix(tmpPhaseVelocityMatrix0, outgoingFlux.srcFaces[faceNumber].surfaceIntegral,
-                tmpPhaseVelocityMatrix1, dimsCount, functionsCount, functionsCount);
-
-              MatrixMulScalar(tmpPhaseVelocityMatrix1, faceDeformJacobian * invJacobian, dimsCount, functionsCount);
-              MatrixAddMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+              timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * leftContactMatrix.asDiagonal() * 
+                faceTransformMatrixInv * currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
             }
 
             // exterior side contribution
-            MatrixMulMatrix(faceTransformMatrix, xExteriorMatrix, tmpMatrix0, dimsCount, dimsCount, dimsCount);
-            MatrixMulMatrix(tmpMatrix0, rightContactMatrix, tmpMatrix1, dimsCount, dimsCount, dimsCount);
-            MatrixMulMatrix(tmpMatrix1, faceTransformMatrixInv, leftNegativeMultMatrix, dimsCount, dimsCount, dimsCount);
-
-            MatrixMulMatrix(leftNegativeMultMatrix, correspondingCellValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-            MatrixMulMatrix(tmpPhaseVelocityMatrix0,
-              incomingFlux.srcFaces[faceNumber].dstFaces[correspondingFaceNumber].orientations[correspondingFaceOrientation].surfaceIntegral,
-              tmpPhaseVelocityMatrix1,
-              dimsCount, functionsCount, functionsCount);
-
-            MatrixMulScalar(tmpPhaseVelocityMatrix1, faceDeformJacobian * invJacobian, dimsCount, functionsCount);
-            MatrixAddMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+            timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * rightContactMatrix.asDiagonal() * 
+              faceTransformMatrixInv * correspondingCellValues * 
+              incomingFlux.srcFaces[faceNumber].dstFaces[correspondingFaceNumber].orientations[correspondingFaceOrientation].surfaceIntegral);
           }
         }
       }
-      MatrixMulMatrix(xMixedMatrix, currCellValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-      MatrixMulMatrix(tmpPhaseVelocityMatrix0, xDerivativeVolumeIntegrals, tmpPhaseVelocityMatrix1, dimsCount, functionsCount, functionsCount);
-      MatrixSubMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
 
-      MatrixMulMatrix(yMixedMatrix, currCellValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-      MatrixMulMatrix(tmpPhaseVelocityMatrix0, yDerivativeVolumeIntegrals, tmpPhaseVelocityMatrix1, dimsCount, functionsCount, functionsCount);
-      MatrixSubMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+      system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
+      system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
+      system.BuildZMatrix(cellMediumParameters[cellIndex], zMatrix);
 
-      MatrixMulMatrix(zMixedMatrix, currCellValues, tmpPhaseVelocityMatrix0, dimsCount, dimsCount, functionsCount);
-      MatrixMulMatrix(tmpPhaseVelocityMatrix0, zDerivativeVolumeIntegrals, tmpPhaseVelocityMatrix1, dimsCount, functionsCount, functionsCount);
-      MatrixSubMatrix(timeDerivatives, tmpPhaseVelocityMatrix1, dimsCount, functionsCount);
+      Vector refXDerivatives = GetRefXDerivatives(cellVertices) * invJacobian;
+      Vector refYDerivatives = GetRefYDerivatives(cellVertices) * invJacobian;
+      Vector refZDerivatives = GetRefZDerivatives(cellVertices) * invJacobian;
+
+      xMixedMatrix.noalias() = xMatrix * refXDerivatives.x + yMatrix * refXDerivatives.y + zMatrix * refXDerivatives.z;
+      yMixedMatrix.noalias() = xMatrix * refYDerivatives.x + yMatrix * refYDerivatives.y + zMatrix * refYDerivatives.z;
+      zMixedMatrix.noalias() = xMatrix * refZDerivatives.x + yMatrix * refZDerivatives.y + zMatrix * refZDerivatives.z;
+
+      timeDerivatives.noalias() -=
+        xMixedMatrix * currCellValues * xDerivativeVolumeIntegrals +
+        yMixedMatrix * currCellValues * yDerivativeVolumeIntegrals + 
+        zMixedMatrix * currCellValues * zDerivativeVolumeIntegrals;
 
       typename SystemT::SourceFunctorT* sourceFunctor = system.GetSourceFunctor();
       if (sourceFunctor)
       {
         typedef SourceFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > SourceFunctorWrapper;
         SourceFunctorWrapper wrapper(sourceFunctor, time, this, cellIndex);
-        functionSpace.template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues);
-        MatrixSubMatrix(timeDerivatives, sourceValues, dimsCount, functionsCount);
+        functionSpace.template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
+        timeDerivatives.noalias() -= sourceValues;
       }
 
       // point sources
@@ -433,12 +341,11 @@ void VolumeMesh<Space3, FunctionSpace, System>::
           {
             for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
             {
-              sourcePointValues[valueIndex * functionsCount + functionIndex] = 
+              sourcePointValues(valueIndex, functionIndex) = 
                 values[valueIndex] * functionSpace.GetBasisFunctionValue(refPoint, functionIndex);
             }
           }
-          MatrixMulMatrix(sourcePointValues, cellVolumeIntegralsInv, tmpPhaseVelocityMatrix0, dimsCount, functionsCount, functionsCount);
-          MatrixSubMatrix(timeDerivatives, tmpPhaseVelocityMatrix0, dimsCount, functionsCount);
+          timeDerivatives.noalias() -= sourcePointValues * cellVolumeIntegralsInv;
         } 
       }
 
@@ -447,7 +354,7 @@ void VolumeMesh<Space3, FunctionSpace, System>::
         for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
         {
           derivatives[targetCellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex]
-            = -timeDerivatives[valueIndex * functionsCount + functionIndex];
+            = -timeDerivatives(valueIndex, functionIndex);
         }
       }
       targetCellIndex++;

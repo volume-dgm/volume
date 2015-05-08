@@ -6,9 +6,9 @@
 #include "Task.h"
 
 // #define ORDER_FROM_SETTINGS
-// #define SPACE_FROM_SETTINGS
+#define SPACE_FROM_SETTINGS
 
-const unsigned int defaultPolynomialOrder = 4;
+const unsigned int defaultPolynomialOrder = 3;
 typedef Space2 DefaultSpace;
 
 int main()

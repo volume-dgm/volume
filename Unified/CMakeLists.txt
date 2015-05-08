@@ -222,10 +222,12 @@ include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/programs)
+include_directories(${CMAKE_SOURCE_DIR}/3rdparty/eigen/Eigen)
 
 add_definitions(-DUSE_GKREGEX)
 add_definitions(-DNDEBUG)
 add_definitions(-DNDEBUG2)
+add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/Task)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder)

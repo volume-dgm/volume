@@ -76,7 +76,9 @@ protected:
   bool sendNodesInfo;
 
   typedef std::map<IndexType, IndexType> NodesDictionary;
-  std::vector< NodesDictionary > nodesDictionaries; 
+  std::vector< NodesDictionary > nodesDictionaries;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 #include "DistributedElasticVolumeMeshCommon.inl"

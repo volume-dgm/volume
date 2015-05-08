@@ -8,6 +8,8 @@
 #include "../VolumeMethod/FunctionGetters/BoundaryFunctionGetter.h"
 #include <vector>
 
+#include "Eigen/Dense"
+
 template <typename Space>
 struct ElasticSystemBase;
 
@@ -98,30 +100,30 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
     } plasticity;
   };
 
-  void BuildXMatrix(const MediumParameters& mediumParameters, Scalar* xMatrix);
-  void BuildYMatrix(const MediumParameters& mediumParameters, Scalar* yMatrix);
+  void BuildXMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xMatrix);
+  void BuildYMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& yMatrix);
 
   void BuildRMatrix(const MediumParameters& interiorMediumParameters, 
                     const MediumParameters& exteriorMediumParameters, 
-                    Scalar *rMatrix);
+                    Eigen::Matrix<Scalar, dimsCount, dimsCount>& rMatrix);
 
   void BuildXnAuxMatrix(const MediumParameters& interiorMediumParameters, 
                         const MediumParameters& exteriorMediumParameters,
-                        Scalar* xnAuxMatrix);
+                        Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnAuxMatrix);
 
   void BuildXnInteriorMatrix(const MediumParameters& interiorMediumParameters, 
                              const MediumParameters& exteriorMediumParameters,
-                             const Vector& edgeNormal, Scalar* xnInteriorMatrix);
+                             const Vector& edgeNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnInteriorMatrix);
 
   void BuildXnExteriorMatrix(const MediumParameters& interiorMediumParameters, 
                              const MediumParameters& exteriorMediumParameters,
-                             const Vector& edgeNormal, Scalar* xnExteriorMatrix);
+                             const Vector& edgeNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnExteriorMatrix);
 
-  void BuildBoundaryMatrix(IndexType interactionType, Scalar *boundaryMatrix);
+  void BuildBoundaryMatrix(IndexType interactionType, Eigen::Matrix<Scalar, 1, dimsCount>& boundaryMatrix);
 
   void BuildContactMatrices(IndexType interactionType,
-                            Scalar *leftContactMatrix,
-                            Scalar *rightContactMatrix);
+    Eigen::Matrix<Scalar, 1, dimsCount>& leftContactMatrix,
+    Eigen::Matrix<Scalar, 1, dimsCount>& rightContactMatrix);
 
   void CorrectContact(Scalar* values, Vector contactNormal, IndexType dynamicInteractionType);
 

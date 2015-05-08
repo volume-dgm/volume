@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <omp.h>
 
+#include "Eigen/Dense"
+
 template <typename Space, typename FunctionSpace, typename System>
 class VolumeMeshCommon: public DifferentialSystem<typename Space::Scalar>, public GeomMesh<Space>
 {
@@ -70,7 +72,6 @@ public:
   using GeomMesh<Space>::GetCellVertices;
   using GeomMesh<Space>::GetFixedCellIndices;
 
-
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
   typename System::ValueType GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepCellSolution = false) const;
 
@@ -112,11 +113,11 @@ protected:
   std::vector<CellSolution>       bufferCellSolutions;
   std::vector<char>               inBuffer;
 
-  Scalar    cellVolumeIntegrals[functionsCount * functionsCount];
-  Scalar cellVolumeIntegralsInv[functionsCount * functionsCount];
+  Eigen::Matrix<Scalar, functionsCount, functionsCount> cellVolumeIntegrals;
+  Eigen::Matrix<Scalar, functionsCount, functionsCount> cellVolumeIntegralsInv;
+  Eigen::Matrix<Scalar, functionsCount, functionsCount> xDerivativeVolumeIntegrals;
+  Eigen::Matrix<Scalar, functionsCount, functionsCount> yDerivativeVolumeIntegrals;
 
-  Scalar xDerivativeVolumeIntegrals[functionsCount * functionsCount];
-  Scalar yDerivativeVolumeIntegrals[functionsCount * functionsCount];
   Scalar cellVolumeAverageIntegrals[functionsCount]; // for computing average values
 
   void Initialize();
@@ -134,6 +135,8 @@ protected:
   virtual bool IsCellRegular(IndexType cellIndex) const = 0;
 
   bool debugMode;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 #include "VolumeMeshCommon.inl"
 
@@ -229,8 +232,9 @@ private:
   {
     struct SrcEdgeFlux
     {
-      Scalar surfaceIntegral[VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount * 
-        VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount];
+      Eigen::Matrix<Scalar,
+        VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount, 
+        VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount> surfaceIntegral;
     };
     SrcEdgeFlux srcEdges[Space::EdgesPerCell];
   } outgoingFlux;
@@ -241,8 +245,9 @@ private:
     {
       struct DstEdgeFlux
       {
-        Scalar surfaceIntegral[VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount * 
-          VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount];
+        Eigen::Matrix<Scalar,
+          VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount,
+          VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount> surfaceIntegral;
       };
       DstEdgeFlux dstEdges[Space::EdgesPerCell];
     };
@@ -253,6 +258,8 @@ private:
   {
     Scalar surfaceIntegral[VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount];
   } edgeAverages[Space::EdgesPerCell];
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 #include "VolumeMesh2.inl"
@@ -338,14 +345,15 @@ private:
   Vector    GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy, dη/dz) * J
   Vector    GetRefZDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dζ/dx, dζ/dy, dζ/dz) * J
 
-  Scalar zDerivativeVolumeIntegrals[functionsCount * functionsCount];
+  Eigen::Matrix<Scalar, functionsCount, functionsCount> zDerivativeVolumeIntegrals;
 
   struct OutgoingFlux
   {
     struct SrcFaceFlux
     {
-      Scalar surfaceIntegral[VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount * 
-        VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount];
+      Eigen::Matrix<Scalar,
+        VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount,
+        VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount> surfaceIntegral;
     };
     SrcFaceFlux srcFaces[Space::FacesPerCell];
   } outgoingFlux;
@@ -358,8 +366,9 @@ private:
       {
         struct OrientationFlux
         {
-          Scalar surfaceIntegral[VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount * 
-            VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount];
+          Eigen::Matrix<Scalar,
+            VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount,
+            VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount> surfaceIntegral;
         };
         OrientationFlux orientations[3];
       };
@@ -367,6 +376,8 @@ private:
     };
     SrcFaceFlux srcFaces[Space::FacesPerCell];
   } incomingFlux;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 #include "VolumeMesh3.inl"

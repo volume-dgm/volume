@@ -5,6 +5,8 @@
 #include "../../Maths/Spaces.h"
 #include "ElasticSystemCommon.h"
 
+#include "Eigen/Dense"
+
 template <typename Space>
 struct ElasticSystem;
 
@@ -35,8 +37,8 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
     typedef          MediumParameters     MediumParametersType;
   };
 
-  void BuildEdgeTransformMatrix   (Vector edgeVertices[2], Scalar* transformMatrix   );
-  void BuildEdgeTransformMatrixInv(Vector edgeVertices[2], Scalar* transformMatrixInv);
+  void BuildEdgeTransformMatrix(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix);
+  void BuildEdgeTransformMatrixInv(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv);
 };
 
 template <>
@@ -70,9 +72,9 @@ struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
     typedef          MediumParameters     MediumParametersType;
   };
 
-  void BuildFaceTransformMatrix   (Vector faceVertices[3], Scalar* transformMatrix   );
-  void BuildFaceTransformMatrixInv(Vector faceVertices[3], Scalar* transformMatrixInv);
-  void BuildZMatrix(const MediumParameters& mediumParameters, Scalar* zMatrix);
+  void BuildFaceTransformMatrix(Vector faceVertices[3], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix);
+  void BuildFaceTransformMatrixInv(Vector faceVertices[3], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv);
+  void BuildZMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& zMatrix);
 };
 
 #include "ElasticSystem.inl"
