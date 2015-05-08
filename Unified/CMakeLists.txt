@@ -222,7 +222,7 @@ include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/programs)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/eigen/Eigen)
+include_directories(${CMAKE_SOURCE_DIR}/3rdparty/eigen)
 
 add_definitions(-DUSE_GKREGEX)
 add_definitions(-DNDEBUG)
