@@ -43,7 +43,7 @@
      <Contacts fileName="out/contacts_crack[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> 
   </Snapshot> -->
 
-  <Schedule domainsCount="4">
+  <Schedule domainsCount="1">
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
   </Schedule>
 
