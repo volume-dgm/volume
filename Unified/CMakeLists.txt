@@ -228,6 +228,7 @@ add_definitions(-DUSE_GKREGEX)
 add_definitions(-DNDEBUG)
 add_definitions(-DNDEBUG2)
 add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
+add_definitions(-DEIGEN_DONT_PARALLELIZE)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/Task)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder)
