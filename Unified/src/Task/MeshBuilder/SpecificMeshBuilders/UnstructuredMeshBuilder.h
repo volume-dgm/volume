@@ -354,6 +354,37 @@ protected:
       mesh->contactEdgesCount[0] = 0;
     }
 
+    if (duplicateNodes)
+    {
+      if (mesh->contactTypesCount > 0 && mesh->contactEdgesCount[0] > 0)
+      {
+        std::cout << "Glue contacts have been already added" << std::endl;
+      } else
+      {
+        typedef GeomMesh<Space>::EdgePairIndices EdgePairIndices;
+        std::vector< EdgePairIndices > glueContacts;
+        // add glue contacts
+        for (IndexType cellIndex = 0; cellIndex < geomMesh->cells.size(); ++cellIndex)
+        {
+          for (IndexType edgeNumber = 0; edgeNumber < Space::EdgesPerCell; ++edgeNumber)
+          {
+            IndexType correspondingCellIndex = geomMesh->additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex;
+            IndexType interactionType = geomMesh->additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].interactionType;
+            if (correspondingCellIndex != IndexType(-1) && interactionType == 0 && cellIndex < correspondingCellIndex)
+            {
+              EdgePairIndices edgePair;
+              for (IndexType pair = 0; pair < 2; ++pair)
+                geomMesh->GetCellEdgeNodes(cellIndex, edgeNumber, edgePair.edges[pair].nodeIndices);
+              glueContacts.push_back(edgePair);
+            }
+          }
+        }
+        if (mesh->contactTypesCount == 0) mesh->contactTypesCount++;
+        mesh->contactEdgesCount[0] = glueContacts.size();
+        mesh->contactEdges.insert(mesh->contactEdges.begin(), glueContacts.begin(), glueContacts.end());
+      }
+    }
+
     IndexType offset = 0;
     for (IndexType contactType = 0; contactType < mesh->contactTypesCount; ++contactType)
     {
@@ -530,6 +561,38 @@ protected:
     {
       mesh->contactFaces.erase(mesh->contactFaces.begin(), mesh->contactFaces.begin() + mesh->contactFacesCount[0]);
       mesh->contactFacesCount[0] = 0;
+    } 
+
+    if (duplicateNodes)
+    {
+      if (mesh->contactTypesCount > 0 && mesh->contactFacesCount[0] > 0)
+      {
+        std::cout << "Glue contacts have been already added" << std::endl;
+      } else
+      {
+        typedef GeomMesh<Space>::FacePairIndices FacePairIndices;
+        std::vector< FacePairIndices > glueContacts;
+        // add glue contacts
+        for (IndexType cellIndex = 0; cellIndex < geomMesh->cells.size(); ++cellIndex)
+        {
+          for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+          {
+            IndexType correspondingCellIndex = geomMesh->additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingCellIndex;
+            IndexType interactionType = geomMesh->additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].interactionType;
+            if (correspondingCellIndex != IndexType(-1) &&
+                interactionType == 0 && cellIndex < correspondingCellIndex)
+            {
+              FacePairIndices facePair;
+              for (IndexType pair = 0; pair < 2; ++pair)
+                geomMesh->GetCellFaceNodes(cellIndex, faceNumber, facePair.faces[pair].nodeIndices);
+              glueContacts.push_back(facePair);
+            }
+          }
+        }
+        if (mesh->contactTypesCount == 0) mesh->contactTypesCount++;
+        mesh->contactFacesCount[0] = glueContacts.size();
+        mesh->contactFaces.insert(mesh->contactFaces.begin(), glueContacts.begin(), glueContacts.end());
+      }
     }
 
     IndexType offset = 0;

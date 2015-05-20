@@ -91,7 +91,12 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public PolynomialPrecompu
   {
     // this constant sets number of gauss-legendre-lobatto points, i.e. accuracy of integration
     // http://people.sc.fsu.edu/~jburkardt/cpp_src/triangle_fekete_rule/triangle_fekete_rule.html/
-    const int Rule = 1;
+
+    const int Precisions[] = {3, 6, 9, 12, 12, 15, 18};
+    int rule = 1;
+
+    while (rule <= 7 && order > Precisions[rule - 1])
+      ++rule;
 
     /* Rule Precision 
        1    3
@@ -102,14 +107,14 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public PolynomialPrecompu
        7    18 */
 
     int rule_num = ::fekete_rule_num();
-    assert(Rule < rule_num);
+    assert(rule < rule_num);
 
-    int order_num = ::fekete_order_num(Rule);
+    int order_num = ::fekete_order_num(rule);
 
     Scalar* xy = new Scalar[2 * order_num];
     Scalar* w = new Scalar[order_num];
 
-    ::fekete_rule(Rule, order_num, xy, w);
+    ::fekete_rule(rule, order_num, xy, w);
 
     for (int i = 0; i < order_num; ++i)
     {

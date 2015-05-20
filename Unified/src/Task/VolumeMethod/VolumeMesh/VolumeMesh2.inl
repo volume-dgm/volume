@@ -187,6 +187,9 @@ void VolumeMesh<Space2, FunctionSpace, System>::
       IndexType cellIncidentNodes[Space::NodesPerCell];
       GetFixedCellIndices(cellIndex, cellIncidentNodes);
 
+      system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
+      system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
+
       /*
         There are regular cells, where we compute solution,
         and domain boundary cells which are taken from neighbouring domains and should not be computed here.
@@ -234,9 +237,6 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             //cellMediumParameters[cellIndex], 
             cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
             edgeNormal, xExteriorMatrix);
-
-          system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
-          system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
 
           bool outgoingFluxAdded = false;
 

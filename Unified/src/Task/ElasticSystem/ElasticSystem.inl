@@ -48,8 +48,7 @@ ElasticSystem<Space2>::ValueType ElasticSystem<Space2>::
   }
 
   if (interactionType == Boundary || riemannSolution.GetXX() > 0 ||
-       riemannSolution.GetVelocity().x > interiorSolution.GetVelocity().x
-       /* exteriorSolution.GetVelocity().x > interiorSolution.GetVelocity().x*/)
+       riemannSolution.GetVelocity().x > interiorSolution.GetVelocity().x)
   {
     interactionType = Boundary;
       
