@@ -100,8 +100,12 @@ public:
 
       if (!dataArrayElement)
       {
-        std::cerr << "There is no DataArray element" << std::endl;
-        return false;
+        if (dataArrayIndex == 0)
+        {
+          std::cerr << "There is no DataArray element" << std::endl;
+          return false;
+        } else
+        return true;
       }
 
       std::string dataName;

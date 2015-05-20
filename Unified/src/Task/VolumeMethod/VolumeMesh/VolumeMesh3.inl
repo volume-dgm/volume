@@ -39,9 +39,9 @@ void VolumeMesh<Space3, FunctionSpace, System>::BuildMatrices()
       printf(".");
       fflush (stdout);
       cellVolumeIntegrals(functionIndex0, functionIndex1) =
-        functionSpace.ComputeCellVolumeIntegral(functionIndex1, functionIndex0);
+        functionSpace->ComputeCellVolumeIntegral(functionIndex1, functionIndex0);
 
-      Vector derivativeIntegral = functionSpace.ComputeDerivativeVolumeIntegral(functionIndex0, functionIndex1);
+      Vector derivativeIntegral = functionSpace->ComputeDerivativeVolumeIntegral(functionIndex0, functionIndex1);
       xDerivativeVolumeIntegrals(functionIndex0, functionIndex1) = derivativeIntegral.x;
       yDerivativeVolumeIntegrals(functionIndex0, functionIndex1) = derivativeIntegral.y;
       zDerivativeVolumeIntegrals(functionIndex0, functionIndex1) = derivativeIntegral.z;
@@ -49,13 +49,13 @@ void VolumeMesh<Space3, FunctionSpace, System>::BuildMatrices()
       for(IndexType srcFaceNumber = 0; srcFaceNumber < 4; srcFaceNumber++)
       {
         outgoingFlux.srcFaces[srcFaceNumber].surfaceIntegral(functionIndex0, functionIndex1) =
-          functionSpace.ComputeOutgoingFlux(srcFaceNumber, functionIndex0, functionIndex1);
+          functionSpace->ComputeOutgoingFlux(srcFaceNumber, functionIndex0, functionIndex1);
         for(IndexType dstFaceNumber = 0; dstFaceNumber < 4; dstFaceNumber++)
         {
           for(IndexType orientationNumber = 0; orientationNumber < 3; orientationNumber++)
           {
             incomingFlux.srcFaces[srcFaceNumber].dstFaces[dstFaceNumber].orientations[orientationNumber].surfaceIntegral(functionIndex0, functionIndex1) =
-              functionSpace.ComputeIncomingFlux(srcFaceNumber, dstFaceNumber, orientationNumber, functionIndex0, functionIndex1);
+              functionSpace->ComputeIncomingFlux(srcFaceNumber, dstFaceNumber, orientationNumber, functionIndex0, functionIndex1);
           }
         }
       }
@@ -236,7 +236,7 @@ void VolumeMesh<Space3, FunctionSpace, System>::
                 typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
                 FunctorWrapper wrapper(functor, time, this, cellIndex, faceNumber);
 
-                functionSpace.template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
+                functionSpace->template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
 
                 timeDerivatives.noalias() += (Scalar(2.0) * faceDeformJacobian * invJacobian) * 
                   (faceTransformMatrix * xExteriorMatrix * faceTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
@@ -244,6 +244,7 @@ void VolumeMesh<Space3, FunctionSpace, System>::
             } else
             {
               // dynamic collisions
+              /*
               system.BuildContactMatrices(dynamicContactType, leftContactMatrix, rightContactMatrix);
 
               BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
@@ -263,10 +264,10 @@ void VolumeMesh<Space3, FunctionSpace, System>::
                 rightContactFaceMatrix.data(),
                 time, dynamicContactType);
 
-              functionSpace.template Decompose<GhostCellFunctionGetter<VolumeMeshT>, dimsCount>(functionGetter, ghostValues.data());
+              functionSpace->template Decompose<GhostCellFunctionGetter<VolumeMeshT>, dimsCount>(functionGetter, ghostValues.data());
 
               timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * 
-                ghostValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
+                ghostValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral); */
             }
           } else
           {
@@ -324,7 +325,7 @@ void VolumeMesh<Space3, FunctionSpace, System>::
       {
         typedef SourceFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > SourceFunctorWrapper;
         SourceFunctorWrapper wrapper(sourceFunctor, time, this, cellIndex);
-        functionSpace.template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
+        functionSpace->template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
         timeDerivatives.noalias() -= sourceValues;
       }
 
@@ -342,7 +343,7 @@ void VolumeMesh<Space3, FunctionSpace, System>::
             for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
             {
               sourcePointValues(valueIndex, functionIndex) = 
-                values[valueIndex] * functionSpace.GetBasisFunctionValue(refPoint, functionIndex);
+                values[valueIndex] * functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
             }
           }
           timeDerivatives.noalias() -= sourcePointValues * cellVolumeIntegralsInv;

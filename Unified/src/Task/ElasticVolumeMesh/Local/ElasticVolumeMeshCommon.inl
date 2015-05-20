@@ -29,7 +29,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::LoadState(const std::vector<
     {
       ElasticGetter getter(this, stateMakers[stateMakerIndex], cellIndex);
       Scalar cellValues[functionsCount * dimsCount];
-      volumeMesh.functionSpace.template Decompose<ElasticGetter, dimsCount>(getter, cellValues);
+      volumeMesh.functionSpace->template Decompose<ElasticGetter, dimsCount>(getter, cellValues);
       std::transform(cellValues, cellValues + functionsCount * dimsCount,
                      totalCellValues, totalCellValues, std::plus<Scalar>());
     }
@@ -192,10 +192,10 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
     }
     for(int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); cellIndex++)
     {
-      IndexType cellIndices[Space::Dimension + 1];
+      IndexType cellIndices[Space::NodesPerCell];
       volumeMesh.GetFixedCellIndices(cellIndex, cellIndices);
 
-      Vector cellVertices[Space::Dimension + 1];
+      Vector cellVertices[Space::NodesPerCell];
       for(IndexType nodeNumber = 0; nodeNumber < Space::Dimension + 1; nodeNumber++)
       {
         nodeVelocities[cellIndices[nodeNumber]] += InterpolateElastic(cellIndex, volumeMesh.nodes[cellIndices[nodeNumber]].pos).GetVelocity();

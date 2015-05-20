@@ -668,17 +668,25 @@ public:
   const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
   {
     Elastic res;
-    /*
-    Vector2f projection;
-    ProjectPointAgainstLine(point, center, normal, normal, projection);
-    if ((point - Vector2(projection.x, projection.y)).Len() > waveLength * Scalar(0.5))
+
+    Vector projection;
+    GetProjection(point, center, normal, normal, projection);
+
+    if ((point - projection).Len() > waveLength * Scalar(0.5))
     {
       res.SetZeroValues();
     } else
+    {
+      SetValues(Overload<Space>(), lambda, mju, invRho, res);
+    }
+    return res;
+  }
+
+  void SetValues(Overload<Space2>, Scalar lambda, Scalar mju, Scalar invRho, Elastic& res)
+  {
     if (shear)
     {
       Scalar sSpeed = sqrt(mju * invRho);
-
       res.SetVelocity(tangent * velocity.Len());
       Scalar mult = velocity.Len() / sSpeed;
 
@@ -686,19 +694,46 @@ public:
       Scalar sigmaxy = -mult * mju * (normal.x * tangent.y + normal.y * tangent.x);
       Scalar sigmayy = -mult * mju * (2 * normal.y * tangent.y);
       res.SetTension(sigmaxx, sigmayy, sigmaxy);
+      res.SetTension(0, 0, 0);
     } else
     {
       Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
-      
+
       res.SetVelocity(normal * velocity.Len());
+
+      if (velocity.x > 0)
+      {
+        res.SetVelocity(-Vector::yAxis() * 0.05);
+      } else
+        res.SetVelocity(Vector::yAxis() * 0.05);
+
       Scalar mult = velocity.Len() / pSpeed;
 
       Scalar sigmaxx = -mult * (lambda + 2 * mju * normal.x * normal.x);
-      Scalar sigmaxy = -mult *           2 * mju * normal.x * normal.y ;
+      Scalar sigmaxy = -mult * 2 * mju * normal.x * normal.y;
       Scalar sigmayy = -mult * (lambda + 2 * mju * normal.y * normal.y);
-      res.SetTension(sigmaxx, sigmayy, sigmaxy);
-    }*/
-    return res;
+      res.SetTension(0, 0, 0);
+    }
+  }
+
+  void SetValues(Overload<Space3>, Scalar lambda, Scalar mju, Scalar invRho, Elastic& res)
+  {
+    // TODO
+    assert(0);
+  }
+
+  void GetProjection(const Space2::Vector& point, 
+    const Space2::Vector& linePoint, const Space2::Vector& lineNormal, const Space2::Vector& projectionDirection,
+    Space2::Vector& projectedPoint)
+  {
+    ProjectPointAgainstLine(point, linePoint, lineNormal, projectionDirection, projectedPoint);
+  }
+
+  void GetProjection(const Space3::Vector& point,
+    const Space3::Vector& planePoint, const Space3::Vector& planeNormal, const Space3::Vector& projectionDirection,
+    Space3::Vector& projectedPoint)
+  {
+    ProjectPointAgainstPlane(point, planePoint, planeNormal, projectionDirection, projectedPoint);
   }
 
 private:

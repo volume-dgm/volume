@@ -3,33 +3,123 @@
 #include "../Cell.h"
 #include "../../../Maths/Spaces.h"
 
-template<typename Space, typename PolynomialSpace>
-struct PolynomialPrecomputer;
+#include "../../../../3rdparty/quadrature_integration/triangle_fekete_rule.hpp"
+#include "../../../../3rdparty/quadrature_integration/tetrahedron_arbq_rule.hpp"
+#include <assert.h>
 
-template<typename PolynomialSpace>
-struct PolynomialPrecomputer<Space2, PolynomialSpace>
+template<typename Space, typename PolynomialSpace>
+struct PolynomialPrecomputerCommon
 {
-  SPACE2_TYPEDEFS
-  typedef Space2 Space;
+  SPACE_TYPEDEFS
 
   const static IndexType functionsCount = PolynomialSpace::functionsCount;
-  const static IndexType order          = PolynomialSpace::order;
-
+  const static IndexType order = PolynomialSpace::order;
   PolynomialSpace space;
 
-  PolynomialPrecomputer()
+  virtual Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) = 0;
+
+  template<typename Function, int ValuesCount>
+  void Decompose(Function& func, Scalar* coords)
   {
+    Scalar correlations[functionsCount * ValuesCount]; // correlations == inner products
+    std::fill_n(correlations, ValuesCount * functionsCount, 0);
+
+    for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+    {
+      Scalar values[ValuesCount];
+      func(points[pointIndex], values);
+
+      for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+      {
+        Scalar basisFunctionValue = space.GetBasisFunctionValue(points[pointIndex], functionIndex);
+        for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+        {
+          correlations[valueIndex * functionsCount + functionIndex] += basisFunctionValue * values[valueIndex] * weights[pointIndex];
+        }
+      }
+    }
+
+    std::fill_n(coords, ValuesCount * functionsCount, 0);
+    for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+      for (IndexType i = 0; i < functionsCount; i++)
+        for (IndexType j = 0; j < functionsCount; j++)
+          coords[valueIndex * functionsCount + i] +=
+            correlations[valueIndex * functionsCount + j] * cellVolumeIntegralsInv[j * functionsCount + i];
   }
 
   Scalar GetBasisFunctionValue(Vector point, IndexType functionIndex) const
   {
-    /*Polynomial<Scalar, IndexType, 2> function = space.GetBasisPolynomial(functionIndex);
-
-    Scalar coords[3];
-    coords[0] = point.x;
-    coords[1] = point.y;
-    return function.GetValue(coords);*/
     return space.GetBasisFunctionValue(point, functionIndex);
+  }
+
+protected:
+  // for quadrature integration
+  std::vector<Scalar> weights;
+  std::vector<Vector> points;
+
+  Scalar cellVolumeIntegrals[functionsCount * functionsCount];
+  Scalar cellVolumeIntegralsInv[functionsCount * functionsCount];
+
+  void ComputeVolumeIntegrals()
+  {
+    for (IndexType functionIndex0 = 0; functionIndex0 < functionsCount; functionIndex0++)
+    {
+      for (IndexType functionIndex1 = 0; functionIndex1 < functionsCount; functionIndex1++)
+      {
+        cellVolumeIntegrals[functionIndex0 * functionsCount + functionIndex1] =
+          ComputeCellVolumeIntegral(functionIndex1, functionIndex0);
+      }
+    }
+    MatrixInverse<Scalar, IndexType>(cellVolumeIntegrals, cellVolumeIntegralsInv, functionsCount);
+  }
+};
+
+template<typename Space, typename PolynomialSpace>
+struct PolynomialPrecomputer;
+
+template<typename PolynomialSpace>
+struct PolynomialPrecomputer<Space2, PolynomialSpace>: public PolynomialPrecomputerCommon<Space2, PolynomialSpace>
+{
+  SPACE2_TYPEDEFS
+  typedef Space2 Space;
+
+  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::functionsCount;
+  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::order;
+  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::space;
+
+  PolynomialPrecomputer()
+  {
+    // this constant sets number of gauss-legendre-lobatto points, i.e. accuracy of integration
+    // http://people.sc.fsu.edu/~jburkardt/cpp_src/triangle_fekete_rule/triangle_fekete_rule.html/
+    const int Rule = 1;
+
+    /* Rule Precision 
+       1    3
+       2    6
+       3    9
+       4-5  12
+       6    15
+       7    18 */
+
+    int rule_num = ::fekete_rule_num();
+    assert(Rule < rule_num);
+
+    int order_num = ::fekete_order_num(Rule);
+
+    Scalar* xy = new Scalar[2 * order_num];
+    Scalar* w = new Scalar[order_num];
+
+    ::fekete_rule(Rule, order_num, xy, w);
+
+    for (int i = 0; i < order_num; ++i)
+    {
+      weights.push_back(w[i] * Scalar(0.5) /* area of unit triangle */);
+      points.push_back(Vector(xy[2 * i], xy[2 * i + 1]));
+    }
+
+    delete[] w;
+    delete[] xy;
+    ComputeVolumeIntegrals();
   }
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)
@@ -268,36 +358,37 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>
     //if(fabs(res - integrationResult) > 1e-3) printf("flux poo");
     return integrationResult;
   }
-
-  template<typename Function, int ValuesCount>
-  void Decompose(Function& func, Scalar *coords)
-  {
-    space.Decompose<Function, ValuesCount>(func, coords);
-  }
 };
 
 template<typename PolynomialSpace>
-struct PolynomialPrecomputer<Space3, PolynomialSpace>
+struct PolynomialPrecomputer<Space3, PolynomialSpace>: public PolynomialPrecomputerCommon<Space3, PolynomialSpace>
 {
   SPACE3_TYPEDEFS
+  typedef Space3 Space;
 
-  const static IndexType functionsCount = PolynomialSpace::functionsCount;
+  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::functionsCount;
+  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::order;
+  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::space;
 
-  PolynomialSpace space;
-
-  PolynomialPrecomputer()
-  {}
-
-  Scalar GetBasisFunctionValue(Vector point, IndexType functionIndex) const
+  PolynomialPrecomputer(): PolynomialPrecomputerCommon<Space3, PolynomialSpace>()
   {
-    /*Polynomial<Scalar, IndexType, 3> function = space.GetBasisPolynomial(functionIndex);
+    const int Degree = 4;
+    int order_num = ::tetrahedron_arbq_size(Degree);
 
-    Scalar coords[3];
-    coords[0] = point.x;
-    coords[1] = point.y;
-    coords[2] = point.z;
-    return function.GetValue(coords);*/
-    return space.GetBasisFunctionValue(point, functionIndex);
+    Scalar* xyz = new Scalar[3 * order_num];
+    Scalar* w = new Scalar[order_num];
+
+    ::tetrahedron_arbq(Degree, order_num, xyz, w);
+
+    for (int i = 0; i < order_num; ++i)
+    {
+      weights.push_back(w[i]);
+      points.push_back(Vector(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2]));
+    }
+
+    delete[] w;
+    delete[] xyz;
+    ComputeVolumeIntegrals();
   }
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)
@@ -552,12 +643,6 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>
     Scalar integrationResult = (intToSrcFunc * intToDstFunc).ComputeSubspaceIntegral(2);
     //if(fabs(res - integrationResult) > 1e-3) printf("flux poo");
     return integrationResult;
-  }
-
-  template<typename Function, int ValuesCount>
-  void Decompose(Function& func, Scalar *coords)
-  {
-    space.template Decompose<Function, ValuesCount>(func, coords);
   }
 };
 

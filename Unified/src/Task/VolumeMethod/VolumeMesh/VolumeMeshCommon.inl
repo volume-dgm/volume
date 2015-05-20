@@ -7,7 +7,7 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
 
   for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
   {
-    Scalar basisFunctionValue = functionSpace.GetBasisFunctionValue(refCoords, functionIndex);
+    Scalar basisFunctionValue = functionSpace->GetBasisFunctionValue(refCoords, functionIndex);
     for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
     {
       Scalar basisFunctionCoefficient =
@@ -27,6 +27,54 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   GetCellVertices(cellIndex, points);
   Vector refCoords = GlobalToRefVolumeCoords(globalPoint, points);
   return GetRefCellSolution(cellIndex, refCoords, halfStepSolution);
+}
+
+template <typename Space, typename FunctionSpace, typename System>
+typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
+  GetRefCellSolution(Scalar* coeffs, Vector refCoords) const
+{
+  typename System::ValueType result;
+  result.SetZeroValues();
+
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  {
+    Scalar basisFunctionValue = functionSpace->GetBasisFunctionValue(refCoords, functionIndex);
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    {
+      Scalar basisFunctionCoefficient = coeffs[valueIndex * functionsCount + functionIndex];
+      result.values[valueIndex] += basisFunctionCoefficient * basisFunctionValue;
+    }
+  }
+  return result;
+}
+
+template <typename Space, typename FunctionSpace, typename System>
+typename System::MediumParameters VolumeMeshCommon<Space, FunctionSpace, System>::
+  GetRefCellParams(Scalar* coeffs, Vector refCoords) const
+{
+  typename System::MediumParameters result;
+  std::fill(result.params, result.params + MediumParameters::ParamsCount, Scalar(0.0));
+
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  {
+    Scalar basisFunctionValue = functionSpace->GetBasisFunctionValue(refCoords, functionIndex);
+    for (IndexType paramIndex = 0; paramIndex < MediumParameters::ParamsCount; paramIndex++)
+    {
+      Scalar basisFunctionCoefficient = coeffs[paramIndex * functionsCount + functionIndex];
+      result.params[paramIndex] += basisFunctionCoefficient * basisFunctionValue;
+    }
+  }
+  return result;
+}
+
+template <typename Space, typename FunctionSpace, typename System>
+typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
+  GetCellSolution(Scalar* coeffs, Vector globalPoint) const
+{
+  Vector points[Space::NodesPerCell];
+  GetCellVertices(cellIndex, points);
+  Vector refCoords = GlobalToRefVolumeCoords(globalPoint, points);
+  return GetRefCellSolution(coeffs, refCoords);
 }
 
 template <typename Space, typename FunctionSpace, typename System>

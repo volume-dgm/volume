@@ -5,7 +5,7 @@
 #include "../../Maths/Spaces.h"
 #include "ElasticSystemCommon.h"
 
-#include "Eigen/Dense"
+#include "Eigen/Core"
 
 template <typename Space>
 struct ElasticSystem;
@@ -22,6 +22,7 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
   {
     using ValueTypeCommon::SetTension;
     using ValueTypeCommon::values;
+
     void SetTension(Scalar xx, Scalar yy, Scalar xy);
     Scalar GetPressure() const;
     Scalar GetDeviatorSquare() const;
@@ -36,6 +37,13 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
     typedef          ValueType            Elastic;
     typedef          MediumParameters     MediumParametersType;
   };
+
+  ValueType GetRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution, 
+    const MediumParameters& interiorParams, MediumParameters& exteriorParams,
+    IndexType boundaryType, IndexType dynamicContactType);
+
+  ValueType GetGlueRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution,
+    const MediumParameters& interiorParams, MediumParameters& exteriorParams);
 
   void BuildEdgeTransformMatrix(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix);
   void BuildEdgeTransformMatrixInv(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv);

@@ -1055,6 +1055,14 @@ void Task<Space, order>::BuildIniStateMakers()
         stateMakers.push_back(new DirectionalExplosionIniStateMaker<ElasticSpace>(explosionInfo.point, explosionInfo.velocity,
           explosionInfo.waveLength, Scalar(1000)));
       }break;
+
+      case TaskSettings<Space>::IniState::ConstantPlaneWave:
+      {
+        typename TaskSettings<Space>::ConstantPlaneWaveStateInfo waveInfo =
+          settings.task.constantPlaneWaveStateInfos[infoIndex];
+        stateMakers.push_back(new ConstantPlaneWaveIniStateMaker<ElasticSpace>(waveInfo.velocity, waveInfo.center,
+          waveInfo.waveLength, waveInfo.shear));
+      }break;
     }
   }
 }

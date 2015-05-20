@@ -76,6 +76,9 @@
     <Filter Include="VolumeMethod\FunctionGetters">
       <UniqueIdentifier>{3a5778c1-32d3-440f-9d89-fc0c24ae578a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="3rdparty\QuadratureIntegration">
+      <UniqueIdentifier>{c2f6de08-7374-458c-bc62-aa64d3766466}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\3rdparty\tinyxml\tinystr.cpp">
@@ -95,6 +98,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Task\Task\Task.cpp">
       <Filter>Task</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdparty\quadrature_integration\triangle_fekete_rule.cpp">
+      <Filter>3rdparty\QuadratureIntegration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdparty\quadrature_integration\tetrahedron_arbq_rule.cpp">
+      <Filter>3rdparty\QuadratureIntegration</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -358,6 +367,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Task\VolumeMethod\Cell.h">
       <Filter>VolumeMethod\VolumeMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\BaseSpace.h">
+      <Filter>VolumeMethod\Spaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdparty\quadrature_integration\tetrahedron_arbq_rule.hpp">
+      <Filter>3rdparty\QuadratureIntegration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdparty\quadrature_integration\triangle_fekete_rule.hpp">
+      <Filter>3rdparty\QuadratureIntegration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdparty\quadrature_integration\legendre_rule.h">
+      <Filter>3rdparty\QuadratureIntegration</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

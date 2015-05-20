@@ -1,22 +1,23 @@
 #pragma once
 #include "../../../Maths/Spaces.h"
+#include "BaseSpace.h"
 
 template<typename Space, int Order>
 struct LagrangeSpace;
 
 template<int Order>
-struct LagrangeSpace<Space2, Order>
+struct LagrangeSpace<Space2, Order>: public BaseSpace<Space2, Order>
 {
   SPACE2_TYPEDEFS
 
-  const static IndexType functionsCount = (Order + 1) * (Order + 2) / 2;
-  const static IndexType order = Order;
+  using BaseSpace<Space2, Order>::order;
+  using BaseSpace<Space2, Order>::functionsCount;
 
   Scalar functionMult;
 
   typedef Polynomial<Scalar, IndexType, 2> PolynomialType;
 
-  LagrangeSpace()
+  LagrangeSpace(): BaseSpace<Space2, Order>()
   {
     ComputeCoordPowers();
   }
@@ -316,22 +317,6 @@ struct LagrangeSpace<Space2, Order>
     return polynomialRes;
   }
 
-  template<typename Function, int ValuesCount>
-  void Decompose(Function& func, Scalar* coords)
-  {
-    for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
-    {
-      Vector basisPoint = GetBasisPoint(functionIndex);
-      Scalar values[ValuesCount];
-      func(basisPoint, values);
-
-      for(IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
-      {
-        coords[valueIndex * functionsCount + functionIndex] = values[valueIndex];
-      }
-    }
-  }
-
 public:
   void GetLocalCoords(const Vector& point, Scalar* localCoords) const
   {
@@ -401,11 +386,12 @@ public:
 };
 
 template<int Order>
-struct LagrangeSpace<Space3, Order>
+struct LagrangeSpace<Space3, Order>: public BaseSpace<Space3, Order>
 {
   SPACE3_TYPEDEFS
 
-  const static IndexType functionsCount = (Order + 1) * (Order + 2) * (Order + 3) / 6;
+  using BaseSpace<Space3, Order>::order;
+  using BaseSpace<Space3, Order>::functionsCount;
 
   Scalar functionMult;
 
@@ -615,25 +601,8 @@ struct LagrangeSpace<Space3, Order>
     return gradient;
   }
 
-  template<typename Function, int ValuesCount>
-  void Decompose(Function& func, Scalar *coords)
-  {
-    for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
-    {
-      Vector basisPoint = GetBasisPoint(functionIndex);
-      Scalar values[ValuesCount];
-      func(basisPoint, values);
-
-      for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
-      {
-        coords[valueIndex * functionsCount + functionIndex] = values[valueIndex];
-      }
-    }
-  }
-
-
-
 public:
+
   void GetLocalCoords(const Vector& point, Scalar *localCoords) const
   {
     Vector vertices[4];

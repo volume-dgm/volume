@@ -1,3 +1,5 @@
+#include "../../../../3rdparty/quadrature_integration/legendre_rule.h"
+
 template<typename FunctionSpace, typename System>
 void VolumeMesh<Space2, FunctionSpace, System>::
   LoadGeom(Vector* vertexPositions, IndexType* cellIndices, IndexType verticesCount, IndexType cellsCount,
@@ -26,6 +28,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
     std::copy(mediumParameters, mediumParameters + cellsCount, cellMediumParameters.begin());
   }
 
+  InitializeQuadrature();
   printf("Loading done \n");
 }
 
@@ -39,20 +42,20 @@ void VolumeMesh<Space2, FunctionSpace, System>::BuildMatrices()
     {
       printf(".");
       cellVolumeIntegrals(functionIndex0, functionIndex1) =
-        functionSpace.ComputeCellVolumeIntegral       (functionIndex1, functionIndex0);
+        functionSpace->ComputeCellVolumeIntegral       (functionIndex1, functionIndex0);
 
-      Vector derivativeIntegral = functionSpace.ComputeDerivativeVolumeIntegral (functionIndex0, functionIndex1);
+      Vector derivativeIntegral = functionSpace->ComputeDerivativeVolumeIntegral (functionIndex0, functionIndex1);
       xDerivativeVolumeIntegrals (functionIndex0, functionIndex1) = derivativeIntegral.x;
       yDerivativeVolumeIntegrals (functionIndex0, functionIndex1) = derivativeIntegral.y;
 
       for(IndexType srcEdgeNumber = 0; srcEdgeNumber < 3; srcEdgeNumber++)
       {
         outgoingFlux.srcEdges[srcEdgeNumber].surfaceIntegral(functionIndex0, functionIndex1) =
-          functionSpace.ComputeOutgoingFlux(srcEdgeNumber, functionIndex0, functionIndex1);
+          functionSpace->ComputeOutgoingFlux(srcEdgeNumber, functionIndex0, functionIndex1);
         for(IndexType dstEdgeNumber = 0; dstEdgeNumber < 3; dstEdgeNumber++)
         {
           incomingFlux.srcEdges[srcEdgeNumber].dstEdges[dstEdgeNumber].surfaceIntegral(functionIndex0, functionIndex1) =
-            functionSpace.ComputeIncomingFlux(srcEdgeNumber, dstEdgeNumber, functionIndex0, functionIndex1);
+            functionSpace->ComputeIncomingFlux(srcEdgeNumber, dstEdgeNumber, functionIndex0, functionIndex1);
         }
       }
     }
@@ -91,14 +94,25 @@ void VolumeMesh<Space2, FunctionSpace, System>::BuildMatrices()
 
   for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
-    cellVolumeAverageIntegrals[functionIndex] = functionSpace.ComputeCellVolumeIntegral(functionIndex);
+    cellVolumeAverageIntegrals[functionIndex] = functionSpace->ComputeCellVolumeIntegral(functionIndex);
 
     for(IndexType edgeNumber = 0; edgeNumber < 3; edgeNumber++)
     {
       edgeAverages[edgeNumber].surfaceIntegral[functionIndex] =
-        functionSpace.ComputeEdgeFlux(edgeNumber, functionIndex);
+        functionSpace->ComputeEdgeFlux(edgeNumber, functionIndex);
     }
   }
+}
+
+template<typename FunctionSpace, typename System>
+void VolumeMesh<Space2, FunctionSpace, System>::InitializeQuadrature()
+{
+  quadratureWeights.resize(FunctionSpace::order + 1);
+  quadraturePoints.resize(FunctionSpace::order + 1);
+  const int    kind  = 1; // gauss
+  const Scalar alpha = 0;
+  const Scalar beta  = 0;
+  cgqf(FunctionSpace::order + 1, kind, alpha, beta, 0, 1, quadraturePoints.data(), quadratureWeights.data());
 }
 
 template<typename FunctionSpace, typename System>
@@ -137,8 +151,11 @@ void VolumeMesh<Space2, FunctionSpace, System>::
 
     Eigen::Matrix<Scalar, dimsCount, functionsCount> boundaryInfoValues;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> ghostValues;
+    Eigen::Matrix<Scalar, MediumParameters::ParamsCount, functionsCount> ghostParams;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> sourceValues;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> sourcePointValues;
+
+    Eigen::Matrix<Scalar, dimsCount, functionsCount> flux;
 
     Vector cellVertices[Space::NodesPerCell];
 
@@ -205,7 +222,6 @@ void VolumeMesh<Space2, FunctionSpace, System>::
           }
 
           // interior matrix
-
           system.BuildXnInteriorMatrix(
             cellMediumParameters[cellIndex],
             //cellMediumParameters[cellIndex],
@@ -219,59 +235,94 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
             edgeNormal, xExteriorMatrix);
 
-          // outgoing flux
-          timeDerivatives.noalias() += (edgeLen * invJacobian) * (edgeTransformMatrix * xInteriorMatrix * edgeTransformMatrixInv * 
-            currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+          system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
+          system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
+
+          bool outgoingFluxAdded = false;
 
           if(correspondingCellIndex == IndexType(-1))
           {
             // bounary condition
-            system.BuildBoundaryMatrix(interactionType, boundaryMatrix);
             IndexType dynamicContactType = system.GetBoundaryDynamicContactType(interactionType);
+
+            // external force/velocity 
+            BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
+            if (functor)
+            {
+              typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
+              FunctorWrapper wrapper(functor, time, this, cellIndex, edgeNumber);
+
+              functionSpace->template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
+
+              timeDerivatives.noalias() += (Scalar(2.0) * edgeLen * invJacobian) *
+                (edgeTransformMatrix * xExteriorMatrix * edgeTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+            }
 
             if(!allowDynamicCollisions || dynamicContactType == IndexType(-1)) //set 1 for regular boundary, 0 for dynamic collisions
             {
+              system.BuildBoundaryMatrix(interactionType, boundaryMatrix);
               timeDerivatives.noalias() += (edgeLen * invJacobian) * 
                 (edgeTransformMatrix * xExteriorMatrix * boundaryMatrix.asDiagonal() * edgeTransformMatrixInv * 
                 currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
-
-              // external force/velocity 
-              BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
-              if (functor)
-              {
-                typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
-                FunctorWrapper wrapper(functor, time, this, cellIndex, edgeNumber);
-
-                functionSpace.template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
-
-                timeDerivatives.noalias() += (Scalar(2.0) * edgeLen * invJacobian) * 
-                  (edgeTransformMatrix * xExteriorMatrix * edgeTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
-              }
             } else
-            {
-              system.BuildContactMatrices(dynamicContactType, leftContactMatrix, rightContactMatrix);
+            { 
+              Vector ghostCellVertices[Space::NodesPerCell];
+              GetGhostCellVertices(cellIndex, edgeNumber, ghostCellVertices);
+              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, edgeNormal, ghostCellVertices, time,
+                GhostCellFunctionGetter<VolumeMeshT>::Solution);
+              functionSpace->template Decompose< GhostCellFunctionGetter<VolumeMeshT>, dimsCount >(functionGetter, ghostValues.data());
 
-              BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
+              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, edgeNormal, ghostCellVertices, time,
+                GhostCellFunctionGetter<VolumeMeshT>::MediumParams);
 
-              Eigen::Matrix<Scalar, dimsCount, dimsCount> boundaryEdgeMatrix = boundaryMatrix.asDiagonal() * edgeTransformMatrixInv;
-              Eigen::Matrix<Scalar, dimsCount, dimsCount> leftContactEdgeMatrix = leftContactMatrix.asDiagonal() * edgeTransformMatrixInv;
-              Eigen::Matrix<Scalar, dimsCount, dimsCount> rightContactEdgeMatrix = rightContactMatrix.asDiagonal() * edgeTransformMatrixInv;
+              /* functionSpace->template Decompose<GhostCellFunctionGetter<VolumeMeshT>, MediumParameters::ParamsCount>
+                (paramsGetter, ghostParams.data()); */
 
-              GhostCellFunctionGetter<VolumeMeshT> functionGetter(
-                this, 
-                cellIndex,
-                edgeGlobalVertices[0], edgeNormal,
-                edgeTransformMatrixInv.data(),
-                boundaryEdgeMatrix.data(),
-                functor,
-                leftContactEdgeMatrix.data(),
-                rightContactEdgeMatrix.data(),
-                time, dynamicContactType);
+              flux.setZero();
 
-              functionSpace.template Decompose<GhostCellFunctionGetter<VolumeMeshT>, dimsCount>(functionGetter, ghostValues.data());
+              // quadrature integration of numerical flux
+              for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+              {
+                Vector globalPoint = (edgeGlobalVertices[1] - edgeGlobalVertices[0]) * quadraturePoints[pointIndex] + edgeGlobalVertices[0];
+                Vector refPoint = GlobalToRefVolumeCoords(globalPoint, cellVertices);
+
+                Vector ghostRefPoint = GlobalToRefVolumeCoords(globalPoint, ghostCellVertices);
+
+                typename System::ValueType interiorSolution = GetRefCellSolution(cellIndex, refPoint);
+                typename System::ValueType exteriorSolution = GetRefCellSolution(ghostValues.data(), ghostRefPoint);
+
+                MediumParameters exteriorParams; // = GetRefCellParams(ghostParams.data(), ghostRefPoint);
+                paramsGetter.operator()(ghostRefPoint, exteriorParams.params);                 
+
+                Scalar tmp[dimsCount];
+                MatrixMulVector(edgeTransformMatrixInv.data(), interiorSolution.values, tmp, dimsCount, dimsCount);
+                std::copy_n(tmp, dimsCount, interiorSolution.values);
+
+                MatrixMulVector(edgeTransformMatrixInv.data(), exteriorSolution.values, tmp, dimsCount, dimsCount);
+                std::copy_n(tmp, dimsCount, exteriorSolution.values);
+
+                typename System::ValueType riemannSolution = 
+                  system.GetRiemannSolution(interiorSolution, exteriorSolution,
+                                            cellMediumParameters[cellIndex], exteriorParams,
+                                            interactionType, // boundary type
+                                            dynamicContactType);
+
+                for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)                
+                {
+                  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+                  {
+                    flux(valueIndex, functionIndex) += 
+                      quadratureWeights[pointIndex] * 
+                      riemannSolution.values[valueIndex] * 
+                      functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
+                  }
+                }
+              }
 
               timeDerivatives.noalias() += (edgeLen * invJacobian) * 
-                (edgeTransformMatrix * xExteriorMatrix * ghostValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+                (edgeTransformMatrix * xMatrix * flux * cellVolumeIntegralsInv);
+
+              outgoingFluxAdded = true;
             }
           } else
           {
@@ -303,11 +354,14 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             timeDerivatives.noalias() += (edgeLen * invJacobian) * (edgeTransformMatrix * xExteriorMatrix * rightContactMatrix.asDiagonal() * edgeTransformMatrixInv *
               correspondingCellValues * incomingFlux.srcEdges[edgeNumber].dstEdges[correspondingEdgeNumber].surfaceIntegral);
           }
+          if (!outgoingFluxAdded)
+          {
+            // outgoing flux
+            timeDerivatives.noalias() += (edgeLen * invJacobian) * (edgeTransformMatrix * xInteriorMatrix * edgeTransformMatrixInv *
+              currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+          }
         }
       }
-
-      system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
-      system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
 
       Vector refXDerivatives = GetRefXDerivatives(cellVertices) * invJacobian;
       Vector refYDerivatives = GetRefYDerivatives(cellVertices) * invJacobian;
@@ -324,7 +378,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
       {
         typedef SourceFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > SourceFunctorWrapper;
         SourceFunctorWrapper wrapper(sourceFunctor, time, this, cellIndex);
-        functionSpace.template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
+        functionSpace->template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
         timeDerivatives.noalias() -= sourceValues;
       }
 
@@ -342,7 +396,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
             {
               sourcePointValues(valueIndex, functionIndex) =
-                values[valueIndex] * functionSpace.GetBasisFunctionValue(refPoint, functionIndex);
+                values[valueIndex] * functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
             }
           }
           timeDerivatives.noalias() -= sourcePointValues * cellVolumeIntegralsInv;

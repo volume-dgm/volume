@@ -78,9 +78,20 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
 
     void MakeDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult);
 
-    Scalar lambda;
-    Scalar mju;
-    Scalar invRho;
+    static const int ParamsCount = 3;
+    union 
+    {
+      struct 
+      {
+        Scalar lambda;
+        Scalar mju;
+        Scalar invRho;
+      };
+      Scalar params[ParamsCount];
+    };
+
+    bool IsZero() const;
+
     Vector flowVelocity;
 
     bool destroyed;
@@ -124,8 +135,6 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   void BuildContactMatrices(IndexType interactionType,
     Eigen::Matrix<Scalar, 1, dimsCount>& leftContactMatrix,
     Eigen::Matrix<Scalar, 1, dimsCount>& rightContactMatrix);
-
-  void CorrectContact(Scalar* values, Vector contactNormal, IndexType dynamicInteractionType);
 
   Scalar GetMaxWaveSpeed(const MediumParameters& mediumParameters) const;
 
@@ -235,7 +244,7 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
     Scalar velocityDimensionlessMult;
   };
 
-private:
+protected:
   void SetBoundaryDescription(IndexType interactionType, BoundaryDescription boundaryDescription);
   void SetContactDescription(IndexType interactionType, ContactDescription contactDescription);
 

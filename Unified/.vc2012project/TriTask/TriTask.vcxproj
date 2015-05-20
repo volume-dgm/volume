@@ -11,6 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\3rdparty\quadrature_integration\tetrahedron_arbq_rule.cpp" />
+    <ClCompile Include="..\..\3rdparty\quadrature_integration\triangle_fekete_rule.cpp" />
     <ClCompile Include="..\..\3rdparty\tinyxml\tinystr.cpp" />
     <ClCompile Include="..\..\3rdparty\tinyxml\tinyxml.cpp" />
     <ClCompile Include="..\..\3rdparty\tinyxml\tinyxmlerror.cpp" />
@@ -19,6 +21,9 @@
     <ClCompile Include="..\..\src\Task\Task\Task.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\3rdparty\quadrature_integration\legendre_rule.h" />
+    <ClInclude Include="..\..\3rdparty\quadrature_integration\tetrahedron_arbq_rule.hpp" />
+    <ClInclude Include="..\..\3rdparty\quadrature_integration\triangle_fekete_rule.hpp" />
     <ClInclude Include="..\..\3rdparty\tinyxml\tinystr.h" />
     <ClInclude Include="..\..\3rdparty\tinyxml\tinyxml.h" />
     <ClInclude Include="..\..\src\DifferentialSolvers\DifferentialSolver.h" />
@@ -93,6 +98,7 @@
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\FunctionGetters.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\GhostFunctionGetter.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\SourceFunctionGetter.h" />
+    <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\BaseSpace.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\FourierSpace2.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\LagrangeSpace.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\PolynomialPrecomputer.h" />

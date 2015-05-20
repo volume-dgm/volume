@@ -506,8 +506,8 @@ void ElasticSystemCommon<Space2>::BuildContactMatrices(IndexType interactionType
     } break;
     case ContactConditions::Friction:
     {
-      leftContactMatrix  << 0, 0, 0, 0, 0;
-      rightContactMatrix << 1, 1, 1, 1, 1;
+      // friction should be computed as a dynamic contact
+      assert(0);
     } break;
   }
 }
@@ -527,70 +527,19 @@ void ElasticSystemCommon<Space3>::BuildContactMatrices(IndexType interactionType
     } break;
     case ContactConditions::Glide:
     {
+      // TODO
       leftContactMatrix  << 0, 1, 1, -1, -1, -1, 0, 1, 1;
       rightContactMatrix << 1, 0, 0,  0,  0,  0, 1, 0, 0;
     } break;
     case ContactConditions::Friction:
     {
-      leftContactMatrix << 0, 0, 0, 0, 0, 0, 0, 0, 0;
-      rightContactMatrix << 1, 1, 1, 1, 1, 1, 1, 1, 1;
+      // friction should be computed as a dynamic contact
+      assert(0);
     } break;
     default:
       assert(0);
     break;
   }
-}
-
-template <>
-void ElasticSystemCommon<Space2>::CorrectContact(Scalar* values, 
-  Vector contactNormal, IndexType dynamicInteractionType)
-{
-  IndexType contactType = contactDescriptions[dynamicInteractionType].type;
-  contactNormal.Normalize();
-  switch (contactType)
-  {
-    case ContactConditions::Glue:
-    {
-    } break;
-    case ContactConditions::Glide:
-    {
-    } break;
-    case ContactConditions::Friction:
-    {
-      Scalar frictionCoeff;
-      GetFrictionContactInfo(dynamicInteractionType, frictionCoeff);
-      // transform into local coordinate system
-      Scalar sigmaNormal = values[0] * Sqr(contactNormal.x) + 
-                            values[1] * Sqr(contactNormal.y) + 
-                            values[2] * 2 * contactNormal.x * contactNormal.y;
-
-      if (sigmaNormal > 0) // sigma_xx > 0
-      {
-        Scalar sigmaTangent = values[0] * Sqr(contactNormal.y) + 
-                              values[1] * Sqr(contactNormal.x) - 
-                              values[2] * 2 * contactNormal.x * contactNormal.y;
-
-        Scalar tau          = -(values[0] - values[1]) * contactNormal.x * contactNormal.y + 
-                                            values[2]  * (Sqr(contactNormal.x) - Sqr(contactNormal.y));
-
-        tau = Sgn(tau) * std::min(fabs(tau), frictionCoeff * sigmaNormal); // sigma_xy correction
-
-        values[0] = sigmaNormal * Sqr(contactNormal.x) + sigmaTangent * Sqr(contactNormal.y) - tau * 2 * contactNormal.x * contactNormal.y;
-        values[1] = sigmaNormal * Sqr(contactNormal.y) + sigmaTangent * Sqr(contactNormal.x) + tau * 2 * contactNormal.x * contactNormal.y;
-        values[2] = (sigmaNormal - sigmaTangent) * contactNormal.x * contactNormal.y + tau * (Sqr(contactNormal.x) - Sqr(contactNormal.y));
-      }
-    } break;
-    default:
-      assert(0);
-    break;
-  }
-}
-
-template <>
-void ElasticSystemCommon<Space3>::CorrectContact(Scalar* value, 
-  Vector contactNormal, IndexType dynamicInteractionType)
-{
-  // TODO
 }
 
 template<typename Space>
@@ -865,14 +814,26 @@ void ElasticSystemCommon<Space>::MediumParameters::MakeDimensionless(
   }
 }
 
+template <typename Space>
+bool ElasticSystemCommon<Space>::MediumParameters::IsZero() const
+{
+  bool isZero = true;
+  for (IndexType paramIndex = 0; paramIndex < ParamsCount; ++paramIndex)
+  {
+    if (params[paramIndex] > std::numeric_limits<Scalar>::epsilon()) isZero = false;
+  }
+  return isZero;
+}
+
 template<typename Space>
 bool ElasticSystemCommon<Space>::IsProperContact(const ValueTypeCommon& value0, 
                                                  const ValueTypeCommon& value1, const Vector& contactNormal)
 {
   // return true;
   Scalar eps = std::numeric_limits<Scalar>::epsilon();
+
   if (value1.GetForce(-contactNormal) * contactNormal - value0.GetForce(contactNormal) * contactNormal > -eps &&
-    (value0.GetVelocity() - value1.GetVelocity()) * contactNormal > 0) return true;
+    (value0.GetVelocity() - value1.GetVelocity()) * contactNormal > eps) return true;
   return false;
 }
 

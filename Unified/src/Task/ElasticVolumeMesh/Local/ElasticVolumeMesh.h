@@ -297,7 +297,7 @@ void ApplyCorrector(MeshType* const mesh)
     Corrector corrector(mesh, cellIndex);
     Scalar cellValues[mesh->functionsCount * mesh->dimsCount];
     
-    mesh->volumeMesh.functionSpace.template Decompose< Corrector, MeshType::dimsCount >(corrector, cellValues);
+    mesh->volumeMesh.functionSpace->template Decompose< Corrector, MeshType::dimsCount >(corrector, cellValues);
 
     for (IndexType functionIndex = 0; functionIndex < mesh->functionsCount; functionIndex++)
     {

@@ -320,6 +320,24 @@ void TaskSettings<Space>::Parse(TiXmlElement *taskElement)
       acousticPlaneWaveStateElement = acousticPlaneWaveStateElement->NextSiblingElement("AcousticPlaneWave");
     }
 
+    TiXmlElement *constantPlaneWaveStateElement = iniStateElement->FirstChildElement("ConstantPlaneWave");
+    while (constantPlaneWaveStateElement)
+    {
+      IniState state;
+      state.type = IniState::ConstantPlaneWave;
+      state.infoIndex = constantPlaneWaveStateInfos.size();
+
+      ConstantPlaneWaveStateInfo constantPlaneWaveInfo;
+      ParseVector(constantPlaneWaveStateElement, "velocity", &(constantPlaneWaveInfo.velocity));
+      ParseVector(constantPlaneWaveStateElement, "center", &(constantPlaneWaveInfo.center));
+      ParseScalar(constantPlaneWaveStateElement, "waveLength", &(constantPlaneWaveInfo.waveLength));
+      ParseBool(constantPlaneWaveStateElement, "shear", &(constantPlaneWaveInfo.shear));
+
+      constantPlaneWaveStateInfos.push_back(constantPlaneWaveInfo);
+      iniStates.push_back(state);
+      constantPlaneWaveStateElement = constantPlaneWaveStateElement->NextSiblingElement("ConstantPlaneWave");
+    }
+
     TiXmlElement *radialWaveElement = iniStateElement->FirstChildElement("RadialWave");
     while(radialWaveElement)
     {

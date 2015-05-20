@@ -29,7 +29,14 @@ public:
 
   VolumeMeshCommon(int solverPhasesCount, int hierarchyLevelsCount):
     DifferentialSystem<Scalar>(solverPhasesCount, hierarchyLevelsCount), GeomMesh<Space>()
-  {}
+  {
+    functionSpace = new FunctionSpace;
+  }
+
+  virtual ~VolumeMeshCommon()
+  {
+    delete functionSpace;
+  }
 
   struct CellSolution
   {
@@ -75,6 +82,11 @@ public:
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
   typename System::ValueType GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepCellSolution = false) const;
 
+  typename System::ValueType GetRefCellSolution(Scalar* coeffs, Vector refCoords) const;
+  typename System::ValueType GetCellSolution(Scalar* coeffs, Vector globalPoint) const;
+
+  typename System::MediumParameters GetRefCellParams(Scalar* coeffs, Vector refCoords) const;
+
   int  GetDimentionsCount(const SolverState&) const;
   int  GetMaxDimentionsCount() const;
 
@@ -93,7 +105,7 @@ public:
   // associatedPermutation = 0 1 2 -> 1 2 0
   void TransformCellSolution(IndexType cellIndex, IndexType associatedPermutation[Space::NodesPerCell], CellSolution* cellSolution);
 
-  FunctionSpace functionSpace;
+  FunctionSpace* functionSpace;
   System system;
 
   Scalar time;
@@ -258,6 +270,13 @@ private:
   {
     Scalar surfaceIntegral[VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount];
   } edgeAverages[Space::EdgesPerCell];
+
+
+  // for quadtature integration
+  void InitializeQuadrature();
+  std::vector<Scalar> quadratureWeights;
+  std::vector<Scalar> quadraturePoints;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

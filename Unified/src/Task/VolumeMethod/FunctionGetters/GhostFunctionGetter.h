@@ -13,21 +13,20 @@ struct CollisionProcessor
   const static int dimsCount = MeshType::dimsCount;
 
   CollisionProcessor(GhostCellFunctionGetter* functionGetter,
-    const Vector& reflectedPoint, const ValueType& innerSolution, Scalar* values):
-    functionGetter(functionGetter), reflectedPoint(reflectedPoint), innerSolution(innerSolution), values(values), found(false)
+    const Vector& testPoint, Scalar* values):
+    functionGetter(functionGetter), testPoint(testPoint), values(values), found(false)
   {}
   void operator()(int nodeIndex)
   {
     if (!found)
     {
       IndexType neighbourCellIndex = functionGetter->mesh->aabbTree.GetUserData(nodeIndex);
-      if (functionGetter->TryGhostCell(reflectedPoint, innerSolution, neighbourCellIndex, values)) found = true;
+      if (functionGetter->TryGhostCell(testPoint, neighbourCellIndex, values)) found = true;
     }
   }
 
   GhostCellFunctionGetter* functionGetter;
-  Vector reflectedPoint;
-  ValueType innerSolution;
+  Vector testPoint;
   Scalar* values;
   bool found;
 };
@@ -40,94 +39,59 @@ struct GhostCellFunctionGetter
   typedef typename MeshType::SystemT     System;
   typedef MeshType MeshTypeT;
   typedef typename System::ValueType     ValueType;
+  typedef typename System::MediumParameters MediumParameters;
   SPACE_TYPEDEFS
 
   typedef CollisionProcessor< GhostCellFunctionGetter<MeshType> > CollisionProcessorT;
 
   const static int dimsCount = MeshType::dimsCount;
 
-  GhostCellFunctionGetter(
-    MeshType *mesh,
-    IndexType cellIndex,
-    Vector edgePoint, Vector edgeNormal, // face for 3d
-    Scalar *edgeTransformMatrixInv,
-    Scalar *boundaryEdgeMatrix,
-    BoundaryInfoFunctor<Space>* functor,
-    Scalar *leftContactEdgeMatrix,
-    Scalar *rightContactEdgeMatrix,
-    Scalar currTime,
-    IndexType dynamicInteractionType):
-    edgeNormal(edgeNormal)
+  enum GetterType
   {
-    this->mesh = mesh;
-    this->cellIndex = cellIndex;
-    this->edgePoint = edgePoint;
-    this->edgeTransformMatrixInv = edgeTransformMatrixInv;
-    this->boundaryEdgeMatrix = boundaryEdgeMatrix;
-    this->functor = functor;
-    this->leftContactEdgeMatrix = leftContactEdgeMatrix;
-    this->rightContactEdgeMatrix = rightContactEdgeMatrix;
-    this->currTime = currTime;
-    this->dynamicInteractionType = dynamicInteractionType;
+    Solution, MediumParams
+  };
 
-    mesh->GetCellVertices(cellIndex, this->cellVertices);
-    mesh->GetFixedCellIndices(cellIndex, this->cellIndices);
+  GhostCellFunctionGetter(
+    MeshType* mesh,
+    IndexType cellIndex,
+    const Vector& edgeNormal,
+    Vector* ghostCellVertices,
+    Scalar currTime,
+    GetterType getterType):
+      cellIndex(cellIndex),
+      ghostCellVertices(ghostCellVertices),
+      edgeNormal(edgeNormal),
+      mesh(mesh),
+      currTime(currTime),
+      getterType(getterType)
+  {
+    mesh->GetFixedCellIndices(cellIndex, cellIndices);
   }
 
-  void operator()(const Vector& point, Scalar *values)
-  {
-    Vector globalPoint = mesh->RefToGlobalVolumeCoords(point, cellVertices);
-    Vector reflectedPoint = globalPoint - edgeNormal * (edgeNormal * (globalPoint - edgePoint)) * Scalar(2.0);
+  IndexType cellIndex;
+  IndexType cellIndices[Space::NodesPerCell];
+  Vector* ghostCellVertices;
+  Vector edgeNormal;
+  MeshType* mesh;
+  Scalar currTime;
+  GetterType getterType;
 
-    // only points located on corresponding faces make contribution for incoming flux 
-    if ((globalPoint - reflectedPoint).Len() > mesh->collisionWidth * Scalar(1e-3)) 
+  void operator()(const Vector& point, Scalar* values)
+  {
+    switch (getterType)
     {
-      std::fill(values, values + dimsCount, 0);
-      return;
+      case Solution: std::fill(values, values + dimsCount, 0); break;
+      case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
     }
 
-    reflectedPoint += edgeNormal * mesh->collisionWidth;
-    ValueType innerSolution = mesh->GetCellSolution(cellIndex, globalPoint);
-
-    CollisionProcessorT collisionProcessor(this, reflectedPoint, innerSolution, values);
-
-    mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(reflectedPoint, reflectedPoint), collisionProcessor);
+    Vector globalPoint = mesh->RefToGlobalVolumeCoords(point, ghostCellVertices) + edgeNormal * mesh->collisionWidth;    
+    CollisionProcessorT collisionProcessor(this, globalPoint, values);
+    mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(globalPoint, globalPoint), collisionProcessor);
 
     if (collisionProcessor.found) return;
-
-    // point is outside of all cells. counting as a ghost point
-    MatrixMulVector(boundaryEdgeMatrix, innerSolution.values, values, dimsCount, dimsCount);
-
-    if (functor)
-    {
-      ValueType externalInfo;
-      functor->operator()(globalPoint, edgeNormal, /*innerSolution,*/ currTime, externalInfo.values);
-      Scalar externalValues[dimsCount];
-      MatrixMulVector(edgeTransformMatrixInv, externalInfo.values, externalValues, dimsCount, dimsCount);
-
-      for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
-      {
-        values[valueIndex] += externalValues[valueIndex];
-      }
-    }
   }
 
-  Vector cellVertices[Space::NodesPerCell];
-  IndexType cellIndices[Space::NodesPerCell];
-  IndexType cellIndex;
-
-  MeshType *mesh;
-  Vector edgePoint;
-  const Vector edgeNormal;
-  Scalar *edgeTransformMatrixInv;
-  Scalar *boundaryEdgeMatrix;
-  BoundaryInfoFunctor<Space>* functor;
-  Scalar *leftContactEdgeMatrix;
-  Scalar *rightContactEdgeMatrix;
-  Scalar currTime;
-  IndexType dynamicInteractionType;
-
-  bool TryGhostCell(const Vector& reflectedPoint, const ValueType& innerSolution, int neighbourCellIndex,
+  bool TryGhostCell(const Vector& testPoint, int neighbourCellIndex,
     Scalar* values)
   {
     IndexType neighbourCellIndices[Space::NodesPerCell];
@@ -147,19 +111,24 @@ struct GhostCellFunctionGetter
     mesh->GetCellVertices(neighbourCellIndex, neighbourCellVertices);
 
     //point is inside a colliding cell, counting it as a contact
-    if (PointInCell<Scalar>(neighbourCellVertices, reflectedPoint))
+    if (PointInCell<Scalar>(neighbourCellVertices, testPoint))
     {
-      ValueType neighbourSolution = mesh->GetCellSolution(neighbourCellIndex, reflectedPoint);
-      if (!mesh->system.IsProperContact(innerSolution, neighbourSolution, edgeNormal)) return false;
-      Scalar innerContactValues[dimsCount];
-      Scalar outerContactValues[dimsCount];
-      MatrixMulVector(rightContactEdgeMatrix, neighbourSolution.values, outerContactValues, dimsCount, dimsCount);
-      MatrixMulVector(leftContactEdgeMatrix, (Scalar*)innerSolution.values, innerContactValues, dimsCount, dimsCount);
-      for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+      ValueType neighbourSolution = mesh->GetCellSolution(neighbourCellIndex, testPoint);
+      switch (getterType)
       {
-        values[valueIndex] = innerContactValues[valueIndex] + outerContactValues[valueIndex];
+        case Solution:
+          for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+          {
+            values[valueIndex] = neighbourSolution.values[valueIndex];
+          }
+        break;
+        case MediumParams:
+          for (IndexType paramIndex = 0; paramIndex < MediumParameters::ParamsCount; ++paramIndex)
+          {
+            values[paramIndex] = mesh->cellMediumParameters[neighbourCellIndex].params[paramIndex];
+          }
+        break;
       }
-      mesh->system.CorrectContact(values, edgeNormal, dynamicInteractionType);
       return true;
     }
     return false;
