@@ -151,7 +151,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
 
     Eigen::Matrix<Scalar, dimsCount, functionsCount> boundaryInfoValues;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> ghostValues;
-    Eigen::Matrix<Scalar, MediumParameters::ParamsCount, functionsCount> ghostParams;
+    // Eigen::Matrix<Scalar, MediumParameters::ParamsCount, functionsCount> ghostParams;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> sourceValues;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> sourcePointValues;
 

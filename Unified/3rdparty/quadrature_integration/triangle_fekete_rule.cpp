@@ -2025,13 +2025,13 @@ void triangle_points_plot ( char *file_name, double node_xy[], int node_show,
 {
   int circle_size;
   int delta;
-  int e;
+//  int e;
   ofstream file_unit;
   int i;
   int node;
   int node_num = 3;
   int point;
-  char string[40];
+//  char string[40];
   double x_max;
   double x_min;
   int x_ps;

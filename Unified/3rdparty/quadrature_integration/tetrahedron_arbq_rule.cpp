@@ -285,11 +285,11 @@ double *ortho3eva ( int degree, double xyz[] )
   double p2;
   double scale;
   double *uvw;
-  double x;
+//  double x;
   double x1;
-  double y;
+//  double y;
   double y1;
-  double z;
+//  double z;
 //
 //  Convert coordinates from reference to Koornwinder tetrahedron.
 //
@@ -3624,9 +3624,9 @@ void tetrahedron_arbq_gnuplot ( int n, double x[], string header )
 {
   string command_filename;
   ofstream command_unit;
-  int i;
+//  int i;
   int j;
-  int l;
+//  int l;
   string node_filename;
   ofstream node_unit;
   string plot_filename;
