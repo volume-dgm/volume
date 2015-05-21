@@ -3088,13 +3088,44 @@ void GeomMesh<Space3>::BuildAdditionalTopology(
   BuildBoundariesInfo(boundaryFaces, boundaryFacesCount, boundaryTypesCount);
 }
 
+void GeomMesh<Space3>::GetCellFaceVertices(IndexType cellIndex, IndexType faceNumber, Vector* faceVertices) const
+{
+  IndexType faceNodeIndices[Space::NodesPerFace];
+  GetCellFaceNodes(cellIndex, faceNumber, faceNodeIndices);
+  for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerFace; nodeNumber++)
+  {
+    faceVertices[nodeNumber] = nodes[faceNodeIndices[nodeNumber]].pos;
+  }
+}
+
+Space3::Vector GeomMesh<Space3>::GetFaceExternalNormal(Vector* faceGlobalVertices) const
+{
+  Vector externalNormal = (faceGlobalVertices[1] - faceGlobalVertices[0]) ^ (faceGlobalVertices[2] - faceGlobalVertices[0]);
+  return externalNormal.GetNorm();
+}
+
 Space3::Vector GeomMesh<Space3>::GetFaceExternalNormal(IndexType cellIndex, IndexType faceNumber) const
 {
-  // TODO
-  return Vector::zero();
+  Vector faceGlobalVertices[Space::NodesPerFace];
+  GetCellFaceVertices(cellIndex, faceNumber, faceGlobalVertices);
+  return GetFaceExternalNormal(faceGlobalVertices);
 }
 
 void GeomMesh<Space3>::GetGhostCellVertices(IndexType cellIndex, IndexType boundaryFaceNumber, Vector* ghostCellVertices) const
 {
-  // TODO
+  Vector points[Space::NodesPerCell];
+  GetCellVertices(cellIndex, points);
+
+  for (IndexType vertexNumber = 0; vertexNumber < Space::NodesPerCell; ++vertexNumber)
+  {
+    ghostCellVertices[vertexNumber] = points[vertexNumber];
+  }
+
+  IndexType mirroringNodeNumber = 3 - boundaryFaceNumber;
+  Vector faceNormal = GetFaceExternalNormal(cellIndex, boundaryFaceNumber);
+
+  ghostCellVertices[mirroringNodeNumber] = points[mirroringNodeNumber] -
+    faceNormal * (faceNormal * (points[mirroringNodeNumber] - points[boundaryFaceNumber])) * Scalar(2.0);
+
+  std::swap(ghostCellVertices[0], ghostCellVertices[1]);
 }

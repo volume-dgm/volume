@@ -91,7 +91,6 @@ inline int VolumeMeshCommon<Space, FunctionSpace, System>::
   return dimsCount * functionsCount * cells.size();
 }
 
-
 template <typename Space, typename FunctionSpace, typename System>
 void VolumeMeshCommon<Space, FunctionSpace, System>::GetCurrCoords(Scalar& time, Scalar* currCoords) const
 {

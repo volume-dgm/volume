@@ -377,18 +377,22 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>: public PolynomialPrecompu
 
   PolynomialPrecomputer(): PolynomialPrecomputerCommon<Space3, PolynomialSpace>()
   {
-    const int Degree = 4;
-    int order_num = ::tetrahedron_arbq_size(Degree);
+    // from http://people.sc.fsu.edu/~jburkardt/c_src/tetrahedron_arbq_rule/tetrahedron_arbq_rule.html
+
+    int order_num = ::tetrahedron_arbq_size(order + 1);
 
     Scalar* xyz = new Scalar[3 * order_num];
     Scalar* w = new Scalar[order_num];
 
-    ::tetrahedron_arbq(Degree, order_num, xyz, w);
+    ::tetrahedron_arbq(order + 1, order_num, xyz, w);
 
     for (int i = 0; i < order_num; ++i)
     {
-      weights.push_back(w[i]);
-      points.push_back(Vector(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2]));
+      weights.push_back(w[i] / (4 * sqrt(2.0)));
+      Scalar* uvw = ::ref_to_koorn(xyz + 3 * i);
+      points.push_back(Vector(uvw[0] + 1, uvw[1] + 1, uvw[2] + 1) * Scalar(0.5));
+
+      free(uvw);
     }
 
     delete[] w;

@@ -131,6 +131,7 @@ public:
 
   void GetCellFaceNodes(const IndexType* cellIncidentNodes, IndexType faceNumber, IndexType* faceNodes) const;
   void GetCellFaceNodes(IndexType cellIndex, IndexType faceNumber, IndexType* faceNodes) const;
+  void GetCellFaceVertices(IndexType cellIndex, IndexType faceNumber, Vector* faceVertices) const;
 
   void BuildBoundariesInfo(BoundaryFace* boundaryFaces, IndexType* boundaryFacesCount, IndexType boundaryTypesCount);
   IndexType GetLocalFaceNumber(IndexType cellIndex, IndexType* faceIndices);
@@ -143,6 +144,8 @@ public:
   IndexType GetFaceNumber(IndexType cellIndex, IndexType faceNodeIndices[Space::NodesPerFace]) const;
 
   Vector GetFaceExternalNormal(IndexType cellIndex, IndexType faceNumber) const;
+  Vector GetFaceExternalNormal(Vector* faceGlobalVertices) const;
+
   void GetGhostCellVertices(IndexType cellIndex, IndexType boundaryFaceNumber, Vector* ghostCellVertices) const;
 
 private:

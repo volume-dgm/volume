@@ -74,7 +74,7 @@ int ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDimentionsCount(const Solv
 
   if(allowMovement && solverState.IsLastStep())
   {
-    return volumeMesh.GetDimentionsCount(solverState) + volumeMesh.nodes.size() * 2;
+    return volumeMesh.GetDimentionsCount(solverState) + volumeMesh.nodes.size() * Space::Dimension;
   } else
   {
     return volumeMesh.GetDimentionsCount(solverState);
@@ -86,7 +86,7 @@ int ElasticVolumeMeshCommon<Space, FunctionSpace>::GetMaxDimentionsCount() const
 {
   if(allowMovement)
   {
-    return volumeMesh.GetMaxDimentionsCount() + volumeMesh.nodes.size() * 2;
+    return volumeMesh.GetMaxDimentionsCount() + volumeMesh.nodes.size() * Space::Dimension;
   } else
   {
     return volumeMesh.GetMaxDimentionsCount(); 

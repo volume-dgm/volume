@@ -43,7 +43,7 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
     IndexType boundaryType, IndexType dynamicContactType);
 
   ValueType GetGlueRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution,
-    const MediumParameters& interiorParams, MediumParameters& exteriorParams);
+    const MediumParameters& interiorParams, const MediumParameters& exteriorParams);
 
   void BuildEdgeTransformMatrix(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix);
   void BuildEdgeTransformMatrixInv(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv);
@@ -79,6 +79,13 @@ struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
     typedef          ValueType            Elastic;
     typedef          MediumParameters     MediumParametersType;
   };
+
+  ValueType GetRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution,
+    const MediumParameters& interiorParams, MediumParameters& exteriorParams,
+    IndexType boundaryType, IndexType dynamicContactType);
+
+  ValueType GetGlueRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution,
+    const MediumParameters& interiorParams, const MediumParameters& exteriorParams);
 
   void BuildFaceTransformMatrix(Vector faceVertices[3], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix);
   void BuildFaceTransformMatrixInv(Vector faceVertices[3], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv);

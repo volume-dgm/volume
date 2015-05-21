@@ -147,6 +147,7 @@ protected:
   virtual bool IsCellRegular(IndexType cellIndex) const = 0;
 
   bool debugMode;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -271,9 +272,8 @@ private:
     Scalar surfaceIntegral[VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount];
   } edgeAverages[Space::EdgesPerCell];
 
-
   // for quadtature integration
-  void InitializeQuadrature();
+  void InitializeQuadrature(); 
   std::vector<Scalar> quadratureWeights;
   std::vector<Scalar> quadraturePoints;
 
@@ -395,6 +395,12 @@ private:
     };
     SrcFaceFlux srcFaces[Space::FacesPerCell];
   } incomingFlux;
+
+  // for quadtature integration
+  void InitializeQuadrature();
+  std::vector<Scalar> quadratureWeights;
+  std::vector<Vector2> quadraturePoints;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

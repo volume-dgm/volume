@@ -1,6 +1,6 @@
 ElasticSystem<Space2>::ValueType ElasticSystem<Space2>::GetGlueRiemannSolution(
   const ValueType& interiorSolution, ValueType& exteriorSolution,
-  const MediumParameters& interiorParams, MediumParameters& exteriorParams)
+  const MediumParameters& interiorParams, const MediumParameters& exteriorParams)
 {
   ValueType riemannSolution;
 
@@ -24,6 +24,44 @@ ElasticSystem<Space2>::ValueType ElasticSystem<Space2>::GetGlueRiemannSolution(
   riemannSolution.SetVelocity(interiorSolution.GetVelocity() -
     Vector(k0 * interiorParams.GetPSpeed(), k2 * (interiorSolution.GetXY() - riemannSolution.GetXY()))
     );
+  return riemannSolution;
+}
+
+ElasticSystem<Space3>::ValueType ElasticSystem<Space3>::GetGlueRiemannSolution(
+  const ValueType& interiorSolution, ValueType& exteriorSolution,
+  const MediumParameters& interiorParams, const MediumParameters& exteriorParams)
+{
+  ValueType riemannSolution;
+
+  Scalar k0 = ((interiorSolution.GetVelocity().x - exteriorSolution.GetVelocity().x) * exteriorParams.GetZp() + interiorSolution.GetXX() - exteriorSolution.GetXX()) /
+    ((interiorParams.GetZp() + exteriorParams.GetZp()) * interiorParams.GetPSpeed());
+
+  Scalar k1 = 0;
+  if (interiorParams.mju > std::numeric_limits<Scalar>::epsilon())
+    k1 = ((interiorSolution.GetVelocity().y - exteriorSolution.GetVelocity().y) * exteriorParams.GetZs() + interiorSolution.GetXY() - exteriorSolution.GetXY()) /
+    ((interiorParams.GetZs() + exteriorParams.GetZs()) * interiorParams.GetSSpeed());
+
+  Scalar k2 = 0;
+  if (interiorParams.mju > std::numeric_limits<Scalar>::epsilon())
+    k2 = ((interiorSolution.GetVelocity().z - exteriorSolution.GetVelocity().z) * exteriorParams.GetZs() + interiorSolution.GetXZ() - exteriorSolution.GetXZ()) /
+    ((interiorParams.GetZs() + exteriorParams.GetZs()) * interiorParams.GetSSpeed());
+
+  riemannSolution.SetTension(Tensor(
+    interiorSolution.GetXX() - k0 * (interiorParams.lambda + 2 * interiorParams.mju),
+    interiorSolution.GetXY() - k1 * interiorParams.mju,
+    interiorSolution.GetXZ() - k2 * interiorParams.mju,
+    0, 0, 0));
+
+  Scalar k3 = 0;
+  if (interiorParams.mju > std::numeric_limits<Scalar>::epsilon())
+    k3 = 1 / interiorParams.GetZs();
+
+  riemannSolution.SetVelocity(interiorSolution.GetVelocity() -
+    Vector(k0 * interiorParams.GetPSpeed(), 
+           k3 * (interiorSolution.GetXY() - riemannSolution.GetXY()), 
+           k3 * (interiorSolution.GetXZ() - riemannSolution.GetXZ()))
+    );
+
   return riemannSolution;
 }
 
@@ -58,9 +96,7 @@ ElasticSystem<Space2>::ValueType ElasticSystem<Space2>::
     {
       exteriorSolution.values[valueIndex] = interiorSolution.values[valueIndex] * boundaryMatrix(valueIndex);
     }
-    std::copy(interiorParams.params, interiorParams.params + MediumParameters::ParamsCount, exteriorParams.params);
-
-    riemannSolution = GetGlueRiemannSolution(interiorSolution, exteriorSolution, interiorParams, exteriorParams);
+    riemannSolution = GetGlueRiemannSolution(interiorSolution, exteriorSolution, interiorParams, interiorParams);
   } else
   {
     IndexType contactType = contactDescriptions[dynamicContactType].type;
@@ -78,8 +114,8 @@ ElasticSystem<Space2>::ValueType ElasticSystem<Space2>::
       {
         Scalar frictionCoeff;
         GetFrictionContactInfo(dynamicContactType, frictionCoeff);
-        Scalar sign = Sgn(riemannSolution.values[2]);
-        riemannSolution.values[2] = sign * std::min(fabs(riemannSolution.values[2]), -frictionCoeff * riemannSolution.GetXX());
+        Scalar sign = Sgn(riemannSolution.GetXY());
+        riemannSolution.values[2] = sign * std::min(fabs(riemannSolution.GetXY()), -frictionCoeff * riemannSolution.GetXX());
       } break;
       default:
         assert(0);
@@ -92,6 +128,85 @@ ElasticSystem<Space2>::ValueType ElasticSystem<Space2>::
 
     // y-velocity correction due to sigma-xy has been changed
     riemannSolution.values[4] = interiorSolution.GetVelocity().y - k2 * (interiorSolution.GetXY() - riemannSolution.GetXY());
+  }
+
+  return riemannSolution;
+}
+
+ElasticSystem<Space3>::ValueType ElasticSystem<Space3>::
+  GetRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution,
+                     const MediumParameters& interiorParams, MediumParameters& exteriorParams,
+                     IndexType boundaryType, IndexType dynamicContactType)
+{
+  ValueType riemannSolution;
+
+  enum
+  {
+    Contact, Boundary
+  } interactionType;
+
+  if (exteriorParams.IsZero())
+  {
+    interactionType = Boundary;
+  } else
+  {
+    // probably contact
+    interactionType = Contact;
+    riemannSolution = GetGlueRiemannSolution(interiorSolution, exteriorSolution, interiorParams, exteriorParams);
+  }
+
+  if (interactionType == Boundary || riemannSolution.GetXX() > 0 ||
+    riemannSolution.GetVelocity().x > interiorSolution.GetVelocity().x)
+  {
+    interactionType = Boundary;
+
+    Eigen::Matrix<Scalar, 1, dimsCount> boundaryMatrix;
+    BuildBoundaryMatrix(boundaryType, boundaryMatrix);
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
+    {
+      exteriorSolution.values[valueIndex] = interiorSolution.values[valueIndex] * boundaryMatrix(valueIndex);
+    }
+
+    riemannSolution = GetGlueRiemannSolution(interiorSolution, exteriorSolution, interiorParams, interiorParams);
+  } else
+  {
+    IndexType contactType = contactDescriptions[dynamicContactType].type;
+    switch (contactType)
+    {
+    case ContactConditions::Glue:
+    {
+      // do nothing
+    } break;
+    case ContactConditions::Glide:
+    {
+      riemannSolution.values[3] =    // xy
+      riemannSolution.values[5] = 0; // xz
+    } break;
+    case ContactConditions::Friction:
+    {
+      Scalar frictionCoeff;
+      GetFrictionContactInfo(dynamicContactType, frictionCoeff);
+
+      Scalar shearStress = sqrt(Sqr(riemannSolution.GetXY()) + Sqr(riemannSolution.GetXZ()));
+      if (shearStress > -frictionCoeff * riemannSolution.GetXX())
+      {
+        Scalar mult = -frictionCoeff * riemannSolution.GetXX() / shearStress;
+        riemannSolution.values[3] *= mult; // xy
+        riemannSolution.values[5] *= mult; // xz
+      }
+    } break;
+    default:
+      assert(0);
+      break;
+    }
+
+    Scalar k3 = 0;
+    if (interiorParams.mju > std::numeric_limits<Scalar>::epsilon())
+      k3 = 1 / interiorParams.GetZs();
+
+    // y,z-velocities correction due to sigma-xy,xz has been changed
+    riemannSolution.values[7] = interiorSolution.GetVelocity().y - k3 * (interiorSolution.GetXY() - riemannSolution.GetXY());
+    riemannSolution.values[8] = interiorSolution.GetVelocity().z - k3 * (interiorSolution.GetXZ() - riemannSolution.GetXZ());
   }
 
   return riemannSolution;

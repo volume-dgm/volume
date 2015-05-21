@@ -245,10 +245,10 @@ Space2::Vector GeomMesh<Space2>::GetCellEdgeMiddle(const IndexType cellIndex, In
 
 void GeomMesh<Space2>::GetGhostCellVertices(IndexType cellIndex, IndexType boundaryEdgeNumber, Vector* ghostCellVertices) const
 {
-  Vector points[3];
+  Vector points[Space::NodesPerCell];
   GetCellVertices(cellIndex, points);
 
-  for (IndexType vertexIndex = 0; vertexIndex < 3; ++vertexIndex)
+  for (IndexType vertexIndex = 0; vertexIndex < Space::NodesPerCell; ++vertexIndex)
   {
     ghostCellVertices[vertexIndex] = points[vertexIndex];
   }
