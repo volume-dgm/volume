@@ -1364,9 +1364,8 @@ typename Task<Space, order>::IndexType Task<Space, order>::GetCurrentNodeDomains
 template<typename Space, unsigned int order>
 void Task<Space, order>::SetThreadsCount()
 {
-  // TODO
-  //  omp_set_num_threads(1);
-  //  return;
+  // omp_set_num_threads(1);
+  // return;
 
   int size, rank;
   int nthreads, tid;
