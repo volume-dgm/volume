@@ -1,4 +1,4 @@
-#include "../../../../3rdparty/quadrature_integration/legendre_rule.h"
+#include "../../../Maths/QuadraturePrecomputer.h"
 
 template<typename FunctionSpace, typename System>
 void VolumeMesh<Space2, FunctionSpace, System>::
@@ -28,21 +28,8 @@ void VolumeMesh<Space2, FunctionSpace, System>::
     std::copy(mediumParameters, mediumParameters + cellsCount, cellMediumParameters.begin());
   }
 
-  InitializeQuadrature();
+  QuadraturePrecomputer::BuildQuadrature<Space::BorderSpace>(FunctionSpace::order, quadratureWeights, quadraturePoints);
   printf("Loading done \n");
-}
-
-template<typename FunctionSpace, typename System>
-void VolumeMesh<Space2, FunctionSpace, System>::InitializeQuadrature()
-{
-  // TODO make separate class for 1/2/3 dimensions to compute weights/point
-
-  quadratureWeights.resize(FunctionSpace::order + 1);
-  quadraturePoints.resize(FunctionSpace::order + 1);
-  const int    kind = 1; // gauss
-  const Scalar alpha = 0;
-  const Scalar beta = 0;
-  cgqf(FunctionSpace::order + 1, kind, alpha, beta, 0, 1, quadraturePoints.data(), quadratureWeights.data());
 }
 
 template<typename FunctionSpace, typename System>

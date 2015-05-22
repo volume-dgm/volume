@@ -148,6 +148,10 @@ protected:
 
   bool debugMode;
 
+  // for quadtature integration
+  std::vector<Scalar> quadratureWeights;
+  std::vector<typename BorderSpace::Vector> quadraturePoints;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -213,6 +217,8 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::halfStepCellSolutions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::allowDynamicCollisions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::time;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeights;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePoints;
 
 public:
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
@@ -271,11 +277,6 @@ private:
   {
     Scalar surfaceIntegral[VolumeMeshCommon<Space2, FunctionSpace, System>::functionsCount];
   } edgeAverages[Space::EdgesPerCell];
-
-  // for quadtature integration
-  void InitializeQuadrature(); 
-  std::vector<Scalar> quadratureWeights;
-  std::vector<Scalar> quadraturePoints;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -337,7 +338,8 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::halfStepCellSolutions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::allowDynamicCollisions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::time;
-
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeights;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePoints;
 
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
     VolumeMeshCommon<Space3, FunctionSpace, System>(solverPhasesCount, hierarchyLevelsCount)
@@ -395,11 +397,6 @@ private:
     };
     SrcFaceFlux srcFaces[Space::FacesPerCell];
   } incomingFlux;
-
-  // for quadtature integration
-  void InitializeQuadrature();
-  std::vector<Scalar> quadratureWeights;
-  std::vector<Vector2> quadraturePoints;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

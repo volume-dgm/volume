@@ -8,6 +8,15 @@ struct SpaceBase
   typedef size_t             IndexType;
 };
 
+struct Space1: public SpaceBase
+{
+  typedef SpaceBase::Scalar             Scalar;
+  typedef SpaceBase::IndexType          IndexType;
+
+  const   static IndexType              Dimension = 1;
+  typedef Scalar                        Vector;
+};
+
 struct Space2: public SpaceBase
 {
   typedef SpaceBase::Scalar             Scalar;
@@ -28,6 +37,7 @@ struct Space2: public SpaceBase
   typedef AABB2<IndexType>              IndexAABB;
   typedef AABB2<int>                    IntAABB;
   typedef Tensor2<Scalar>               Tensor;
+  typedef Space1                        BorderSpace;
 
   typedef Scalar                        Angle;
   typedef Scalar                        DiagTensor;
@@ -55,6 +65,7 @@ struct Space3: public SpaceBase
   typedef Tensor3<Scalar>               Tensor;
   typedef Vector3<Scalar>               Angle;
   typedef Vector3<Scalar>               DiagTensor;
+  typedef Space2                        BorderSpace;
 };
 
 template<typename Space>
@@ -73,7 +84,8 @@ struct Overload{};
   typedef typename Space::IndexAABB     IndexAABB; \
   typedef typename Space::IntAABB       IntAABB; \
   typedef typename Space::Vector2T      Vector2; \
-  typedef typename Space::Vector3T      Vector3;
+  typedef typename Space::Vector3T      Vector3; \
+  typedef typename Space::BorderSpace   BorderSpace;
 
 #define SPACE2_TYPEDEFS \
   typedef Space2::Vector        Vector; \
@@ -88,7 +100,8 @@ struct Overload{};
   typedef Space2::IndexAABB     IndexAABB; \
   typedef Space2::IntAABB       IntAABB; \
   typedef Space2::Vector2T      Vector2; \
-  typedef Space2::Vector3T      Vector3;
+  typedef Space2::Vector3T      Vector3; \
+  typedef Space2::BorderSpace   BorderSpace;
 
 #define SPACE3_TYPEDEFS \
   typedef Space3::Vector        Vector; \
@@ -103,4 +116,5 @@ struct Overload{};
   typedef Space3::IndexAABB     IndexAABB; \
   typedef Space3::IntAABB       IntAABB; \
   typedef Space3::Vector2T      Vector2; \
-  typedef Space3::Vector3T      Vector3;
+  typedef Space3::Vector3T      Vector3; \
+  typedef Space3::BorderSpace   BorderSpace;

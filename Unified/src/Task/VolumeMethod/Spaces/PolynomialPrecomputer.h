@@ -2,9 +2,7 @@
 
 #include "../Cell.h"
 #include "../../../Maths/Spaces.h"
-
-#include "../../../../3rdparty/quadrature_integration/triangle_fekete_rule.hpp"
-#include "../../../../3rdparty/quadrature_integration/tetrahedron_arbq_rule.hpp"
+#include "../../../Maths/QuadraturePrecomputer.h"
 #include <assert.h>
 
 template<typename Space, typename PolynomialSpace>
@@ -89,41 +87,7 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public PolynomialPrecompu
 
   PolynomialPrecomputer()
   {
-    // this constant sets number of gauss-legendre-lobatto points, i.e. accuracy of integration
-    // http://people.sc.fsu.edu/~jburkardt/cpp_src/triangle_fekete_rule/triangle_fekete_rule.html/
-
-    const int Precisions[] = {3, 6, 9, 12, 12, 15, 18};
-    int rule = 1;
-
-    while (rule <= 7 && order > Precisions[rule - 1])
-      ++rule;
-
-    /* Rule Precision 
-       1    3
-       2    6
-       3    9
-       4-5  12
-       6    15
-       7    18 */
-
-    int rule_num = ::fekete_rule_num();
-    assert(rule < rule_num);
-
-    int order_num = ::fekete_order_num(rule);
-
-    Scalar* xy = new Scalar[2 * order_num];
-    Scalar* w = new Scalar[order_num];
-
-    ::fekete_rule(rule, order_num, xy, w);
-
-    for (int i = 0; i < order_num; ++i)
-    {
-      weights.push_back(w[i] * Scalar(0.5) /* area of unit triangle */);
-      points.push_back(Vector(xy[2 * i], xy[2 * i + 1]));
-    }
-
-    delete[] w;
-    delete[] xy;
+    QuadraturePrecomputer::BuildQuadrature<Space2>(order, weights, points);
     ComputeVolumeIntegrals();
   }
 
@@ -377,26 +341,7 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>: public PolynomialPrecompu
 
   PolynomialPrecomputer(): PolynomialPrecomputerCommon<Space3, PolynomialSpace>()
   {
-    // from http://people.sc.fsu.edu/~jburkardt/c_src/tetrahedron_arbq_rule/tetrahedron_arbq_rule.html
-
-    int order_num = ::tetrahedron_arbq_size(order + 1);
-
-    Scalar* xyz = new Scalar[3 * order_num];
-    Scalar* w = new Scalar[order_num];
-
-    ::tetrahedron_arbq(order + 1, order_num, xyz, w);
-
-    for (int i = 0; i < order_num; ++i)
-    {
-      weights.push_back(w[i] / (4 * sqrt(2.0)));
-      Scalar* uvw = ::ref_to_koorn(xyz + 3 * i);
-      points.push_back(Vector(uvw[0] + 1, uvw[1] + 1, uvw[2] + 1) * Scalar(0.5));
-
-      free(uvw);
-    }
-
-    delete[] w;
-    delete[] xyz;
+    QuadraturePrecomputer::BuildQuadrature<Space3>(order, weights, points);
     ComputeVolumeIntegrals();
   }
 

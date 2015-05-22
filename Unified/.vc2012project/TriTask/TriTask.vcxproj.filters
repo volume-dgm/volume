@@ -380,6 +380,9 @@
     <ClInclude Include="..\..\3rdparty\quadrature_integration\legendre_rule.h">
       <Filter>3rdparty\QuadratureIntegration</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Maths\QuadraturePrecomputer.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Vtk\ContactVtkWriter2.inl">

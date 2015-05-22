@@ -48,6 +48,7 @@
     <ClInclude Include="..\..\src\Maths\MatrixMaths.h" />
     <ClInclude Include="..\..\src\Maths\NonlinearSolvers.h" />
     <ClInclude Include="..\..\src\Maths\Polynomial.h" />
+    <ClInclude Include="..\..\src\Maths\QuadraturePrecomputer.h" />
     <ClInclude Include="..\..\src\Maths\Random.h" />
     <ClInclude Include="..\..\src\Maths\Spaces.h" />
     <ClInclude Include="..\..\src\Maths\Tensor2.h" />

@@ -1,3 +1,5 @@
+#include "../../../Maths/QuadraturePrecomputer.h"
+
 template<typename FunctionSpace, typename System>
 void VolumeMesh<Space3, FunctionSpace, System>::
   LoadGeom(Vector* vertexPositions, IndexType* cellIndices, IndexType verticesCount, IndexType cellsCount,
@@ -25,38 +27,8 @@ void VolumeMesh<Space3, FunctionSpace, System>::
     std::copy(mediumParameters, mediumParameters + cellsCount, cellMediumParameters.begin());
   }
 
-  InitializeQuadrature();
+  QuadraturePrecomputer::BuildQuadrature<Space::BorderSpace>(FunctionSpace::order, quadratureWeights, quadraturePoints);
   printf("Loading done \n");
-}
-
-template<typename FunctionSpace, typename System>
-void VolumeMesh<Space3, FunctionSpace, System>::InitializeQuadrature()
-{
-  // see PolynomialPrecomputer.h for comments
-  const int Precisions[] = { 3, 6, 9, 12, 12, 15, 18 };
-  int rule = 1;
-
-  while (rule <= 7 && FunctionSpace::order > Precisions[rule - 1])
-    ++rule;
-
-  int rule_num = ::fekete_rule_num();
-  assert(rule < rule_num);
-
-  int order_num = ::fekete_order_num(rule);
-
-  Scalar* xy = new Scalar[2 * order_num];
-  Scalar* w = new Scalar[order_num];
-
-  ::fekete_rule(rule, order_num, xy, w);
-
-  for (int i = 0; i < order_num; ++i)
-  {
-    quadratureWeights.push_back(w[i] * Scalar(0.5));
-    quadraturePoints.push_back(Vector2(xy[2 * i], xy[2 * i + 1]));
-  }
-
-  delete[] w;
-  delete[] xy;
 }
 
 template<typename FunctionSpace, typename System>
