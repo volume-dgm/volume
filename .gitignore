@@ -363,7 +363,7 @@ Thumbs.db
 *.vti
 log.txt
 detectorsLocations.txt
-profiling[*].txt
+profiling*.txt
 *.pvd
 *.mesh
 *.params

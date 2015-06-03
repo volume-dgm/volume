@@ -1,93 +1,23 @@
 #pragma once
 
 #include "../Cell.h"
-#include "../../../Maths/Spaces.h"
-#include "../../../Maths/QuadraturePrecomputer.h"
-#include <assert.h>
-
-template<typename Space, typename PolynomialSpace>
-struct PolynomialPrecomputerCommon
-{
-  SPACE_TYPEDEFS
-
-  const static IndexType functionsCount = PolynomialSpace::functionsCount;
-  const static IndexType order = PolynomialSpace::order;
-  PolynomialSpace space;
-
-  virtual Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) = 0;
-
-  template<typename Function, int ValuesCount>
-  void Decompose(Function& func, Scalar* coords)
-  {
-    Scalar correlations[functionsCount * ValuesCount]; // correlations == inner products
-    std::fill_n(correlations, ValuesCount * functionsCount, 0);
-
-    for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
-    {
-      Scalar values[ValuesCount];
-      func(points[pointIndex], values);
-
-      for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
-      {
-        Scalar basisFunctionValue = space.GetBasisFunctionValue(points[pointIndex], functionIndex);
-        for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
-        {
-          correlations[valueIndex * functionsCount + functionIndex] += basisFunctionValue * values[valueIndex] * weights[pointIndex];
-        }
-      }
-    }
-
-    std::fill_n(coords, ValuesCount * functionsCount, 0);
-    for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
-      for (IndexType i = 0; i < functionsCount; i++)
-        for (IndexType j = 0; j < functionsCount; j++)
-          coords[valueIndex * functionsCount + i] +=
-            correlations[valueIndex * functionsCount + j] * cellVolumeIntegralsInv[j * functionsCount + i];
-  }
-
-  Scalar GetBasisFunctionValue(Vector point, IndexType functionIndex) const
-  {
-    return space.GetBasisFunctionValue(point, functionIndex);
-  }
-
-protected:
-  // for quadrature integration
-  std::vector<Scalar> weights;
-  std::vector<Vector> points;
-
-  Scalar cellVolumeIntegrals[functionsCount * functionsCount];
-  Scalar cellVolumeIntegralsInv[functionsCount * functionsCount];
-
-  void ComputeVolumeIntegrals()
-  {
-    for (IndexType functionIndex0 = 0; functionIndex0 < functionsCount; functionIndex0++)
-    {
-      for (IndexType functionIndex1 = 0; functionIndex1 < functionsCount; functionIndex1++)
-      {
-        cellVolumeIntegrals[functionIndex0 * functionsCount + functionIndex1] =
-          ComputeCellVolumeIntegral(functionIndex1, functionIndex0);
-      }
-    }
-    MatrixInverse<Scalar, IndexType>(cellVolumeIntegrals, cellVolumeIntegralsInv, functionsCount);
-  }
-};
+#include "Decomposer.h" 
 
 template<typename Space, typename PolynomialSpace>
 struct PolynomialPrecomputer;
 
 template<typename PolynomialSpace>
-struct PolynomialPrecomputer<Space2, PolynomialSpace>: public PolynomialPrecomputerCommon<Space2, PolynomialSpace>
+struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2, PolynomialSpace>
 {
   SPACE2_TYPEDEFS
   typedef Space2 Space;
 
-  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::functionsCount;
-  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::order;
-  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::space;
+  using Decomposer<Space, PolynomialSpace>::functionsCount;
+  using Decomposer<Space, PolynomialSpace>::order;
+  using Decomposer<Space, PolynomialSpace>::space;
 
   PolynomialPrecomputer()
   {
-    QuadraturePrecomputer::BuildQuadrature<Space2>(order, weights, points);
     ComputeVolumeIntegrals();
   }
 
@@ -330,18 +260,17 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public PolynomialPrecompu
 };
 
 template<typename PolynomialSpace>
-struct PolynomialPrecomputer<Space3, PolynomialSpace>: public PolynomialPrecomputerCommon<Space3, PolynomialSpace>
+struct PolynomialPrecomputer<Space3, PolynomialSpace>: public Decomposer<Space3, PolynomialSpace>
 {
   SPACE3_TYPEDEFS
   typedef Space3 Space;
 
-  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::functionsCount;
-  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::order;
-  using PolynomialPrecomputerCommon<Space, PolynomialSpace>::space;
+  using Decomposer<Space, PolynomialSpace>::functionsCount;
+  using Decomposer<Space, PolynomialSpace>::order;
+  using Decomposer<Space, PolynomialSpace>::space;
 
   PolynomialPrecomputer(): PolynomialPrecomputerCommon<Space3, PolynomialSpace>()
   {
-    QuadraturePrecomputer::BuildQuadrature<Space3>(order, weights, points);
     ComputeVolumeIntegrals();
   }
 

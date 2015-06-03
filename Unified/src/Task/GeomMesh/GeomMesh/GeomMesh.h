@@ -50,6 +50,8 @@ struct GeomMesh<Space2>: public GeomMeshCommon<Space2>
   bool IsBoundaryCell(IndexType cellIndex) const;
   bool IsBoundaryNode(IndexType nodeIndex) const;
 
+  void FindNodeGroup(IndexType nodeIndex, IndexType* groupNodeIndices, IndexType& groupNodesCount);
+
 private:
   void BuildCellAdditionalTopology(IndexType *internalContactTypes);
   void BuildContactsInfo(EdgePairIndices* contactEdges, IndexType* contactEdgesCount, IndexType contactTypesCount);

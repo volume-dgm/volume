@@ -14,10 +14,12 @@
 #include "../../Network/NetworkInterface.h"
 #include "../../Utils/Utils.h"
 
+#include "../VolumeMethod/Spaces/Decomposer.h"
 #include "../VolumeMethod/Spaces/PolynomialPrecomputer.h"
 #include "../VolumeMethod/Spaces/PolynomialSpace.h"
 #include "../VolumeMethod/Spaces/FourierSpace2.h"
 #include "../VolumeMethod/Spaces/LagrangeSpace.h"
+#include "../VolumeMethod/Spaces/DubinerSpace.h"
 
 #include "../ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh.h"
 
@@ -50,6 +52,7 @@ public:
 
   typedef PolynomialPrecomputer<Space, LagrangeSpace<Space, order> > FunctionSpace;
   // typedef PolynomialPrecomputer<Space, PolynomialSpace<Space, order> > FunctionSpace;
+  // typedef DummyPrecomputer<Space, DubinerSpace<Space, order> > FunctionSpace;
 
   Task();
   virtual ~Task();

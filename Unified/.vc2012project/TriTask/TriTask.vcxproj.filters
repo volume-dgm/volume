@@ -383,6 +383,12 @@
     <ClInclude Include="..\..\src\Maths\QuadraturePrecomputer.h">
       <Filter>Maths</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\DubinerSpace.h">
+      <Filter>VolumeMethod\Spaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\Decomposer.h">
+      <Filter>VolumeMethod\Spaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Vtk\ContactVtkWriter2.inl">

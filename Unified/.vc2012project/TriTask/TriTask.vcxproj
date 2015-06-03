@@ -100,9 +100,11 @@
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\GhostFunctionGetter.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\SourceFunctionGetter.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\BaseSpace.h" />
+    <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\DubinerSpace.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\FourierSpace2.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\LagrangeSpace.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\PolynomialPrecomputer.h" />
+    <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\Decomposer.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\PolynomialSpace.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\Cell.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\VolumeMesh\VolumeMesh.h" />
