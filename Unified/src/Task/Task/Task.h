@@ -1116,6 +1116,14 @@ void Task<Space, order>::BuildPointSources()
           settings.solver.tensionDimensionlessMult, settings.solver.velocityDimensionlessMult);
         pointSources.push_back(source);
       } break;
+      case TaskSettings<Space>::PointSource::Monopole:
+      {
+        typename TaskSettings<Space>::MonopoleSourceInfo info = settings.task.monopoleSourceInfos[infoIndex];
+        PointSource<Space>* source = new MonopoleSource< ElasticSystem<Space> >(info.point,
+          info.pressure, info.peakFrequency, info.latency,
+          settings.solver.tensionDimensionlessMult, settings.solver.velocityDimensionlessMult);
+        pointSources.push_back(source);
+      } break;
     } break;
   }
 

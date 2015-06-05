@@ -7,16 +7,22 @@ class PointSource
 public:
   SPACE_TYPEDEFS
 
-  PointSource(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult):
+  PointSource(Vector point, Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult):
+    point(point),
     tensionDimensionlessMult(tensionDimensionlessMult),
     velocityDimensionlessMult(velocityDimensionlessMult)
   {}
 
   virtual ~PointSource() {}
-  virtual Vector GetPoint() const = 0;
+  virtual Vector GetPoint() const
+  {
+    return point;
+  }
+
   virtual void operator()(Scalar time, Scalar* values) const = 0;
 
 protected:
+  Vector point;
   Scalar tensionDimensionlessMult;
   Scalar velocityDimensionlessMult;
 };
@@ -28,19 +34,15 @@ public:
   typedef typename ElasticSystem::Space Space;
   SPACE_TYPEDEFS
   const static IndexType dimsCount = ElasticSystem::dimsCount;
+  using PointSource<typename ElasticSystem::Space>::point;
 
   RiekerPointSource(const Vector& point,
     Scalar peakFrequency, Vector acceleration, Scalar latency,
     Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult): 
-    PointSource<Space>(tensionDimensionlessMult, velocityDimensionlessMult), 
-    point(point), peakFrequency(peakFrequency), acceleration(acceleration), latency(latency)
+    PointSource<Space>(point, tensionDimensionlessMult, velocityDimensionlessMult), 
+    peakFrequency(peakFrequency), acceleration(acceleration), latency(latency)
   {
-    latency = std::max(latency, sqrt(1.5) / (pi * peakFrequency) * 3);
-  }
-
-  Vector GetPoint() const
-  {
-    return point;
+    this->latency = std::max(latency, sqrt(1.5) / (pi * peakFrequency) * 3);
   }
 
   void operator()(Scalar time, Scalar* values) const
@@ -66,8 +68,53 @@ private:
     values[8] = mult * acceleration.z;
   }
 
-  Vector point; 
   Scalar peakFrequency;
   Vector acceleration;
   Scalar latency; 
 };
+
+template <typename ElasticSystem>
+struct MonopoleSource: public PointSource<typename ElasticSystem::Space>
+{
+  typedef typename ElasticSystem::Space Space;
+  SPACE_TYPEDEFS
+
+  const static IndexType dimsCount = ElasticSystem::dimsCount;
+
+  using PointSource<Space>::tensionDimensionlessMult;
+  using PointSource<Space>::velocityDimensionlessMult;
+  using PointSource<Space>::point;
+
+  MonopoleSource(const Vector& point, Scalar pressure, Scalar peakFrequency, Scalar latency, 
+    Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult):
+    PointSource<Space>(point, tensionDimensionlessMult, velocityDimensionlessMult),
+    pressure(pressure),
+    peakFrequency(peakFrequency),
+    latency(latency)
+  {
+    this->latency = std::max(latency, sqrt(1.5) / (pi * peakFrequency) * 3);
+  }
+
+  virtual ~MonopoleSource() {}
+
+  virtual void operator()(Scalar time, Scalar* values) const
+  {
+    std::fill_n(values, dimsCount, Scalar(0.0));
+
+    Scalar arg = Sqr(pi * peakFrequency * (time - latency));
+    Scalar mult = (1 - 2 * arg) * exp(-arg);
+    Scalar p = pressure * mult;
+
+    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+    {
+      values[dimIndex] = -p / Space::Dimension; // sigma_ii
+    }
+  }
+
+protected:
+  Scalar pressure;
+  Scalar peakFrequency;
+  Scalar latency;
+};
+
+

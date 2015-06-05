@@ -222,11 +222,27 @@ struct TaskSettings
   };
   std::vector<RiekerPointSourceInfo> riekerPointSourceInfos;
 
+  struct MonopoleSourceInfo
+  {
+    MonopoleSourceInfo():
+      point(Vector::zeroVector()),
+      peakFrequency(Scalar(1.0)),
+      pressure(Scalar(1.0)),
+      latency(Scalar(0.0))
+    {}
+    Vector point;
+    Scalar peakFrequency;
+    Scalar pressure;
+    Scalar latency;
+  };
+  std::vector<MonopoleSourceInfo> monopoleSourceInfos;
+
   struct PointSource
   {
     enum PointSourcesTypes
     {
       Rieker,
+      Monopole,
       Undefined
     };
     PointSourcesTypes type;
@@ -455,6 +471,25 @@ void TaskSettings<Space>::Parse(TiXmlElement *taskElement)
       pointSources.push_back(source);
 
       riekerPointSourceElement = riekerPointSourceElement->NextSiblingElement("RiekerSource");
+    }
+
+    TiXmlElement* monopoleSourceElement = pointSourcesElement->FirstChildElement("MonopoleSource");
+    while (monopoleSourceElement)
+    {
+      PointSource source;
+      source.type = PointSource::Monopole;
+      source.infoIndex = monopoleSourceInfos.size();
+
+      MonopoleSourceInfo info;
+      ParseVector(monopoleSourceElement, "point", &(info.point));
+      ParseScalar(monopoleSourceElement, "pressure", &(info.pressure));
+      ParseScalar(monopoleSourceElement, "peakFrequency", &(info.peakFrequency));
+      ParseScalar(monopoleSourceElement, "latency", &(info.latency));
+      monopoleSourceInfos.push_back(info);
+
+      pointSources.push_back(source);
+
+      monopoleSourceElement = monopoleSourceElement->NextSiblingElement("MonopoleSource");
     }
   }
 }

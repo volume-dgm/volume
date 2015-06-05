@@ -38,5 +38,5 @@ private:
   typename System::SourceFunctorT* functor;
   Scalar time;
   const VolumeMesh* const volumeMesh;
-  Vector cellVertices[3];
+  Vector cellVertices[Space::NodesPerCell];
 };
