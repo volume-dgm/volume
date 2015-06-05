@@ -207,9 +207,9 @@ struct TaskSettings
   std::vector<SourceTerm> sourceTerms;
 
   // point sources
-  struct RiekerPointSourceInfo
+  struct ForcePointSourceInfo
   {
-    RiekerPointSourceInfo():
+    ForcePointSourceInfo():
       point(Vector::zeroVector()),
       peakFrequency(Scalar(1.0)), 
       acceleration(Vector::xAxis()),
@@ -220,7 +220,7 @@ struct TaskSettings
     Vector acceleration;
     Scalar latency;
   };
-  std::vector<RiekerPointSourceInfo> riekerPointSourceInfos;
+  std::vector<ForcePointSourceInfo> forcePointSourceInfos;
 
   struct MonopoleSourceInfo
   {
@@ -241,7 +241,7 @@ struct TaskSettings
   {
     enum PointSourcesTypes
     {
-      Rieker,
+      Force,
       Monopole,
       Undefined
     };
@@ -454,23 +454,23 @@ void TaskSettings<Space>::Parse(TiXmlElement *taskElement)
 
   if (pointSourcesElement)
   {
-    TiXmlElement* riekerPointSourceElement = pointSourcesElement->FirstChildElement("RiekerSource");
-    while (riekerPointSourceElement)
+    TiXmlElement* forcePointSourceElement = pointSourcesElement->FirstChildElement("ForceSource");
+    while (forcePointSourceElement)
     {
       PointSource source;
-      source.type = PointSource::Rieker;
-      source.infoIndex = riekerPointSourceInfos.size();
+      source.type = PointSource::Force;
+      source.infoIndex = forcePointSourceInfos.size();
 
-      RiekerPointSourceInfo info;
-      ParseVector(riekerPointSourceElement, "point",         &(info.point));
-      ParseVector(riekerPointSourceElement, "acceleration",  &(info.acceleration));
-      ParseScalar(riekerPointSourceElement, "peakFrequency", &(info.peakFrequency));
-      ParseScalar(riekerPointSourceElement, "latency",       &(info.latency));
-      riekerPointSourceInfos.push_back(info);
+      ForcePointSourceInfo info;
+      ParseVector(forcePointSourceElement, "point",         &(info.point));
+      ParseVector(forcePointSourceElement, "acceleration",  &(info.acceleration));
+      ParseScalar(forcePointSourceElement, "peakFrequency", &(info.peakFrequency));
+      ParseScalar(forcePointSourceElement, "latency",       &(info.latency));
+      forcePointSourceInfos.push_back(info);
 
       pointSources.push_back(source);
 
-      riekerPointSourceElement = riekerPointSourceElement->NextSiblingElement("RiekerSource");
+      forcePointSourceElement = forcePointSourceElement->NextSiblingElement("ForceSource");
     }
 
     TiXmlElement* monopoleSourceElement = pointSourcesElement->FirstChildElement("MonopoleSource");

@@ -1108,10 +1108,10 @@ void Task<Space, order>::BuildPointSources()
     IndexType infoIndex = settings.task.pointSources[sourceIndex].infoIndex;
     switch (settings.task.pointSources[sourceIndex].type)
     {
-      case TaskSettings<Space>::PointSource::Rieker:
+      case TaskSettings<Space>::PointSource::Force:
       {
-        typename TaskSettings<Space>::RiekerPointSourceInfo info = settings.task.riekerPointSourceInfos[infoIndex];
-        PointSource<Space>* source = new RiekerPointSource< ElasticSystem<Space> >(info.point,
+        typename TaskSettings<Space>::ForcePointSourceInfo info = settings.task.forcePointSourceInfos[infoIndex];
+        PointSource<Space>* source = new ForcePointSource< ElasticSystem<Space> >(info.point,
           info.peakFrequency, info.acceleration, info.latency,
           settings.solver.tensionDimensionlessMult, settings.solver.velocityDimensionlessMult);
         pointSources.push_back(source);

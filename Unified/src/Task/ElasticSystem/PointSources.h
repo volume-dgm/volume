@@ -28,7 +28,7 @@ protected:
 };
 
 template <typename ElasticSystem>
-class RiekerPointSource: public PointSource<typename ElasticSystem::Space>
+class ForcePointSource: public PointSource<typename ElasticSystem::Space>
 {
 public:
   typedef typename ElasticSystem::Space Space;
@@ -36,7 +36,7 @@ public:
   const static IndexType dimsCount = ElasticSystem::dimsCount;
   using PointSource<typename ElasticSystem::Space>::point;
 
-  RiekerPointSource(const Vector& point,
+  ForcePointSource(const Vector& point,
     Scalar peakFrequency, Vector acceleration, Scalar latency,
     Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult): 
     PointSource<Space>(point, tensionDimensionlessMult, velocityDimensionlessMult), 
@@ -73,6 +73,7 @@ private:
   Scalar latency; 
 };
 
+// spherical point explosion
 template <typename ElasticSystem>
 struct MonopoleSource: public PointSource<typename ElasticSystem::Space>
 {
