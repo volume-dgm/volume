@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../Maths/Spaces.h"
+#include "../../../Maths/MatrixMaths.h"
 #include "../../../Maths/QuadraturePrecomputer.h"
 #include <assert.h>
 
@@ -87,7 +88,7 @@ struct DummyPrecomputer: public Decomposer<Space, PolynomialSpace>
 
   DummyPrecomputer()
   {
-    ComputeVolumeIntegrals();
+    Decomposer<Space, PolynomialSpace>::ComputeVolumeIntegrals();
   }
 
   inline Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // <Ô1, Ô2>

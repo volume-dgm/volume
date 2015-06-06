@@ -105,6 +105,7 @@ add_executable(${BinaryFileName}
   ${NetworkSrc}
   ${MathsSrc}
   ${TinyXmlSrc}
+  ${QuadratureIntegrationSrc}
   ${DifferentialSolversSrc}
   ${VtkSrc}
   ${ElasticSystemSrc}

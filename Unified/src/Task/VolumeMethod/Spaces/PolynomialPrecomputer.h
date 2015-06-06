@@ -18,7 +18,7 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2,
 
   PolynomialPrecomputer()
   {
-    ComputeVolumeIntegrals();
+    Decomposer<Space, PolynomialSpace>::ComputeVolumeIntegrals();
   }
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)
@@ -269,9 +269,9 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>: public Decomposer<Space3,
   using Decomposer<Space, PolynomialSpace>::order;
   using Decomposer<Space, PolynomialSpace>::space;
 
-  PolynomialPrecomputer(): PolynomialPrecomputerCommon<Space3, PolynomialSpace>()
+  PolynomialPrecomputer(): Decomposer<Space3, PolynomialSpace>()
   {
-    ComputeVolumeIntegrals();
+    Decomposer<Space, PolynomialSpace>::ComputeVolumeIntegrals();
   }
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 template <typename Space>
 MeshIO<Space>::MeshIO(): 
   contactTypesCount(0),
@@ -238,10 +240,18 @@ void MeshIO<Space>::Load(std::fstream& file, IO::FileType fileType)
 template <typename Space>
 void MeshIO<Space>::SaveDetectors(const std::string& vtkFileName)
 {
+  Scalar minY = vertices[0].y;
+  Scalar maxY = vertices[0].y;
+  for (IndexType vertexIndex = 0; vertexIndex < vertices.size(); ++vertexIndex)
+  {
+    minY = std::min(minY, vertices[vertexIndex].y);
+    maxY = std::max(maxY, vertices[vertexIndex].y);
+  }
+
   std::vector<Vector> vertices;
   std::vector<IndexType> indices;
 
-  const Scalar Height = 10;
+  const Scalar Height = (maxY - minY) / 50;
 
   for (IndexType detectorIndex = 0; detectorIndex < detectorsPositions.size(); ++detectorIndex)
   {

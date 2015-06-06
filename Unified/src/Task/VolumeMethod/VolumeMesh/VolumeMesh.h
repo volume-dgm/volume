@@ -83,12 +83,13 @@ public:
   using GeomMesh<Space>::GetMassCenter;
   using GeomMesh<Space>::GetCellVertices;
   using GeomMesh<Space>::GetFixedCellIndices;
+  using GeomMesh<Space>::GetGhostCellVertices;
 
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
   typename System::ValueType GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepCellSolution = false) const;
 
   typename System::ValueType GetRefCellSolution(Scalar* coeffs, Vector refCoords) const;
-  typename System::ValueType GetCellSolution(Scalar* coeffs, Vector globalPoint) const;
+  typename System::ValueType GetCellSolution(IndexType cellIndex, Scalar* coeffs, Vector globalPoint) const;
 
   typename System::MediumParameters GetRefCellParams(Scalar* coeffs, Vector refCoords) const;
 
@@ -190,10 +191,12 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMassCenter;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellVertices;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetFixedCellIndices;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetRefCellSolution;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetCellEdgeNodes;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetEdgeExternalNormal;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetCellEdgeMiddle;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetGhostCellVertices;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetHierarchyLevelsCount;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMaxHierarchyLevel;
@@ -212,6 +215,8 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::cellVolumeIntegralsInv;
   using VolumeMeshCommon<Space, FunctionSpace, System>::xDerivativeVolumeIntegrals;
   using VolumeMeshCommon<Space, FunctionSpace, System>::yDerivativeVolumeIntegrals;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::xDerivativeVolumeIntegralsSparse;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::yDerivativeVolumeIntegralsSparse;
   using VolumeMeshCommon<Space, FunctionSpace, System>::cellVolumeAverageIntegrals;
   using VolumeMeshCommon<Space, FunctionSpace, System>::Initialize;
 
@@ -311,10 +316,13 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMassCenter;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellVertices;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetFixedCellIndices;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetRefCellSolution;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetFaceExternalNormal;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetCellFaceNodes;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetFaceSquare;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetGhostCellVertices;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetCellFaceVertices;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::nodes;
   using VolumeMeshCommon<Space, FunctionSpace, System>::cells;
@@ -329,6 +337,8 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::cellVolumeIntegralsInv;
   using VolumeMeshCommon<Space, FunctionSpace, System>::xDerivativeVolumeIntegrals;
   using VolumeMeshCommon<Space, FunctionSpace, System>::yDerivativeVolumeIntegrals;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::xDerivativeVolumeIntegralsSparse;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::yDerivativeVolumeIntegralsSparse;
   using VolumeMeshCommon<Space, FunctionSpace, System>::cellVolumeAverageIntegrals;
   using VolumeMeshCommon<Space, FunctionSpace, System>::Initialize;
 

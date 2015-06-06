@@ -270,10 +270,10 @@ void VolumeMesh<Space3, FunctionSpace, System>::
 
               Scalar tmp[dimsCount];
               MatrixMulVector(faceTransformMatrixInv.data(), interiorSolution.values, tmp, dimsCount, dimsCount);
-              std::copy_n(tmp, dimsCount, interiorSolution.values);
+              std::copy(tmp, tmp + dimsCount, interiorSolution.values);
 
               MatrixMulVector(faceTransformMatrixInv.data(), exteriorSolution.values, tmp, dimsCount, dimsCount);
-              std::copy_n(tmp, dimsCount, exteriorSolution.values);
+              std::copy(tmp, tmp + dimsCount, exteriorSolution.values);
 
               typename System::ValueType riemannSolution =
                 system.GetRiemannSolution(interiorSolution, exteriorSolution,

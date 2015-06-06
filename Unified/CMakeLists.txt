@@ -166,6 +166,11 @@ set(MetisIncludeSrc
   ${CMAKE_SOURCE_DIR}/3rdparty/metis/include/metis.h
 )
 
+set(QuadratureIntegrationSrc
+  ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/tetrahedron_arbq_rule.cpp
+  ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/triangle_fekete_rule.cpp
+)
+
 set(MetisLibSrc
   ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/
   ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/auxapi.c
@@ -229,6 +234,11 @@ add_definitions(-DNDEBUG)
 add_definitions(-DNDEBUG2)
 add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
 add_definitions(-DEIGEN_DONT_PARALLELIZE)
+
+add_definitions(-DEIGEN_NO_DEBUG)
+add_definitions(-DEIGEN_NO_AUTOMATIC_RESIZING)
+add_definitions(-DEIGEN_FAST_MATH)
+add_definitions(-DEIGEN_NO_MALLOC)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/Task)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder)

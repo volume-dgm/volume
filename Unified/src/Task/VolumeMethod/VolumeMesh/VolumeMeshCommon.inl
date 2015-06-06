@@ -69,7 +69,7 @@ typename System::MediumParameters VolumeMeshCommon<Space, FunctionSpace, System>
 
 template <typename Space, typename FunctionSpace, typename System>
 typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
-  GetCellSolution(Scalar* coeffs, Vector globalPoint) const
+  GetCellSolution(IndexType cellIndex, Scalar* coeffs, Vector globalPoint) const
 {
   Vector points[Space::NodesPerCell];
   GetCellVertices(cellIndex, points);
