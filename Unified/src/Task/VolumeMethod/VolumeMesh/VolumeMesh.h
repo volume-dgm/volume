@@ -11,6 +11,9 @@
 #include <omp.h>
 
 #include "Eigen/Dense"
+#include "Eigen/SparseCore"
+
+// #define USE_SPARSE_MATRIX_FOR_DERIVATIVES
 
 template <typename Space, typename FunctionSpace, typename System>
 class VolumeMeshCommon: public DifferentialSystem<typename Space::Scalar>, public GeomMesh<Space>
@@ -28,7 +31,9 @@ public:
   typedef typename AdditionalCellInfo<Space>:: template AuxInfo<Scalar> ScalarTypeCellInfo;
 
   VolumeMeshCommon(int solverPhasesCount, int hierarchyLevelsCount):
-    DifferentialSystem<Scalar>(solverPhasesCount, hierarchyLevelsCount), GeomMesh<Space>()
+    DifferentialSystem<Scalar>(solverPhasesCount, hierarchyLevelsCount), GeomMesh<Space>(),
+    xDerivativeVolumeIntegralsSparse(functionsCount, functionsCount),
+    yDerivativeVolumeIntegralsSparse(functionsCount, functionsCount)
   {
     functionSpace = new FunctionSpace;
   }
@@ -127,8 +132,12 @@ protected:
 
   Eigen::Matrix<Scalar, functionsCount, functionsCount> cellVolumeIntegrals;
   Eigen::Matrix<Scalar, functionsCount, functionsCount> cellVolumeIntegralsInv;
+
   Eigen::Matrix<Scalar, functionsCount, functionsCount> xDerivativeVolumeIntegrals;
   Eigen::Matrix<Scalar, functionsCount, functionsCount> yDerivativeVolumeIntegrals;
+
+  Eigen::SparseMatrix<Scalar> xDerivativeVolumeIntegralsSparse;
+  Eigen::SparseMatrix<Scalar> yDerivativeVolumeIntegralsSparse;
 
   Scalar cellVolumeAverageIntegrals[functionsCount]; // for computing average values
 

@@ -66,6 +66,25 @@ void VolumeMesh<Space2, FunctionSpace, System>::BuildMatrices()
   xDerivativeVolumeIntegrals *= cellVolumeIntegralsInv;
   yDerivativeVolumeIntegrals *= cellVolumeIntegralsInv;
 
+  #ifdef USE_SPARSE_MATRIX_FOR_DERIVATIVES
+    xDerivativeVolumeIntegralsSparse.reserve(Eigen::VectorXi::Constant(functionsCount, functionsCount));
+    yDerivativeVolumeIntegralsSparse.reserve(Eigen::VectorXi::Constant(functionsCount, functionsCount));
+
+    for (int functionIndex0 = 0; functionIndex0 < functionsCount; functionIndex0++)
+    {
+      for (int functionIndex1 = 0; functionIndex1 < functionsCount; functionIndex1++)
+      {
+        if (fabs(xDerivativeVolumeIntegrals(functionIndex0, functionIndex1)) > std::numeric_limits<Scalar>::epsilon())
+          xDerivativeVolumeIntegralsSparse.insert(functionIndex0, functionIndex1) = xDerivativeVolumeIntegrals(functionIndex0, functionIndex1);
+        if (fabs(yDerivativeVolumeIntegrals(functionIndex0, functionIndex1)) > std::numeric_limits<Scalar>::epsilon())
+          yDerivativeVolumeIntegralsSparse.insert(functionIndex0, functionIndex1) = yDerivativeVolumeIntegrals(functionIndex0, functionIndex1);
+      }
+    }
+
+    xDerivativeVolumeIntegralsSparse.makeCompressed();
+    yDerivativeVolumeIntegralsSparse.makeCompressed();
+  #endif
+
   for(IndexType srcEdgeNumber = 0; srcEdgeNumber < 3; srcEdgeNumber++)
   {
     outgoingFlux.srcEdges[srcEdgeNumber].surfaceIntegral *= cellVolumeIntegralsInv;
@@ -349,9 +368,15 @@ void VolumeMesh<Space2, FunctionSpace, System>::
       xMixedMatrix.noalias() = xMatrix * refXDerivatives.x + yMatrix * refXDerivatives.y;
       yMixedMatrix.noalias() = xMatrix * refYDerivatives.x + yMatrix * refYDerivatives.y;
 
-      timeDerivatives.noalias() -= 
-        xMixedMatrix * currCellValues * xDerivativeVolumeIntegrals + 
-        yMixedMatrix * currCellValues * yDerivativeVolumeIntegrals;
+      #ifdef USE_SPARSE_MATRIX_FOR_DERIVATIVES
+        timeDerivatives.noalias() -=
+          xMixedMatrix * currCellValues * xDerivativeVolumeIntegralsSparse +
+          yMixedMatrix * currCellValues * yDerivativeVolumeIntegralsSparse;
+      #else
+        timeDerivatives.noalias() -= 
+          xMixedMatrix * currCellValues * xDerivativeVolumeIntegrals + 
+          yMixedMatrix * currCellValues * yDerivativeVolumeIntegrals;
+      #endif
 
       typename SystemT::SourceFunctorT* sourceFunctor = system.GetSourceFunctor();
       if (sourceFunctor)
