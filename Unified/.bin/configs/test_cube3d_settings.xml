@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Settings dimsCount = "3">
+   <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_test_cube" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "temp_meshes/test_cube[<domain>].mesh" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+ 
   <Mesh fileName="meshes/test_cube[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.001">
     <MediumParams>
     <PerSubmesh fileName = "meshes/test_cube[<domain>].params">

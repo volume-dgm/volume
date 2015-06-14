@@ -789,6 +789,7 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
       boxPoint1 / settings.solver.velocityDimensionlessMult, 
       boxPoint2 / settings.solver.velocityDimensionlessMult, halfStepSolution);
 
+
     IndexType domainIndex = nodesSchedule[GetNodeId()].domainsIndices[domainNumber];
 
     char stepString[256];
@@ -862,10 +863,10 @@ void Task<Space, order>::LoadMeshes()
     printf("Loading geom: node %d; domain %d\n", (int)GetNodeId(), (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber]);
 
     meshes[domainNumber] = new DistributedMeshIO<Space>(GetDomainsCount());
-    std::string meshName = settings.mesh.meshFileName;
     char domainString[256];
     sprintf(domainString, "%.3d", (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber]);
 
+    std::string meshName = settings.mesh.meshFileName + ".mesh";
     ReplaceSubstring(meshName, "<domain>", domainString);
     meshes[domainNumber]->Load(meshName);
 
@@ -883,6 +884,12 @@ void Task<Space, order>::LoadMeshes()
           settings.mesh.mediumParamsSection.perSubmeshInfos[paramsDesc.infoIndex];
 
         std::string paramsFileName = perSubmeshInfo.fileName;
+
+        if(paramsFileName == "")
+        {
+          paramsFileName = settings.mesh.meshFileName + ".params";
+        }
+
         ReplaceSubstring(paramsFileName, "<domain>", domainString);
 
         FILE* paramsFile = fopen(paramsFileName.c_str(), "rb");
@@ -929,6 +936,11 @@ void Task<Space, order>::LoadMeshes()
           settings.mesh.mediumParamsSection.perCellInfos[paramsDesc.infoIndex];
 
         std::string paramsFileName = perCellInfo.fileName;
+        
+        if(paramsFileName == "")
+        {
+          paramsFileName = settings.mesh.meshFileName + ".params";
+        }
         ReplaceSubstring(paramsFileName, "<domain>", domainString);
 
         FILE *paramsFile = fopen(paramsFileName.c_str(), "rb");

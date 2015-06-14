@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Settings dimsCount = "2">
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_methane_bomb" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <!-- <OutFile fileName= "temp_meshes/methane_bomb[<domain>].mesh" /> -->
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+  
   <Mesh fileName="meshes/methane_bomb[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01">
     <MediumParams>
       <PerSubmesh fileName = "meshes/methane_bomb[<domain>].params">

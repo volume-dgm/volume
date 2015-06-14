@@ -42,7 +42,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)..\.bin\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\.bin\</OutDir>
     <IntDir>$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
     <IncludePath>$(SolutionDir)..\3rdparty\eigen;$(SolutionDir)..\3rdparty\zlib\include;$(IncludePath)</IncludePath>
     <ReferencePath>$(ReferencePath)</ReferencePath>
@@ -51,7 +51,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)..\.bin\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\.bin\</OutDir>
     <IntDir>$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
     <LibraryPath>$(SolutionDir)..\3rdparty\zlib\lib;$(LibraryPath)</LibraryPath>
     <IncludePath>$(SolutionDir)..\3rdparty\eigen;$(SolutionDir)..\3rdparty\zlib\include;$(IncludePath)</IncludePath>

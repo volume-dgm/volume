@@ -103,13 +103,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)..\.bin\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\.lib\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
     <IncludePath>$(SolutionDir)../3rdparty/metis/libmetis/.;$(SolutionDir)../3rdparty/metis/GKlib/.;$(SolutionDir)../3rdparty/metis/include/.;$(IncludePath)</IncludePath>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)..\.bin\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\.lib\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)Debug</TargetName>
     <TargetExt>.lib</TargetExt>
@@ -117,7 +117,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;MSC;_CRT_SECURE_NO_DEPRECATE;USE_GKREGEX;NDEBUG;NDEBUG2;__thread=__declspec(thread);_MBCS;__OPENMP__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
@@ -129,7 +129,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>

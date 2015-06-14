@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Settings dimsCount = "3">
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_2bars_strike_3d" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "temp_meshes/2bars_strike_3d[<domain>].mesh" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+
   <Mesh fileName="meshes/2bars_strike_3d[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.09"> 
     <MediumParams>
       <!-- <Uniform pSpeed = "5700" sSpeed = "3100" rho = "7800" />  -->

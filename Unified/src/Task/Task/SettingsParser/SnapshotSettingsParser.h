@@ -18,7 +18,7 @@ struct SnapshotSettings
       filename("snapshot<step>"),
       used(true),
       writeVelocity(true),
-      writeTension(true),
+      writeTension(false),
       writeWaves(false)
     {
       Initialize();

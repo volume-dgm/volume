@@ -7,7 +7,7 @@ set(ElasticSystemSrc
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/ElasticSystem.h
 )
 
-set(BINDIR ${CMAKE_SOURCE_DIR}/.bin/ResultCombiner)
+set(BINDIR ${CMAKE_SOURCE_DIR}/.bin)
 
 MAKE_DIRECTORY(${BINDIR})
 

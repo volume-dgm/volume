@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Settings>
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_rect_cracks" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "temp_meshes/rect_cracks[<domain>].mesh" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+  
   <Mesh fileName="meshes/rect_cracks[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.001">
     <MediumParams>
       <PerSubmesh fileName = "meshes/rect_cracks[<domain>].params">

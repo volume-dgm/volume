@@ -88,7 +88,7 @@ std::string BasicSettings::ParseSettingsFileName(const char* fileName)
     std::cerr << "You should choose settings file to compute\n";
     throw;
   }
-  return GetPath(fileName) + settingsFileName;
+  return settingsFileName;
 }
 
 void BasicSettings::Parse(const char* fileName)

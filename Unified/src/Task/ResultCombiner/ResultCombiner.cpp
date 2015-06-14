@@ -35,7 +35,7 @@ public:
 
   void Run()
   {
-    settings.Parse("../Task/task.xml");
+    settings.Parse("task.xml");
 
     assert(settings.configDimsCount == Space::Dimension);
 
@@ -233,7 +233,7 @@ private:
 int main()
 {
   BasicSettings basicSettings; //Space2 settings reader should read Space3 settings file just fine. probably.
-  basicSettings.Parse("../Task/task.xml");
+  basicSettings.Parse("task.xml");
 
   #ifdef SPACE_FROM_SETTINGS
   {
