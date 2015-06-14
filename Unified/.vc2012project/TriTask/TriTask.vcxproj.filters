@@ -389,6 +389,12 @@
     <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\Decomposer.h">
       <Filter>VolumeMethod\Spaces</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Task\Task\SettingsParser\MeshBuilderSettingsParser.h">
+      <Filter>Task\SettingsParser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Task\Task\SettingsParser\ResultCombinerSettingsParser.h">
+      <Filter>Task\SettingsParser</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Vtk\ContactVtkWriter2.inl">

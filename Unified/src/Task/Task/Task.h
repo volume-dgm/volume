@@ -373,6 +373,8 @@ void Task<Space, order>::Run()
   printf("Node %d network initialized\n", (int)network->getID());
   network->setReceiveListener(this);
   settings.Parse("task.xml");
+
+  assert(settings.configDimsCount == Space::Dimension);
   LoadNodesSchedule();
 
   char profilingFileName[100];

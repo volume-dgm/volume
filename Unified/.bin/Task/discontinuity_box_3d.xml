@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "3">
+  <MeshBuilder>
+    <SalomeFile fileName= "Salome/Salome_3dDoubleBox" /> <!-- Path is relative to bin/MeshBuilder -->
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+
+  <Mesh fileName="../MeshBuilder/meshes/3d_double_box[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01">
+    <MediumParams>
+    <PerSubmesh fileName = "../MeshBuilder/meshes/3d_double_box[<domain>].params">
+      <Submesh index="0" pSpeed = "2.0" sSpeed = "1.0" rho = "1.0" internalContactType = "0"/> 
+    </PerSubmesh>  
+      <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> -->
+    </MediumParams>
+
+    <Boundaries>
+      <Free interactionType= "0" /> <!-- x-faces -->
+      <Free interactionType= "1" /> <!-- y-faces -->
+      <Free interactionType= "2" /> <!-- z-faces -->
+    </Boundaries>
+
+    <Contacts>
+      <!-- <Glue interactionType= "0" dynamicBoundaryInteractionType= "1" maxShearStress="1.75e-2" maxLongitudinalStress="1e+30"/> -->
+      <Glue interactionType= "0" /> <!-- internal edges -->
+      <Glue interactionType= "1" /> <!-- middle contact -->
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <!-- <Period frames="50" /> -->
+    <Period time="0.5e-2"/>
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true">
+      <Box    boxPoint1 = "-1.1 -1.1 -1.1" boxPoint2 = "1.1 1.1 1.1" />
+      <Resolution resolution="128 128 128"/>
+    </Data>
+    <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
+    <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+    <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
+  </Snapshot>
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  </Schedule>
+
+  <Task destinationTime = "0.4">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "5000 5000" velocity = "0.0 -1.0" /> -->
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "0 5000" velocity = "1.0 0.0" /> -->
+      <BoxState boxPoint1 = "-1.0 -1.0 -1.0" boxPoint2 = "1.0 1.0 0.0" velocity = " 0.0 0.0 1.0" />
+      <BoxState boxPoint1 = "-1.0 -1.0 0.0" boxPoint2 = "1.0 1.0 1.0" velocity = " 0.0 0.0 -1.0" />
+
+      <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
+      <!-- <BerlageWave point= "-0.25 0.0" waveVector= "1 0" waveLength= "0.05" shear="false"/> -->
+      <!-- <AcousticPlaneWave point= "0.0 0.20" waveVector= "0 -0.01" waveLength= "0.2"/> -->
+      <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
+    </IniState>
+    <PointSources>
+      <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+    </PointSources>  
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="Trapezoid"
+   -->
+
+  <Solver polynomialsOrder="4" precision="double" integrator="DormandPrince"
+        tolerance="1e-3" maxScale="3e-3" maxTimeStep="1e-1" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        tensionErrorMult="1e+2" velocityErrorMult="1e+2" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

@@ -8,6 +8,8 @@
 #include "SnapshotSettingsParser.h"
 #include "SolverSettingsParser.h"
 #include "TaskSettingsParser.h"
+#include "MeshBuilderSettingsParser.h"
+#include "ResultCombinerSettingsParser.h"
 
 struct BasicSettings
 {
@@ -53,62 +55,20 @@ protected:
   }
 };
 
-template <typename Space>
-struct MeshBuilderSettings: public BasicSettings
-{
-  SPACE_TYPEDEFS
-
-  MeshBuilderSettings(): 
-    partitionAlgorithmName("METIS_PartMeshDual")
-    // METIS_PartMeshNodal
-  {}
-
-  void Parse(const char* fileName)
-  {
-    ParseSettingsFile(fileName);
-    TiXmlDocument settingsFile;
-    TiXmlElement* settingsElement = GetSettingXmlElement(settingsFile, fileName);
-    TiXmlElement* partitionInfoElement = settingsElement->FirstChildElement("Partition");
-    ParseString(partitionInfoElement, "algorithm", &partitionAlgorithmName);
-  }
-
-  std::string partitionAlgorithmName;
-};
-
-template <typename Space>
-struct ResultCombinerSettings: public BasicSettings
-{
-  SPACE_TYPEDEFS
-
-  ResultCombinerSettings():
-    maxStepsCount(1)
-  {}
-
-  void Parse(const char* fileName)
-  {
-    ParseSettingsFile(fileName);
-    TiXmlDocument settingsFile;
-    TiXmlElement* settingsElement = GetSettingXmlElement(settingsFile, fileName);
-    if (settingsElement->QueryIntAttribute("maxStepsCount", &maxStepsCount) != TIXML_SUCCESS)
-    {
-      maxStepsCount = 1;
-    }
-  }
-
-  int maxStepsCount;
-};
 
 template <typename Space>
 struct Settings : public BasicSettings
 {
   SPACE_TYPEDEFS
 
-  MeshSettings      <Space>   mesh;
-  ScheduleSettings  <Space>   schedule;
-  TaskSettings      <Space>   task;
-  SolverSettings    <Space>   solver;
+  MeshSettings            <Space>   mesh;
+  ScheduleSettings        <Space>   schedule;
+  TaskSettings            <Space>   task;
+  SolverSettings          <Space>   solver;
+  DetectorsSettings       <Space>   detectors;
+  MeshBuilderSettings     <Space>   meshBuilder;
+  ResultCombinerSettings  <Space>   resultCombiner;
   std::vector< SnapshotSettings<Space> > snapshots;
-  DetectorsSettings <Space>   detectors;
 
   void Parse(const char* fileName);
 
@@ -230,6 +190,25 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
   {
     std::cout << "There is no Solver section";
   }
+
+  TiXmlElement* meshBuilderElement = settingsElement->FirstChildElement("MeshBuilder");
+  if (meshBuilderElement)
+  {
+    meshBuilder.Parse(meshBuilderElement);
+  } else
+  {
+    std::cout << "There is no MeshBuilder section";
+  }
+
+  TiXmlElement* resultCombinerElement = settingsElement->FirstChildElement("ResultCombiner");
+  if (resultCombinerElement)
+  {
+    resultCombiner.Parse(resultCombinerElement);
+  } else
+  {
+    std::cout << "There is no ResultCombiner section";
+  }
+
 
   detectors.Parse(settingsElement);
 }

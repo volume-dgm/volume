@@ -28,6 +28,9 @@ public:
   {
     settings.Parse("../Task/task.xml");
 
+    assert(settings.configDimsCount == Space::Dimension);
+
+
     // build geom
     mesh = new MeshIO<Space>();
     geomMesh = new GeomMesh<Space>();
@@ -71,15 +74,13 @@ private:
   MeshSplitter<Space>*                    meshSplitter;
   std::vector< DistributedMeshIO<Space> > domains;
   std::vector<char>                       globalMediumParams;
-  MeshBuilderSettings<Space>              meshBuilderSettings;
 
   void BuildGeom()
   {
-    meshBuilderSettings.Parse("meshbuilder.xml");
     std::cout << "Building mesh...\n";
 
     bool duplicateNodes = settings.solver.allowDestruction;
-    builder = new SalomeMeshBuilder<Space>(BasicSettings::ParseSettingsFileName("meshbuilder.xml"), duplicateNodes, Scalar(0.0));
+    builder = new SalomeMeshBuilder<Space>(settings.meshBuilder.salomeFileName, duplicateNodes, Scalar(0.0));
     builder->BuildMesh(mesh, geomMesh, nonDuplicatedVerticesMesh);
     mesh->Save("meshes/" + settings.mesh.GetBaseName() + "[].mesh");
   }
@@ -121,7 +122,7 @@ private:
       efficientStep = false;
       std::vector<IndexType> cellsDomainIds;
 
-      distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, meshBuilderSettings.partitionAlgorithmName, &cellsDomainIds);
+      distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, settings.meshBuilder.partitionAlgorithmName, &cellsDomainIds);
       std::vector<IndexType> updatedCellsDomainIds(cellsDomainIds.size());
 
       for (IndexType cellIndex = 0; cellIndex < geomMesh->cells.size(); ++cellIndex)
@@ -165,7 +166,7 @@ private:
 
     std::cout << "Splitting..." << std::endl;
     std::vector<IndexType> cellsDomainIds;
-    distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, meshBuilderSettings.partitionAlgorithmName, &cellsDomainIds);
+    distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, settings.meshBuilder.partitionAlgorithmName, &cellsDomainIds);
     delete distributor;
 
     MeshVtkWriter<Space, IndexCellInfo> writer;
