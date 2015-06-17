@@ -1,6 +1,7 @@
 #pragma once
 #include "Vector3.h"
 #include "Matrix3x3.h"
+#include <assert.h>
 
 template<typename T>
 class Tensor3
