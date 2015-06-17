@@ -195,27 +195,9 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
       this->tensionDimensionlessMult = tensionDimensionlessMult;
     }
 
-    void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values)
-    {
-      std::fill_n(values, dimsCount, 0);
-      Vector externalForce = (*forceFunctor)(globalPoint, externalNormal, time) / tensionDimensionlessMult;
+    void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values);
 
-      // TODO
-      // 2d case
-      //Vector force(externalForce * externalNormal, externalNormal ^ externalForce);
-
-      // 3d case ?
-      //Vector force(externalForce * externalNormal, externalNormal ^ externalForce);
-      Vector force = Space::Vector::zeroVector();
-
-      /*const Scalar frictionCoeff = Scalar(0.002);
-      force.y *= -frictionCoeff * externalForce.GetNorm() * externalNormal;*/
-      SetTension(externalNormal, force, values);
-    }
   private:
-    void SetTension(const Vector& externalNormal, 
-      const Vector& force, Scalar* values);
-
     VectorFunctor<Space>* forceFunctor;
     Scalar tensionDimensionlessMult; 
   };

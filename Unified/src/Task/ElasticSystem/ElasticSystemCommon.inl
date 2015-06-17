@@ -913,21 +913,49 @@ void ElasticSystemCommon<Space>::SetFixedBoundary(IndexType interactionType, Sca
 }
 
 template <>
-void ElasticSystemCommon<Space2>::FreeBoundaryInfoFunctor::SetTension(
+void ElasticSystemCommon<Space2>::FreeBoundaryInfoFunctor::operator()(
+  const Vector& globalPoint, 
   const Vector& externalNormal, 
-  const Vector& force, Scalar* values)
+  const Scalar time, Scalar* values)
 {
-  values[0] = force.x * Sqr(externalNormal.x) - 2 * force.y * externalNormal.x * externalNormal.y;
-  values[1] = force.x * Sqr(externalNormal.y) + 2 * force.y * externalNormal.x * externalNormal.y;
-  values[2] = force.x * externalNormal.x * externalNormal.y + force.y * (Sqr(externalNormal.x) - Sqr(externalNormal.y));
+  Vector externalForce = (*forceFunctor)(globalPoint, externalNormal, time) / tensionDimensionlessMult;
+  Vector force(externalForce * externalNormal, externalNormal ^ externalForce);
+
+  /*const Scalar frictionCoeff = Scalar(0.002);
+  force.y *= -frictionCoeff * externalForce.GetNorm() * externalNormal;*/
+
+  Tensor tension(force.x, force.y, 0);
+  Tensor rotatedTension = tension.RotateAxes(externalNormal);
+
+  values[0] = rotatedTension.xx;
+  values[1] = rotatedTension.yy;
+  values[2] = rotatedTension.xy;
+  values[3] = values[4] = 0;
 }
 
 template <>
-void ElasticSystemCommon<Space3>::FreeBoundaryInfoFunctor::SetTension(
-  const Vector& externalNormal, 
-  const Vector& force, Scalar* values)
+void ElasticSystemCommon<Space3>::FreeBoundaryInfoFunctor::operator()(
+  const Vector& globalPoint,
+  const Vector& externalNormal,
+  const Scalar time, Scalar* values)
 {
-  // TODO
+  Vector externalForce = (*forceFunctor)(globalPoint, externalNormal, time) / tensionDimensionlessMult;
+
+  Vector tangent0 = (externalNormal ^ externalForce).GetNorm();
+  Vector tangent1 = (externalNormal ^ tangent0).GetNorm();
+
+  Vector force(externalForce * externalNormal, externalForce * tangent0, externalForce * tangent1);
+
+  Tensor tension(force.x, force.y, force.z, 0, 0, 0);
+  Tensor rotatedTension = tension.RotateAxes(externalNormal, tangent0, tangent1);
+
+  values[0] = rotatedTension.xx;
+  values[1] = rotatedTension.yy;
+  values[2] = rotatedTension.zz;
+  values[3] = rotatedTension.xy;
+  values[4] = rotatedTension.yz;
+  values[5] = rotatedTension.xz;
+  values[6] = values[7] = values[8] = 0;
 }
 
 template <>

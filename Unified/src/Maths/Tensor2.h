@@ -64,9 +64,12 @@ public:
 
   Tensor2 RotateAxes(const Vector2<T>& axis)
   {
-    Matrix2x2<T> res(0, 0, 0, 0);
-    Matrix2x2<T> p(axis.x, axis.y, -axis.y, axis.x);
-    Matrix2x2<T> s(xx, xy, xy, yy);
+    Matrix2x2<T> res(0, 0, 
+                     0, 0);
+    Matrix2x2<T> p(axis.x, axis.y, 
+                  -axis.y, axis.x);
+    Matrix2x2<T> s(xx, xy, 
+                   xy, yy);
 
     for (int i = 0; i < 2; ++i)
       for (int j = 0; j < 2; ++j)
@@ -75,7 +78,8 @@ public:
             res.data[i][j] += s.data[k][l] * p.data[i][k] * p.data[j][l];
 
     assert(res.data[0][1] == res.data[1][0]);
-    return Tensor2(res.data[0][0], res.data[0][1], res.data[1][1]);
+    return Tensor2(res.data[0][0], res.data[0][1], 
+                                   res.data[1][1]);
   }
 
   T& operator[](const int i)

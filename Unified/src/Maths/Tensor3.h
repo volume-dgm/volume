@@ -66,6 +66,33 @@ public:
     return *this;
   }
 
+  Tensor3 RotateAxes(const Vector3<T>& newX, const Vector3<T>& newY, const Vector3<T>& newZ)
+  {
+    Matrix3x3<T> res(0, 0, 0, 
+                     0, 0, 0, 
+                     0, 0, 0);
+    Matrix3x3<T> p(newX.x, newX.y, newX.z, 
+                   newY.x, newY.y, newY.z, 
+                   newZ.x, newZ.y, newZ.z);
+    Matrix3x3<T> s(xx, xy, xz, 
+                   xy, yy, yz, 
+                   xz, yz, zz);
+
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        for (int k = 0; k < 3; ++k)
+          for (int l = 0; l < 3; ++l)
+            res.data[i][j] += s.data[k][l] * p.data[i][k] * p.data[j][l];
+
+    assert(res.data[0][1] == res.data[1][0] && 
+           res.data[0][2] == res.data[2][0] && 
+           res.data[1][2] == res.data[2][1]);
+
+    return Tensor3(res.data[0][0], res.data[0][1], res.data[0][2],
+                                   res.data[1][1], res.data[1][2],
+                                                   res.data[2][2]);
+  }
+
   T xx, xy, xz, yy, yz, zz;
 };
 
