@@ -1,17 +1,18 @@
 #pragma once
 #include "../../../Maths/MatrixMaths.h"
 #include "../../../Maths/Spaces.h"
+#include "BaseSpace.h"
 
 template<typename Space, int Order>
 struct PolynomialSpace;
 
 template <int Order>
-struct PolynomialSpace<Space2, Order>
+struct PolynomialSpace<Space2, Order>: public BaseSpace<Space2, Order>
 {
   SPACE2_TYPEDEFS
 
-  const static IndexType functionsCount = (Order + 1) * (Order + 2) / 2;
-  const static IndexType order = Order;
+  using BaseSpace<Space2, Order>::order;
+  using BaseSpace<Space2, Order>::functionsCount;
 
   Scalar functionMult;
 
@@ -384,12 +385,12 @@ public:
 };
 
 template<int Order>
-struct PolynomialSpace<Space3, Order>
+struct PolynomialSpace<Space3, Order>: public BaseSpace<Space3, Order>
 {
   SPACE3_TYPEDEFS
 
-  const static IndexType functionsCount = (Order + 1) * (Order + 2) * (Order + 3) / 6;
-  //const static IndexType functionsCount = 4;
+  using BaseSpace<Space3, Order>::order;
+  using BaseSpace<Space3, Order>::functionsCount;
 
   PolynomialSpace()
   {
@@ -555,7 +556,7 @@ struct PolynomialSpace<Space3, Order>
 
 
 private:
-  Scalar Pow(Scalar a, Scalar b)
+  Scalar Pow(Scalar a, Scalar b) const
   {
     if (fabs(b) < Scalar(1e-5)) return Scalar(1.0);
     if (fabs(a) < Scalar(1e-5)) return 0;
@@ -611,7 +612,7 @@ private:
     }
   }
 
-  Scalar GetPolynomeValue(IndexVector pows, Vector3 point)
+  Scalar GetPolynomeValue(IndexVector pows, Vector3 point) const
   {
     return Pow(point.x, Scalar(pows.x)) * Pow(point.y, Scalar(pows.y)) * Pow(point.z, Scalar(pows.z));
   }
@@ -636,7 +637,7 @@ private:
     }
   }
 
-  IndexVector GetCoordPowers(IndexType functionIndex)
+  IndexVector GetCoordPowers(IndexType functionIndex) const
   {
     return functionPows[functionIndex];
   }
