@@ -154,8 +154,7 @@ ElasticSystem<Space3>::ValueType ElasticSystem<Space3>::
     riemannSolution = GetGlueRiemannSolution(interiorSolution, exteriorSolution, interiorParams, exteriorParams);
   }
 
-  if (interactionType == Boundary || riemannSolution.GetXX() > 0 ||
-    riemannSolution.GetVelocity().x > interiorSolution.GetVelocity().x)
+  if (interactionType == Boundary || riemannSolution.GetXX() > 0)
   {
     interactionType = Boundary;
 

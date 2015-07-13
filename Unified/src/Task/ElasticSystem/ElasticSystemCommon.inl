@@ -925,7 +925,7 @@ void ElasticSystemCommon<Space2>::FreeBoundaryInfoFunctor::operator()(
   force.y *= -frictionCoeff * externalForce.GetNorm() * externalNormal;*/
 
   Tensor tension(force.x, force.y, 0);
-  Tensor rotatedTension = tension.RotateAxes(externalNormal);
+  Tensor rotatedTension = tension.RotateAxes(-externalNormal);
 
   values[0] = rotatedTension.xx;
   values[1] = rotatedTension.yy;
