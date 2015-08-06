@@ -16,7 +16,7 @@
 #include "../Task/SettingsParser/SettingsParser.h"
 #include "../../DifferentialSolvers/SolversFactory.h"
 
-#define SPACE_FROM_SETTINGS
+// #define SPACE_FROM_SETTINGS
 
 typedef Space2                                        DefaultSpace;
 

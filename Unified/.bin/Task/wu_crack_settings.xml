@@ -2,7 +2,7 @@
 <Settings dimsCount = "2">
   <Mesh fileName="meshes/wu_crack[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.001">
     <MediumParams>
-    <PerSubmesh fileName = "meshes/test2_cube[<domain>].params">
+    <PerSubmesh fileName = "meshes/wu_crack[<domain>].params">
       <Submesh index="0" pSpeed= "1500.0" sSpeed= "0.0" rho= "1000.0"/> 
       <Submesh index="1" pSpeed= "4200.0" sSpeed= "2700.0" rho = "2490.0"/>
     </PerSubmesh>  
@@ -27,13 +27,14 @@
       <Box    boxPoint1 = "0 0" boxPoint2 = "25 30" />
 
       <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
-      <Resolution resolution="1000 1200"/>
+      <Resolution resolution="750 900"/>
       <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
     </Data>
     <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
     <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
-    <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
   </Snapshot>
+
+  <Detectors fileName="out/detectors[<domain>]<detector>.csv" />
 
   <Schedule domainsCount="1">
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
@@ -55,7 +56,7 @@
     </IniState>
     <PointSources>
       <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
-      <MonopoleSource point="12.78 18" peakFrequency= "3e+1" pressure="1e+3" latency="0.0"/>
+      <MonopoleSource point="12.78 18" peakFrequency="3e+3" pressure="1e+3" latency="0.0"/>
     </PointSources>  
   </Task>
 "1e-0"/> -->
@@ -66,9 +67,9 @@
        integrator="Trapezoid"
    -->
 
-  <Solver polynomialsOrder="1" precision="double" integrator="DormandPrince"
-        tolerance="1e-0" maxScale="1e-3" maxTimeStep="1e-4" hierarchyLevelsCount="1" 
+  <Solver polynomialsOrder="1" precision="double" integrator="Euler"
+        tolerance="1e-2" maxScale="1e-4" maxTimeStep="1e-4" hierarchyLevelsCount="1" 
         allowMovement="false" allowPlasticity="false" allowDestruction="false" 
-        tensionErrorMult="1e+0" velocityErrorMult="1e+0" positionErrorMult="1e-0"
+        tensionErrorMult="1e+0" velocityErrorMult="1e+8" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
 </Settings>

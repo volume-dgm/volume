@@ -63,7 +63,8 @@ for mesh in geomMeshes:
     outFile = open(outFileName + '.mesh', 'w')
     paramsFile = open(outFileName + '.params', 'w')
 
-    dimension = mesh.MeshDimension()
+    #dimension = mesh.MeshDimension()
+    dimension = 2
 
     if dimension == 2:
         salomeCellType = SMESH.FACE

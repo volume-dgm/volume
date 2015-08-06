@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings dimsCount= "2" fileName="Salome/Salome3ok">
+<Settings dimsCount= "3" fileName="Salome/Salome_Mesh_11">
 	<!-- <Partition algorithm="METIS_PartMeshDual"/> -->
 	<Partition algorithm="METIS_PartMeshNodal"/>
 </Settings>

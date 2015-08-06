@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings dimsCount = "2">
+<Settings>
   <Mesh fileName="meshes/cracks2d[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.001">
     <MediumParams>
       <PerSubmesh fileName = "meshes/cracks2d[<domain>].params">
@@ -11,7 +11,7 @@
 
     <Boundaries>
       <Free interactionType= "0"/>
-      <Symmetry interactionType= "1"/>
+      <AntiSymmetry interactionType= "1"/>
       <Absorb interactionType= "2" />
     </Boundaries>
 
@@ -50,12 +50,12 @@
      <Contacts fileName="out/contacts_crack[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> 
   </Snapshot> -->
 
-  <Schedule domainsCount="32"/>
+  <Schedule domainsCount="96"/>
 
   <Task destinationTime = "2e-0">
     <IniState>
       <!-- <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 5000" velocity = "0.0 -1" />  -->
-      <BerlageWave point= "0.0 -1200.0" waveVector= "0.0 -1.0" waveLength= "150" shear="false"/> 
+      <BerlageWave point= "0.0 -1200.0" waveVector= "0.0 -1.0" waveLength= "150" shear="true"/> 
      <!-- <RickerWave  point = "0.0 -1200.0" waveVector = "0.0 -1.0" waveLength = "150"/>  -->
     </IniState>
   </Task>

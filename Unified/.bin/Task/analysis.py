@@ -1,4 +1,3 @@
-processesCount = 32
 
 globalStepTime = 0
 stepsCount = 0
