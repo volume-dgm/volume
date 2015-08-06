@@ -228,12 +228,13 @@ void TimeHierarchyLevelsManager<Space>::BuildTimeHierarchyLevels(const GeomMesh<
     }
     Scalar cellTimeStep = geomMesh->GetMinHeight(cellIndex) / cellMaxWaveSpeeds[cellIndex];
     IndexType currentLevel = timeHierarchyLevels[cellIndex];
-    IndexType newLevel = std::min(currentLevel, std::max<IndexType>(IndexType(cellTimeStep / minTimeStep), 1) - 1);
+    // TODO: check it
+    IndexType newLevel = std::min(currentLevel, IndexType(Log2(cellTimeStep / minTimeStep)) );
     timeHierarchyLevels.UpdateBucket(cellIndex, newLevel);
   }
 
   IndexType hierarchyLevel = 0;
-  int step = 0;
+  int step = 0; // TODO: unused variable?
   while (hierarchyLevel < hierarchyLevelsCount)
   {
     typedef typename BucketStorage<IndexType>::ElementIterator ElementIterator;
