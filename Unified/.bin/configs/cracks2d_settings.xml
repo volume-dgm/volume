@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings>
+<Settings dimsCount = "2">
   <MeshBuilder>
     <SalomeFile fileName= "salome/Salome_cracks2d" />
     <Partition algorithm="METIS_PartMeshNodal" /> 
@@ -21,7 +21,7 @@
 
     <Boundaries>
       <Free interactionType= "0"/>
-      <AntiSymmetry interactionType= "1"/>
+      <Symmetry interactionType= "1"/>
       <Absorb interactionType= "2" />
     </Boundaries>
 
@@ -60,12 +60,12 @@
      <Contacts fileName="out/contacts_crack[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> 
   </Snapshot> -->
 
-  <Schedule domainsCount="96"/>
+  <Schedule domainsCount="32"/>
 
   <Task destinationTime = "2e-0">
     <IniState>
       <!-- <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 5000" velocity = "0.0 -1" />  -->
-      <BerlageWave point= "0.0 -1200.0" waveVector= "0.0 -1.0" waveLength= "150" shear="true"/> 
+      <BerlageWave point= "0.0 -1200.0" waveVector= "0.0 -1.0" waveLength= "150" shear="false"/> 
      <!-- <RickerWave  point = "0.0 -1200.0" waveVector = "0.0 -1.0" waveLength = "150"/>  -->
     </IniState>
   </Task>
