@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "2">
+  <Mesh fileName="meshes/stiff_inclusion[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.001">
+    <MediumParams>
+      <PerSubmesh fileName = "meshes/stiff_inclusion[<domain>].params">
+        <Submesh index="0" lambda="200" mju= "100" rho= "1"/> 
+        <Submesh index="1" lambda="2" mju= "1" rho= "1"/> 
+      </PerSubmesh> 
+      <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> -->
+    </MediumParams>
+
+    <Boundaries>
+      <Fixed interactionType= "0"> <!-- left-->
+        <ExternalVelocity>
+          <WaveFunctor waveVector= "1 0" waveLength="0.1" initialPhase="3.14159265359" speed="2" maxTime="0.025" shear="false"/> 
+          <!-- <BoxFunctor boxPoint1= "-0.01 -10" boxPoint2= "0.01 10" value="1 0"/>  -->
+        </ExternalVelocity>
+      </Fixed>
+      <Free interactionType= "1"/>
+      <Free interactionType= "2" />
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" />
+      <Glue interactionType= "1" />
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <!-- <Period frames="1" /> -->
+    <Period time="5e-3"/>    
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <!-- Either frame rect or box aabb should be set to define snapshot area -->
+      <Frame  center= "1.0 0.5" size= "2.0 1.0" margin = "0.0" />
+      <!-- <Box    boxPoint1 = "-1.0 -1.0" boxPoint2 = "1.0 1.0" /> -->
+
+      <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
+      <Resolution resolution="900 450" />
+      <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
+    </Data>
+     <!-- <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" /> -->
+     <!-- <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+  </Snapshot>
+  <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" samplesPeriod="1"/>  -->
+
+  <!--
+  <Snapshot>
+    <Period time="2e-3"/>    
+    <Data fileName = "out/crack[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <Frame  center = "0.0 -400.0" size = "200.0 200.0" margin = "0.0" />
+      <Resolution width="800" height="800" />
+    </Data>
+     <Mesh     fileName="out/mesh_crack[<domain>]<step>.vtk" /> 
+     <Contacts fileName="out/contacts_crack[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> 
+  </Snapshot> -->
+
+  <Schedule domainsCount="1"/>
+
+  <Task destinationTime = "7e-1">
+    <IniState>
+      <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 5000" velocity = "0 0" /> 
+      <!-- <BerlageWave point= "0.0 -1200.0" waveVector= "0.0 -1.0" waveLength= "150" shear="false"/>  -->
+     <!-- <RickerWave  point = "0.0 -1200.0" waveVector = "0.0 -1.0" waveLength = "150"/>  -->
+    </IniState>
+    <PointSources>
+      <!-- <ForceSource point="0 -200" peakFrequency= "14.5" acceleration="0 -1e+3" latency="0.08"/> -->
+      <!-- <MonopoleSource point="12.78 18" peakFrequency="3e+3" pressure="1e+3" latency="0.0"/> -->
+    </PointSources> 
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="RKF45" 
+   -->
+
+  <Solver polynomialsOrder= "1" precision="double" integrator="DormandPrince"
+        tolerance="1e+0" maxScale="1e-3" maxTimeStep="1e-3" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        tensionErrorMult="1e-0" velocityErrorMult="1e-0" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

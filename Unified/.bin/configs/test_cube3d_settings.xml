@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "3">
+   <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_test_cube" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "temp_meshes/test_cube[<domain>].mesh" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+ 
+  <Mesh fileName="meshes/test_cube[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.001">
+    <MediumParams>
+    <PerSubmesh fileName = "meshes/test_cube[<domain>].params">
+      <Submesh index="0" pSpeed = "2.0" sSpeed = "1.0" rho = "1.0" k= "0.75e-2" flowVelocity="0 0 0"/> 
+      <Submesh index="1" pSpeed = "20.0" sSpeed = "2.0" rho = "2.0"/>
+       <!-- <Submesh index="0" lambda="146.1e+9" mju="79.3e+9" rho="7.8e+3"/>     
+       <Submesh index="1" pSpeed="350.0" sSpeed="0.0" rho="1.15" flowVelocity="0.0 0.0"/>  -->
+    </PerSubmesh>  
+      <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> -->
+    </MediumParams>
+
+    <Boundaries>
+      <Symmetry interactionType= "0"/>
+      <Symmetry interactionType= "1"/>
+      <Symmetry interactionType= "2"/>
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0"/>
+      <Glue interactionType= "1"/>
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <!-- <Period frames="1" /> -->
+    <Period time="5e+0"/>
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <!-- Either frame rect or box aabb should be set to define snapshot area -->
+      <Frame  center = "100 100 100" size = "200.0 200.0 200.0" margin = "0" />
+      <!-- <Box    boxPoint1 = "-1.0 -1.0" boxPoint2 = "1.0 1.0" /> -->
+
+      <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
+      <Resolution resolution="100 100 100"/>
+      <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
+    </Data>
+    <Mesh     fileName="out/mesh[<domain>]<step>.vtk" />
+    <!--<Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+    <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
+  </Snapshot>
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  </Schedule>
+
+  <Task destinationTime = "400e-0">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 -5000 5000" boxPoint2 = "5000 5000 5000" velocity = "0.0 0.0 0.0" /> -->
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "0 5000" velocity = "1.0 0.0" /> 
+      <BoxState boxPoint1 = "0 0" boxPoint2 = "5000 5000" velocity = "0.0 0.0" /> 
+      <BoxState boxPoint1 = "0 -5000" boxPoint2 = "5000 0" velocity = "3.0 0.0" /> -->
+
+      <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
+      <BerlageWave point= "100 100 100" waveVector= "0 -1 0" waveLength= "100"/>
+      <!-- <AcousticPlaneWave point= "0.0 0.20" waveVector= "0 -0.01" waveLength= "0.2"/> -->
+      <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
+    </IniState>
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="Trapezoid"
+       integrator="RK4"
+       integrator="RKF45"
+       integrator="RK2"
+   -->
+
+ <Solver polynomialsOrder="1" precision="double" integrator="RK2"
+        tolerance="1e-2" maxScale="1e-2" maxTimeStep="1e+1" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        tensionErrorMult="1e-0" velocityErrorMult="1e-0" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings>
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_rect_cracks" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "temp_meshes/rect_cracks[<domain>].mesh" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+  
+  <Mesh fileName="meshes/rect_cracks[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.001">
+    <MediumParams>
+      <PerSubmesh fileName = "meshes/rect_cracks[<domain>].params">
+        <Submesh index="2" pSpeed = "4300.0" sSpeed = "2400.0" rho = "2400.0" /> <!-- ground -->
+        <Submesh index="1" pSpeed = "1480.0" sSpeed = "0.0" rho = "885.0" fluidVelocity = "0.0 0.0"/> <!-- oil -->
+        <Submesh index="0" pSpeed = "0.0" sSpeed = "0.0" rho = "0.0" fluidVelocity = "0.0 0.0"/> <!-- oil -->
+      </PerSubmesh> 
+      <!-- <Uniform pSpeed = "2280.0" sSpeed = "1549.0" rho = "2500.0"  />  -->
+      <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> -->
+    </MediumParams>
+
+    <Boundaries>
+      <Symmetry interactionType= "0"/>
+      <Symmetry interactionType= "1" />
+    </Boundaries>
+
+    <Contacts>
+      <Glue  interactionType= "0" />
+      <Glue interactionType= "1" />
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <!-- <Period frames="1" /> -->
+    <Period time="2e-3"/>    
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="false">
+      <!-- Either frame rect or box aabb should be set to define snapshot area -->
+      <Frame  center = "0 0" size = "1000.0 2000.0" margin = "0.0" />
+      <!-- <Box    boxPoint1 = "-1.0 -1.0" boxPoint2 = "1.0 1.0" /> -->
+
+      <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
+      <Resolution resolution="300 600"/>
+      <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
+    </Data>
+     <!-- <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" /> -->
+     <!-- <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+     <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
+  </Snapshot>
+
+  <!--
+  <Snapshot>
+    <Period time="2e-3"/>    
+    <Data fileName = "out/crack[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <Frame  center = "0.0 -400.0" size = "200.0 200.0" margin = "0.0" />
+      <Resolution width="800" height="800" />
+    </Data>
+     <Mesh     fileName="out/mesh_crack[<domain>]<step>.vtk" /> 
+     <Contacts fileName="out/contacts_crack[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> 
+  </Snapshot> -->
+
+  <Schedule domainsCount="1"/>
+
+  <Task destinationTime = "2e-0">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 5000" velocity = "0.0 -1" />  -->
+      <RickerWave point= "-300.0 0.0" waveVector= "10.0 0" waveLength= "100"/> 
+      <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
+    </IniState>
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+   -->
+
+  <Solver polynomialsOrder= "1" precision="double" integrator="RKF45" 
+        tolerance="1e-2" maxScale="1e-4" maxTimeStep="1e-2" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false " 
+        tensionErrorMult="1e-1" velocityErrorMult="1e-8" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "2">
+  <Mesh fileName="meshes/lts_test[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.001">
+    <MediumParams>
+    <PerSubmesh fileName = "meshes/lts_test[<domain>].params">
+      <Submesh index="0" pSpeed = "16.0" sSpeed = "1.0" rho = "1.0"/> 
+      <Submesh index="1" pSpeed = "8.0" sSpeed = "1.0" rho = "1.0"/>
+      <Submesh index="2" pSpeed = "4.0" sSpeed = "1.0" rho = "1.0"/>
+      <Submesh index="2" pSpeed = "1.8" sSpeed = "1.0" rho = "1.0"/>
+    </PerSubmesh>  
+      <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> -->
+    </MediumParams>
+
+    <Boundaries>
+      <Free interactionType= "0"/> 
+      <Symmetry interactionType= "1"/>
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "1" maxShearStress="1.75e-2" maxLongitudinalStress="1e+30"/>
+      <Glue interactionType= "1" />
+    </Contacts>
+  </Mesh>
+
+
+  <Snapshot>
+    <!-- <Period frames="50" /> -->
+    <Period time="5e-1"/>
+    <Data fileName = "out/snapsааhot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <!-- Either frame rect or box aabb should be set to define snapshot area -->
+      <Frame  center = "0.00000 0.00000" size = "75.0 10.0" margin = "0" />
+      <!-- <Box    boxPoint1 = "-1.0 -1.0" boxPoint2 = "1.0 1.0" /> -->
+
+      <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
+      <Resolution resolution="1000 5000"/>
+      <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
+    </Data>
+    <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
+    <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+    <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
+  </Snapshot>
+
+  <Snapshot>
+    <!-- <Period frames="50" /> -->
+    <Period time="5e-1"/>
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <!-- Either frame rect or box aabb should be set to define snapshot area -->
+      <Frame  center = "0.00000 0.00000" size = "75.0 10.0" margin = "0" />
+      <!-- <Box    boxPoint1 = "-1.0 -1.0" boxPoint2 = "1.0 1.0" /> -->
+
+      <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
+      <Resolution resolution="1000 50"/>
+      <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
+    </Data>
+    <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
+    <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+    <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
+  </Snapshot>
+
+    <Detectors fileName="out/detectors[<domain>]<detector>.csv" samplesPeriod="1"/> 
+
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  </Schedule>
+
+  <Task destinationTime = "500e-0">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "5000 5000" velocity = "0.0 -1.0" /> -->
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "0 5000" velocity = "1.0 0.0" />  -->
+      <!-- <BoxState boxPoint1 = "0 0" boxPoint2 = "5000 5000" velocity = "0.0 0.0" />  -->
+      <!-- <BoxState boxPoint1 = "0 -5000" boxPoint2 = "5000 0" velocity = "3.0 0.0" /> -->
+
+      <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 5000" velocity = "0.0 0.0" />
+
+      <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
+      <!-- <BerlageWave point= "0.0 0.0" waveVector= "0 -1" waveLength= "20"/> -->
+      <!-- <AcousticPlaneWave point= "0.0 0.20" waveVector= "0 -0.01" waveLength= "0.2"/> -->
+      <RickerWave  point = "0.0 0.0" waveVector = "1.0 0.0" waveLength = "5"/>
+    </IniState>
+    <PointSources>
+      <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+      <!-- <MonopoleSource point="0 0" peakFrequency= "0.4" pressure="3" latency="5"/> -->
+    </PointSources>  
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="Trapezoid"
+   -->
+
+  <Solver polynomialsOrder="1" precision="double" integrator="RK4"
+        tolerance="1e+1" maxScale="1e-2" maxTimeStep="1e-2" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        tensionErrorMult="1e+1" velocityErrorMult="1e+1" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "3"> <!-- dims count is either 2 or 3 [required] -->
+  <MeshBuilder> <!-- required by meshbuilder, optional otherwise -->
+    <SalomeFile fileName= "salome/Salome_3dDoubleBox" /> <!-- salome file without extension, [required] -->
+    <Partition algorithm="METIS_PartMeshNodal" />  <!-- metis algorithm, [optional, defValue = "METIS_PartMeshDual"] -->
+    <!-- <OutFile fileName= "temp_meshes/3d_double_box[<domain>]" /> --> <!-- mesh builder out file. no extension needed. Mesh/fileName is used not provided. [optional, defValue = Mesh/fileName] -->
+  </MeshBuilder>
+
+  <ResultCombiner> <!-- required by result combiner, optional otherwise -->
+    <Snapshots count="300000" /> <!-- number of snapshots to combine. [required] -->
+  </ResultCombiner>
+
+  <Mesh fileName="meshes/3d_double_box[<domain>]" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01"> <!-- Mesh section used by Task. [required] -->
+    <!-- 
+    fileName - mesh file name without extension. <domain> is replaced for every domain with its own index. [required]
+    unfoldIterationsCount - number of iterations to try and fix collapsed mesh [optional, defValue = "0"]
+    minGridHeight - minimal cell height used by unfolding algorithm [optional, defValue = "0"]
+    moveMassCenter - moves snapshot region to grid area [optional, defValue = "false"] --> 
+
+    <MediumParams> <!-- lambda, mju and rho in every cell. [required] -->
+      <!-- Exactly one of: PerSubmesh, PerCell or Uniform is required -->
+
+      <PerSubmesh> <!-- every cell has an index assigned(index is called submesh index), params are assigned for every submesh -->
+        <!-- fileName - name of params file. [optional, defValue = Mesh/filename + ".params"] -->
+
+        <Submesh index="0" pSpeed = "2.0" sSpeed = "1.0" rho = "1.0" internalContactType = "0"/> <!-- Description of one submesh params. Must contain one such section for every submesh used. [optional] -->
+        <!-- index - number of submesh index properties are assigned to. [required]
+        pSpeed, sSpeed, rho - p-wave speeds, s-wave speeds [optional, defValue = values calculated from lambda/mju/rho]
+        lambda, mju, rho - Lame params [optional, defValue = values calculated from pSpeed, sSpeed]
+        internalContactType - index of internal contacts interactionType. [optional, defValue = "0"]
+        -->        
+      </PerSubmesh>  
+
+      <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> --> <!-- lame params are assigned for every cell and stored in .params file. [optional]-->
+        <!-- fileName - name of params file. [optional, defValue = Mesh/filename + ".params"] -->
+
+      <!-- <Uniform pSpeed = "2" sSpeed = "1" rho = "1" /> --> <!-- lame params the same for all cells [optional] --> 
+        <!-- see PerSubmesh -->
+    </MediumParams>
+
+    <Boundaries> <!-- Description of boundary interaction types-->
+      <!-- One section must exist for every boundary type present in the mesh -->
+
+      <Free interactionType= "0" dynamicContactInteractionType= "1"> <!-- Free boundary type -->
+        <!-- interactionType - index of boundaryType that will be set to "Free". [required]
+        dynamicContactInteractionType - index of contactType type that will be assigned if dynamic contact with this boundary occurs. -1 for no dynamic contacts [optional, defValue = "-1"]
+        -->
+        <ExternalForce> <!-- specifies vector of external force acting on free boundary in world coordinates[optional] -->
+          <!-- 
+            Section may contain multiple vector functors-->
+          <ConstFunctor value= "0 0 0"/> <!-- constant vector functor -->
+            <!-- 
+              value - specifies value of the vector, external force in case of free boundary [required]-->
+          <RadialFunctor center= "0 0 0" intensity= "10.0" /><!-- radial functor -->
+            <!-- 
+            center - center of the circle area [required]
+            intensity - intensity of radial field [required] -->
+          <BoxFunctor boxPoint1= "-1 -1 -1" boxPoint2= "1 1 1" value= "42.0, -1.0" aabbVelocity="1.0, 0.0" /><!-- box functor -->
+            <!-- 
+            boxPoint1/boxPoint2 - aabb of box area [required]
+            value - vector field value [required] 
+            aabbVelocity - vector field area moves with this velocity [optional, defValue="0.0, 0.0"]-->
+
+          <WaveFunctor waveVector= "-1 -1 -1" waveLength= "1.0" initialPhase= "3.14" speed="1.0" shear="false" maxTime="-1" />
+            <!-- 
+            waveVector -
+            waveLength -
+            initialPhase -
+            speed -
+            shear -
+            maxTime -
+            -->
+          <!-- <RotatingFunctor pos= "-1 -1 -1" angularVelocity= "1.0" linearVelocity= "3.14" linearTime="1.0"/> -->
+        </ExternalForce>
+      </Free>
+      <Absorb interactionType= "1" /> <!-- Absorb condition -->
+      <Fixed interactionType= "2"> <!-- Fixed velocity -->
+        <ExternalVelocity> <!-- specifies external velocity on fixed boundary. [optional]-->
+          <!-- Vector functor that specifies velocity. See Free boundary functors for info on vector functors-->
+        </ExternalVelocity>
+      </Fixed>
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "1" maxShearStress="1.75e-2" maxLongitudinalStress="1e+30"/> <!-- glue contact type -->
+        <!--
+          interactionType - index of contactType that will be set to "Glue". [required]
+          dynamicBoundaryInteractionType - index of boundary type that will be assigned if this contact breaks [optional, defValue = "-1"]
+          maxShearStress, maxLongitudinalStress - is shear/longitudinal stress excess these values contact will break [optional, devValue = "max() * 0.5"] -->
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <!-- <Period frames="1" /> -->
+    <Period time="0.25e-1"/>
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true">
+      <Box    boxPoint1 = "-0.51 -0.51 -0.51" boxPoint2 = "0.51 0.51 0.51" />
+      <Resolution resolution="128 128 128"/>
+    </Data>
+    <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
+    <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+    <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
+  </Snapshot>
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  </Schedule>
+
+  <Task destinationTime = "0.5">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "5000 5000" velocity = "0.0 -1.0" /> -->
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "0 5000" velocity = "1.0 0.0" /> -->
+      <BoxState boxPoint1 = "-0.51 -0.51 -0.51" boxPoint2 = "0.51 0.51 0.0" velocity = " 0.0 0.0 1.0" />
+      <BoxState boxPoint1 = "-0.51 -0.51 0.0" boxPoint2 = "0.51 0.51 0.51" velocity = " 0.0 0.0 -1.0" />
+
+      <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
+      <!-- <BerlageWave point= "-0.25 0.0" waveVector= "1 0" waveLength= "0.05" shear="false"/> -->
+      <!-- <AcousticPlaneWave point= "0.0 0.20" waveVector= "0 -0.01" waveLength= "0.2"/> -->
+      <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
+    </IniState>
+    <PointSources>
+      <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+    </PointSources>  
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="Trapezoid"
+   -->
+
+  <Solver polynomialsOrder="4" precision="double" integrator="DormandPrince"
+        tolerance="1e-3" maxScale="1e-2" maxTimeStep="1e-1" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        tensionErrorMult="1e+2" velocityErrorMult="1e+2" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>
