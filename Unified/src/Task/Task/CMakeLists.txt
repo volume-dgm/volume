@@ -84,7 +84,7 @@ set(VolumeMethodSrc
   ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/Cell.h
 )
 
-set(BINDIR ${CMAKE_SOURCE_DIR}/.bin/Task)
+set(BINDIR ${CMAKE_SOURCE_DIR}/.bin)
 
 MAKE_DIRECTORY(${BINDIR})
 

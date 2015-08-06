@@ -106,6 +106,7 @@ void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
   IndexType vectorElementsCount = 3; //we have to write 3 components regardless of space used
 
   IndexType maxElementsCount = 0;
+
   if(writeVelocity)
   {
     maxElementsCount = std::max(maxElementsCount, vectorElementsCount);
@@ -257,8 +258,18 @@ void SnapshotVtkWriter<ElasticSpace>::WriteCompressedData(fstream& file, unsigne
 
   size_t outputSize;
   char* output = ::base64_encode((const unsigned char*)prefix, 4 * sizeof(uint32_t), &outputSize);
+  if(output == NULL)
+  {
+    printf("Fatal error: base64_encode returned NULL trying to encode %d bytes", 4 * sizeof(uint32_t));
+    return;
+  }
   file.write(output, outputSize);
 
   output = ::base64_encode((const unsigned char*)(&compressedData[0]), compressedDataLen, &outputSize);
+  if(output == NULL)
+  {
+    printf("Fatal error: base64_encode returned NULL trying to encode %d bytes", compressedDataLen);
+    return;
+  }
   file.write(output, outputSize);
 }

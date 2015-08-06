@@ -26,7 +26,17 @@ struct MeshBuilderTask
 public:
   void Run()
   {
-    settings.Parse("../Task/task.xml");
+    settings.Parse("task.xml");
+
+    std::string meshFileName = settings.mesh.meshFileName;
+    if(settings.meshBuilder.meshFileName != "")
+    {
+      meshFileName = settings.meshBuilder.meshFileName;
+    }
+    this->meshBaseName = meshFileName;
+
+    assert(settings.configDimsCount == Space::Dimension);
+
 
     // build geom
     mesh = new MeshIO<Space>();
@@ -51,7 +61,7 @@ public:
     delete nonDuplicatedVerticesMesh;
 
     // mesh checking
-    MeshChecker<Space> meshChecker(settings.mesh.GetBaseName(), settings.schedule.domainsCount);
+    MeshChecker<Space> meshChecker(meshBaseName, settings.schedule.domainsCount);
     meshChecker.Check();
     printf("\nDone");
   }
@@ -71,17 +81,20 @@ private:
   MeshSplitter<Space>*                    meshSplitter;
   std::vector< DistributedMeshIO<Space> > domains;
   std::vector<char>                       globalMediumParams;
-  MeshBuilderSettings<Space>              meshBuilderSettings;
+
+  std::string meshBaseName;
 
   void BuildGeom()
   {
-    meshBuilderSettings.Parse("meshbuilder.xml");
     std::cout << "Building mesh...\n";
 
     bool duplicateNodes = settings.solver.allowDestruction;
-    builder = new SalomeMeshBuilder<Space>(BasicSettings::ParseSettingsFileName("meshbuilder.xml"), duplicateNodes, Scalar(0.0));
+    builder = new SalomeMeshBuilder<Space>(settings.meshBuilder.salomeFileName, duplicateNodes, Scalar(0.0));
     builder->BuildMesh(mesh, geomMesh, nonDuplicatedVerticesMesh);
-    mesh->Save("meshes/" + settings.mesh.GetBaseName() + "[].mesh");
+
+    std::string globalMeshName = meshBaseName;
+    ReplaceSubstring(globalMeshName, "<domain>", "");
+    mesh->Save(globalMeshName + ".mesh");
   }
 
   void BuildGlobalMediumParams(const GeomMesh<Space>* geomMesh)
@@ -90,13 +103,18 @@ private:
     builder->BuildMediumParams(mesh, &globalMediumParams);
     delete builder;
 
+
+    std::string globalMeshName = meshBaseName;
+    ReplaceSubstring(globalMeshName, "<domain>", "");
+    mesh->Save(globalMeshName + ".mesh");
+
     MeshVtkWriter<Space, CharCellInfo> meshWriter;
     if (globalMediumParams.size() == mesh->GetCellsCount())
     {
-      meshWriter.Write("meshes/" + settings.mesh.GetBaseName() + "GlobalMesh.vtk", mesh->vertices, mesh->indices, globalMediumParams);
+      meshWriter.Write(globalMeshName + "_globalMesh.vtk", mesh->vertices, mesh->indices, globalMediumParams);
     } else
     {
-      meshWriter.Write("meshes/" + settings.mesh.GetBaseName() + "GlobalMesh.vtk", mesh->vertices, mesh->indices);
+      meshWriter.Write(globalMeshName + "_globalMesh.vtk", mesh->vertices, mesh->indices);
     }
   }
 
@@ -121,7 +139,7 @@ private:
       efficientStep = false;
       std::vector<IndexType> cellsDomainIds;
 
-      distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, meshBuilderSettings.partitionAlgorithmName, &cellsDomainIds);
+      distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, settings.meshBuilder.partitionAlgorithmName, &cellsDomainIds);
       std::vector<IndexType> updatedCellsDomainIds(cellsDomainIds.size());
 
       for (IndexType cellIndex = 0; cellIndex < geomMesh->cells.size(); ++cellIndex)
@@ -165,11 +183,14 @@ private:
 
     std::cout << "Splitting..." << std::endl;
     std::vector<IndexType> cellsDomainIds;
-    distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, meshBuilderSettings.partitionAlgorithmName, &cellsDomainIds);
+    distributor->Distribute(nonDuplicatedVerticesMesh, domainsCount, cellWeights, settings.meshBuilder.partitionAlgorithmName, &cellsDomainIds);
     delete distributor;
 
     MeshVtkWriter<Space, IndexCellInfo> writer;
-    writer.Write("domains.vtk", mesh->vertices, mesh->indices, cellsDomainIds);
+
+    std::string domainsName = meshBaseName;
+    ReplaceSubstring(domainsName, "<domain>", "");
+    writer.Write(domainsName + "_domains.vtk", mesh->vertices, mesh->indices, cellsDomainIds);
 
     meshSplitter->Split(cellsDomainIds, domainsCount, &domains, settings.solver.allowMovement);
 
@@ -196,10 +217,14 @@ private:
       std::cout << "  Saving domain " << domainIndex << std::endl;
       char domainString[256];
       sprintf(domainString, "%.3lu", domainIndex);
-      domains[domainIndex].Save("meshes/" + settings.mesh.GetBaseName() + "[" + std::string(domainString) + "].mesh");
-      domains[domainIndex].SaveContacts("meshes/" + settings.mesh.GetBaseName() + "_contacts[" + std::string(domainString) + "].vtk");
-      domains[domainIndex].SaveBoundaries("meshes/" + settings.mesh.GetBaseName() + "_boundaries[" + std::string(domainString) + "].vtk");
-      domains[domainIndex].SaveDetectors("meshes/" + settings.mesh.GetBaseName() + "_detectors[" + std::string(domainString) + "].vtk");
+
+      std::string domainMeshName = meshBaseName;
+      ReplaceSubstring(domainMeshName, "<domain>", std::string(domainString));
+
+      domains[domainIndex].Save(domainMeshName + ".mesh");
+      domains[domainIndex].SaveContacts(domainMeshName + "_contacts.vtk");
+      domains[domainIndex].SaveBoundaries(domainMeshName + "_boundaries.vtk");
+      domains[domainIndex].SaveDetectors(domainMeshName + "_detectors.vtk");
 
       std::vector<char> mediumParams(domains[domainIndex].GetCellsCount() * paramsPerCellSize, 0);
     
@@ -218,13 +243,16 @@ private:
 
       if (mediumParams.size() > 0)
       {
-        FILE *paramsFile = fopen(("meshes/" + settings.mesh.GetBaseName() + "[" + std::string(domainString) + "].params").c_str(), "wb");
+        std::string paramsFileName = meshBaseName + ".params";
+        ReplaceSubstring(paramsFileName, "<domain>", std::string(domainString));
+        FILE *paramsFile = fopen(paramsFileName.c_str(), "wb");
         assert(paramsFile != NULL);
         fwrite(&(mediumParams[0]), 1, mediumParams.size(), paramsFile);
         fclose(paramsFile);
       }
 
-      std::string vtkMeshFilename = std::string("meshes/" + settings.mesh.GetBaseName() + "Geom[") + std::string(domainString) + "].vtk";
+      std::string vtkMeshFilename = meshBaseName + "_geom.vtk";
+      ReplaceSubstring(vtkMeshFilename, "<domain>", std::string(domainString));
       MeshVtkWriter<Space> writer;
 
       std::vector<CharCellInfo> cellInfos(domains[domainIndex].GetCellsCount());
@@ -256,7 +284,7 @@ private:
 int main()
 {
   BasicSettings basicSettings; //Space2 settings reader should read Space3 settings file just fine. probably.
-  basicSettings.Parse("../Task/task.xml");
+  basicSettings.Parse("task.xml");
 
   #ifdef SPACE_FROM_SETTINGS
   {

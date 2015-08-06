@@ -13,24 +13,6 @@ struct MeshSettings
 
   std::string meshFileName;
 
-  std::string GetBaseName()
-  {
-    std::string baseName(meshFileName);
-
-    size_t pos = meshFileName.find_first_of('[');
-    if (pos != std::string::npos)
-    {
-      baseName.erase(pos);
-    }
-
-    pos = meshFileName.find_last_of("\\/");
-    if (pos != std::string::npos)
-    {
-      baseName.erase(0, pos);
-    }
-    return baseName;
-  }
-
   struct MediumParamsSection
   {
     struct ParamsDescription

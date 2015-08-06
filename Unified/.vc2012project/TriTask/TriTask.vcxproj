@@ -87,8 +87,10 @@
     <ClInclude Include="..\..\src\Task\GeomMesh\MeshIO\Local\MeshIOBase.h" />
     <ClInclude Include="..\..\src\Task\GeomMesh\TimeHierarchyLevelsManager.h" />
     <ClInclude Include="..\..\src\Task\GeomMesh\TopologyReconstructor.h" />
+    <ClInclude Include="..\..\src\Task\Task\SettingsParser\MeshBuilderSettingsParser.h" />
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\MeshSettingsParser.h" />
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\ParserUtil.h" />
+    <ClInclude Include="..\..\src\Task\Task\SettingsParser\ResultCombinerSettingsParser.h" />
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\ScheduleSettingsParser.h" />
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\SettingsParser.h" />
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\SnapshotSettingsParser.h" />
@@ -173,10 +175,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\.bin\$(ProjectName)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\.bin\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\.bin\$(ProjectName)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\.bin\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>

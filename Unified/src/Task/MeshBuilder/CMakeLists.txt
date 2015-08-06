@@ -27,7 +27,7 @@ set(TriGeomSrc
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMesh.h
 )
 
-set(BINDIR ${CMAKE_SOURCE_DIR}/.bin/MeshBuilder)
+set(BINDIR ${CMAKE_SOURCE_DIR}/.bin)
 
 MAKE_DIRECTORY(${BINDIR})
 

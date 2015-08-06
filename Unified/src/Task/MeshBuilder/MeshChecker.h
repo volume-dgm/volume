@@ -37,9 +37,14 @@ public:
     {
       char domainString[256];
       sprintf(domainString, "%.3lu", domainIndex);
-      domains[domainIndex].Load("meshes/" + meshBaseName + "[" + std::string(domainString) + "].mesh");
+
+      std::string meshName = meshBaseName;
+      ReplaceSubstring(meshName, "<domain>", std::string(domainString));
+      domains[domainIndex].Load(meshName + ".mesh");
     }
-    baseMesh.Load("meshes/" + meshBaseName + "[].mesh");
+    std::string meshName = meshBaseName;
+    ReplaceSubstring(meshName, "<domain>", "");
+    baseMesh.Load(meshName + ".mesh");
     
     for (IndexType cellIndex = 0; cellIndex < baseMesh.GetCellsCount(); ++cellIndex)
     {

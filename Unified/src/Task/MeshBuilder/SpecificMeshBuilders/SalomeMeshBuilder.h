@@ -43,6 +43,15 @@ public:
     {
       mesh->detectorsPositions.push_back(Vector(Distance * detectorIndex, Scalar(-1)));
     }*/
+    /*
+    // Wu
+    mesh->detectorsPositions.push_back(Vector(10.2, 12));
+    mesh->detectorsPositions.push_back(Vector(6, 12));
+    */
+    // mesh->detectorsPositions.push_back(Vector(2, 0, 0));
+    // mesh->detectorsPositions.push_back(Vector(2, 0, -1));
+
+    mesh->detectorsPositions.push_back(Vector(8, 0));
   }
 
 private:

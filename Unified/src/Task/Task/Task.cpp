@@ -5,10 +5,10 @@
 
 #include "Task.h"
 
-// #define ORDER_FROM_SETTINGS
-// #define SPACE_FROM_SETTINGS
+//#define ORDER_FROM_SETTINGS
+#define SPACE_FROM_SETTINGS
 
-const unsigned int defaultPolynomialOrder = 3;
+const unsigned int defaultPolynomialOrder = 4;
 typedef Space2 DefaultSpace;
 
 int main()
@@ -34,7 +34,7 @@ int main()
           case 5: {Task<Space2, 5> task; task.Run();} break;
           case 6: {Task<Space2, 6> task; task.Run();} break;
           case 7: {Task<Space2, 7> task; task.Run();} break;
-          case 8: {Task<Space2, 8> task; task.Run();} break;
+          //case 8: {Task<Space2, 8> task; task.Run();} break;
           default: std::cerr << "Unknown polynomial order"; break;
         }
       }break;
@@ -52,7 +52,7 @@ int main()
           case 5: {Task<Space3, 5> task; task.Run();} break;
           case 6: {Task<Space3, 6> task; task.Run();} break;
           case 7: {Task<Space3, 7> task; task.Run();} break;
-          case 8: {Task<Space3, 8> task; task.Run();} break;
+          //case 8: {Task<Space3, 8> task; task.Run();} break;
           default: std::cerr << "Unknown polynomial order"; break;
         }
       }break;

@@ -35,8 +35,10 @@ public:
 
   void Run()
   {
-    resultCombinerSettings.Parse("resultcombiner.xml");
-    settings.Parse("../Task/task.xml");
+    settings.Parse("task.xml");
+
+    assert(settings.configDimsCount == Space::Dimension);
+
 
     IndexType domainsCount = settings.schedule.domainsCount;
 
@@ -52,7 +54,7 @@ public:
         settings.snapshots[snapshotIndex].data.boxPoint2));
       if (result.size() < snapshotSize) result.resize(snapshotSize);
 
-      for (int stepIndex = 0; stepIndex < resultCombinerSettings.maxStepsCount; ++stepIndex)
+      for (int stepIndex = 0; stepIndex < settings.resultCombiner.snapshotsCount; ++stepIndex)
       {
         #pragma omp parallel for
         for (int elasticIndex = 0; elasticIndex < int(snapshotSize); ++elasticIndex)
@@ -133,7 +135,6 @@ public:
   }
 private:
   Settings<Space> settings;
-  ResultCombinerSettings<Space> resultCombinerSettings;
 
   void CombineDetectors()
   {
@@ -232,7 +233,7 @@ private:
 int main()
 {
   BasicSettings basicSettings; //Space2 settings reader should read Space3 settings file just fine. probably.
-  basicSettings.Parse("../Task/task.xml");
+  basicSettings.Parse("task.xml");
 
   #ifdef SPACE_FROM_SETTINGS
   {
