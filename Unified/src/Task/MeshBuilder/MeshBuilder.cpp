@@ -94,7 +94,7 @@ private:
 
     std::string globalMeshName = meshBaseName;
     ReplaceSubstring(globalMeshName, "<domain>", "");
-    mesh->Save(globalMeshName + ".mesh");
+    mesh->Save(AddExtensionToFileName(globalMeshName, ".mesh"));
   }
 
   void BuildGlobalMediumParams(const GeomMesh<Space>* geomMesh)
@@ -106,7 +106,7 @@ private:
 
     std::string globalMeshName = meshBaseName;
     ReplaceSubstring(globalMeshName, "<domain>", "");
-    mesh->Save(globalMeshName + ".mesh");
+    mesh->Save(AddExtensionToFileName(globalMeshName, ".mesh"));
 
     MeshVtkWriter<Space, CharCellInfo> meshWriter;
     if (globalMediumParams.size() == mesh->GetCellsCount())
@@ -221,7 +221,7 @@ private:
       std::string domainMeshName = meshBaseName;
       ReplaceSubstring(domainMeshName, "<domain>", std::string(domainString));
 
-      domains[domainIndex].Save(domainMeshName + ".mesh");
+      domains[domainIndex].Save(AddExtensionToFileName(domainMeshName, ".mesh"));
       domains[domainIndex].SaveContacts(domainMeshName + "_contacts.vtk");
       domains[domainIndex].SaveBoundaries(domainMeshName + "_boundaries.vtk");
       domains[domainIndex].SaveDetectors(domainMeshName + "_detectors.vtk");
@@ -243,7 +243,7 @@ private:
 
       if (mediumParams.size() > 0)
       {
-        std::string paramsFileName = meshBaseName + ".params";
+        std::string paramsFileName = AddExtensionToFileName(meshBaseName, ".params");
         ReplaceSubstring(paramsFileName, "<domain>", std::string(domainString));
         FILE *paramsFile = fopen(paramsFileName.c_str(), "wb");
         assert(paramsFile != NULL);
@@ -267,7 +267,7 @@ private:
     std::cout << "\n";
   
     // save detectors locations (global index -> domain index + detector number)
-    std::fstream detectorsLocations("../ResultCombiner/detectorsLocations.txt", std::ios_base::out);
+    std::fstream detectorsLocations("meshes/detectorsLocations.txt", std::ios_base::out);
 
     assert(detectorsLocations.fail() == false);
 

@@ -55,6 +55,16 @@ bool EndWith(const std::string& fullString, const std::string& ending)
   }
 }
 
+std::string AddExtensionToFileName(const std::string& fileName, const std::string& extension)
+{
+  std::string result = fileName;
+
+  if (!EndWith(result, extension))
+   result += extension;
+
+  return result;
+}
+
 template <typename T>
 void swap_endian(T& pX)
 {

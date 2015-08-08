@@ -76,7 +76,7 @@ public:
             std::string dataFilename = settings.snapshots[snapshotIndex].data.filename;
             ReplaceSubstring(dataFilename, "<step>", std::string(stepString));
             ReplaceSubstring(dataFilename, "<domain>", std::string(domainString));
-            std::string pathName = "../Task/" + dataFilename;
+            std::string pathName = dataFilename;
             bool res = false;
 
             if (EndWith(dataFilename, ".vti"))
@@ -120,7 +120,7 @@ public:
           Vector origin = settings.snapshots[snapshotIndex].data.origin;
           Vector spacing = settings.snapshots[snapshotIndex].data.spacing;
 
-          snapshotWriter.Write(("../Task/" + dataFilename).c_str(),
+          snapshotWriter.Write((dataFilename).c_str(),
             &result[0],
             origin, spacing,
             AABB(boxPoint1, boxPoint2),
@@ -143,10 +143,9 @@ private:
 
     std::cout << "Combine detectors\n";
 
-    std::string detectorsFileNamePattern = std::string("../Task/") +
-      settings.detectors.filename;
+    std::string detectorsFileNamePattern = settings.detectors.filename;
 
-    std::fstream detectorsLocationsFile("detectorsLocations.txt", std::ios_base::in);
+    std::fstream detectorsLocationsFile("meshes/detectorsLocations.txt", std::ios_base::in);
     assert(detectorsLocationsFile.fail() == false);
 
     IndexType detectorsCount = 0;
@@ -179,8 +178,8 @@ private:
       assert(files[detectorIndex] != NULL);
     }
 
-    std::fstream outputVelocity("../Task/out/velocity_detector.csv", std::ios_base::out);
-    std::fstream outputPressure("../Task/out/pressure_detector.csv", std::ios_base::out);
+    std::fstream outputVelocity("out/velocity_detector.csv", std::ios_base::out);
+    std::fstream outputPressure("out/pressure_detector.csv", std::ios_base::out);
 
     assert(outputVelocity.fail() == false);
     assert(outputPressure.fail() == false);

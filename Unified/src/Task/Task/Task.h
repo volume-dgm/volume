@@ -50,9 +50,9 @@ public:
   typedef typename ElasticSpace::Elastic                      Elastic;
   const static int dimsCount = ElasticSystemType::dimsCount;
 
-  typedef PolynomialPrecomputer<Space, LagrangeSpace<Space, order> > FunctionSpace;
+  // typedef PolynomialPrecomputer<Space, LagrangeSpace<Space, order> > FunctionSpace;
   // typedef PolynomialPrecomputer<Space, PolynomialSpace<Space, order> > FunctionSpace;
-  // typedef DummyPrecomputer<Space, DubinerSpace<Space, order> > FunctionSpace;
+  typedef DummyPrecomputer<Space, DubinerSpace<Space, order> > FunctionSpace;
 
   Task();
   virtual ~Task();
@@ -866,7 +866,7 @@ void Task<Space, order>::LoadMeshes()
     char domainString[256];
     sprintf(domainString, "%.3d", (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber]);
 
-    std::string meshName = settings.mesh.meshFileName + ".mesh";
+    std::string meshName = AddExtensionToFileName(settings.mesh.meshFileName, ".mesh");
     ReplaceSubstring(meshName, "<domain>", domainString);
     meshes[domainNumber]->Load(meshName);
 
@@ -883,11 +883,11 @@ void Task<Space, order>::LoadMeshes()
         typename MediumParamsSection::PerSubmeshInfo perSubmeshInfo =
           settings.mesh.mediumParamsSection.perSubmeshInfos[paramsDesc.infoIndex];
 
-        std::string paramsFileName = perSubmeshInfo.fileName;
+        std::string paramsFileName = AddExtensionToFileName(perSubmeshInfo.fileName, ".params");
 
         if(paramsFileName == "")
         {
-          paramsFileName = settings.mesh.meshFileName + ".params";
+          paramsFileName = AddExtensionToFileName(settings.mesh.meshFileName, ".params");
         }
 
         ReplaceSubstring(paramsFileName, "<domain>", domainString);
@@ -935,11 +935,11 @@ void Task<Space, order>::LoadMeshes()
         typename MediumParamsSection::PerCellInfo perCellInfo =
           settings.mesh.mediumParamsSection.perCellInfos[paramsDesc.infoIndex];
 
-        std::string paramsFileName = perCellInfo.fileName;
+        std::string paramsFileName = AddExtensionToFileName(perCellInfo.fileName, ".params");
         
         if(paramsFileName == "")
         {
-          paramsFileName = settings.mesh.meshFileName + ".params";
+          paramsFileName = AddExtensionToFileName(settings.mesh.meshFileName, ".params");
         }
         ReplaceSubstring(paramsFileName, "<domain>", domainString);
 
