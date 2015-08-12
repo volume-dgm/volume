@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Settings dimsCount = "2">
   <MeshBuilder>
-    <SalomeFile fileName= "salome/Salome_methane_bomb" />
+    <SalomeFile fileName= "salome/Salome_MainMesh" />
     <Partition algorithm="METIS_PartMeshNodal" /> 
     <!-- <OutFile fileName= "temp_meshes/methane_bomb[<domain>].mesh" /> -->
   </MeshBuilder>
@@ -12,7 +12,7 @@
   
   <Mesh fileName="meshes/methane_bomb[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01">
     <MediumParams>
-      <PerSubmesh fileName = "meshes/methane_bomb[<domain>].params">
+      <PerSubmesh fileName = "meshes/methane_bomb[<domain>].mesh.params">
         <Submesh index="0"  pSpeed = "2000.0" sSpeed = "1414.0" rho = "2500.0" internalContactType = "0" />
         <Submesh index="1"  pSpeed = "2500.0" sSpeed = "1768.0" rho = "2500.0" internalContactType = "0" />
         <Submesh index="2"  pSpeed = "2750.0" sSpeed = "1944.0" rho = "2500.0" internalContactType = "0" />

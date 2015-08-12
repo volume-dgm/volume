@@ -40,11 +40,11 @@ public:
 
       std::string meshName = meshBaseName;
       ReplaceSubstring(meshName, "<domain>", std::string(domainString));
-      domains[domainIndex].Load(meshName + ".mesh");
+      domains[domainIndex].Load(AddExtensionToFileName(meshName, ".mesh"));
     }
     std::string meshName = meshBaseName;
     ReplaceSubstring(meshName, "<domain>", "");
-    baseMesh.Load(meshName + ".mesh");
+    baseMesh.Load(AddExtensionToFileName(meshName, ".mesh"));
     
     for (IndexType cellIndex = 0; cellIndex < baseMesh.GetCellsCount(); ++cellIndex)
     {

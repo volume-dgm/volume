@@ -61,7 +61,7 @@ if len(meshes) > 0:
     for mesh in geomMeshes:
         outFileName = outFolder + '/Salome_%(meshName)s' % {'meshName': mesh.GetName()}
         outFile = open(outFileName + '.mesh', 'w')
-        paramsFile = open(outFileName + '.params', 'w')
+        paramsFile = open(outFileName + '.params', 'wb')
 
         dimension = mesh.MeshDimension()
 
@@ -191,19 +191,19 @@ if len(meshes) > 0:
 
         for detectorMesh in detectorMeshes:
             for nodeId in detectorMesh.GetNodesId():
-                xyz = mesh.GetNodeXYZ(nodeId)
+                xyz = detectorMesh.GetNodeXYZ(nodeId)
                 for coordIndex in range(dimension):
                     outFile.write('%(coord)f ' % {'coord': xyz[coordIndex]})
                 outFile.write('\n')
 
         elements = mesh.GetElementsId()
-        elementSubmeshIndices = len(elements) * [0]  # we'll have edge elements as dummies in this array because meh
+        elementSubmeshIndices = len(elements) * [0]  # we'll have edge elements as dummies in this array as well but they won't be used
 
         print "Total cells count: %d" % len(cells)
 
         for groupIndex in range(len(mesh.GetGroups())):
             group = mesh.GetGroups()[groupIndex]
-            groupType = 0
+            groupType = -1
 
             if group.GetType() == salomeCellType:
                 name = group.GetName()
@@ -211,20 +211,26 @@ if len(meshes) > 0:
                     groupType = int(name.split('<')[1].split('>')[0])
                 except:
                     pass
+                print "Cell group" + name + "is index %d" % groupType
 
-                print "Face group" + name + "is index %d" % groupType
+            if groupType >= 0:
+                for elementIndex in group.GetIDs():
+                    if mesh.GetElementType(elementIndex, True) == salomeCellType:
+                        elementSubmeshIndices[elementIndex - 1] = groupType
 
-            if groupType > 0:
-                for faceElementIndex in group.GetIDs():
-                    elementSubmeshIndices[faceElementIndex - 1] = groupType
-
-        faceSubmeshIndices = []
+        cellSubmeshIndices = []
         for elementIndex in range(len(elementSubmeshIndices)):
             if mesh.GetElementType(elementIndex + 1, True) == salomeCellType:
-                faceSubmeshIndices.append(elementSubmeshIndices[elementIndex])
+                cellSubmeshIndices.append(elementSubmeshIndices[elementIndex])
 
-        paramsFileByteArray = bytearray(faceSubmeshIndices)
+        print "Cell params count %d" % len(cellSubmeshIndices)
+
+        paramsFileByteArray = bytearray(cellSubmeshIndices)
+
+        print "Cell params array size %d" % len(paramsFileByteArray)
         paramsFile.write(paramsFileByteArray)
 
         outFile.close()
         paramsFile.close()
+
+        print "Exporting done"

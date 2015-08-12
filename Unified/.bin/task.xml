@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings fileName="configs/discontinuity_box_3d.xml"/>
+<Settings fileName="configs/annual_seismics.xml"/>
+<!-- <Settings fileName="configs/discontinuity_box_3d.xml"/> -->
 <!-- <Settings fileName="configs/methane_bomb.xml"/> -->
 <!-- <Settings fileName="configs/discontinuity_box.xml"/> -->
 <!-- <Settings fileName="configs/cracks2d_settings.xml"/> -->

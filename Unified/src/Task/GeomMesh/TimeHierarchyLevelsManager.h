@@ -230,6 +230,8 @@ void TimeHierarchyLevelsManager<Space>::BuildTimeHierarchyLevels(const GeomMesh<
     IndexType currentLevel = timeHierarchyLevels[cellIndex];
     // TODO: check it
     IndexType newLevel = std::min(currentLevel, IndexType(Log2(cellTimeStep / minTimeStep)) );
+    //IndexType newLevel = std::min(currentLevel, std::max<IndexType>(IndexType(cellTimeStep / minTimeStep), 1) - 1);
+
     timeHierarchyLevels.UpdateBucket(cellIndex, newLevel);
   }
 

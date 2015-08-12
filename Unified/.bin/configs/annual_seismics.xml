@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "2">
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_Annual Seismics Mesh" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <!-- <OutFile fileName= "temp_meshes/annual_seismics[<domain>].mesh" /> -->
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+  
+  <Mesh fileName="meshes/annual_seismics[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01">
+    <MediumParams>
+      <!-- <PerSubmesh fileName = "meshes/annual_seismics[<domain>].mesh.params"> -->
+      <PerSubmesh fileName = "meshes/annual_seismics[<domain>].mesh.params">
+        <Submesh index="0"  pSpeed = "2000.0" sSpeed = "1414.0" rho = "2500.0" internalContactType = "0" /> <!-- clay -->
+        <Submesh index="1"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1600.0" internalContactType = "0" /> <!-- mud -->
+        <Submesh index="2"  pSpeed = "1500.0" sSpeed = "0.0"    rho = "1000.0" internalContactType = "0" /> <!-- water -->
+        <Submesh index="3"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- sand -->
+        <Submesh index="4"  pSpeed = "1400.0" sSpeed = "1000.0" rho = "707.0"  internalContactType = "0" /> <!-- oil -->
+        <Submesh index="5"  pSpeed = "1000.0" sSpeed = "707.0" rho = "900.0"  internalContactType = "0" /> <!-- stage00 -->
+        <Submesh index="6"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage01 -->
+        <Submesh index="7"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage02 -->
+        <Submesh index="8"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage03 -->
+        <Submesh index="9"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage10 -->
+        <Submesh index="10"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage11 -->
+        <Submesh index="11"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage12 -->
+        <Submesh index="12"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage13 -->
+        <Submesh index="13"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage20 -->
+        <Submesh index="14"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage21 -->
+        <Submesh index="15"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage22 -->
+        <Submesh index="16"  pSpeed = "1600.0" sSpeed = "1131.0" rho = "1200.0" internalContactType = "0" /> <!-- stage23 -->
+      </PerSubmesh>  
+    </MediumParams>
+
+    <Boundaries>
+      <Absorb interactionType= "0" /> <!-- left edge -->
+      <Absorb interactionType= "1" /> <!-- right edge -->
+      <Free interactionType= "2"> <!-- top edge-->
+<!--         <ExternalForce>
+          <BoxFunctor boxPoint1= "25.0 -200.0" boxPoint2= "30.0 0" value="0 -1"/> 
+        </ExternalForce> -->
+      </Free>
+      <Absorb interactionType= "3" /> <!-- botttom-->
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" /> <!-- internal contacts -->
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <!-- <Period frames="50" /> -->
+    <Period time="1e-2"/>
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true" writeWaves="true" >
+      <Box    boxPoint1 = "-1550 -1450" boxPoint2 = "1550 50" />
+      <Resolution resolution="1000 500"/>
+    </Data>
+    <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
+    <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+  </Snapshot>
+
+
+  <Detectors fileName="out/detectors[<domain>]<detector>.csv" />
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  </Schedule>
+
+  <Task destinationTime = "2.0">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "5000 5000" velocity = "0.0 -1.0" /> -->
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "0 5000" velocity = "1.0 0.0" /> -->
+      <!-- <BoxState boxPoint1 = "-1.0 -1.0" boxPoint2 = "0.0 1.0" velocity = "-1.0 0.0" /> -->
+      <!-- <BoxState boxPoint1 = "0.0 -1.0" boxPoint2 = "1.0 1.0" velocity = "1.0 0.0" /> -->
+<!--       <BoxState boxPoint1= "-20.0 -20.0" boxPoint2= "20.0 20.0" te = "0.0 -1.0" /> -->
+      <!-- <RadialWave point = "-50.0 -50.0" waveLength = "20.0" radialVelocity = "1.0" /> -->
+      <BallWave   point = "0.0 -50.0" radialVelocity = "0.0 0.0" waveLength = "70.0" pressure = "10000000.0" />
+
+      <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
+      <!-- <BerlageWave point= "0.0 0.0" waveVector= "0 -1" waveLength= "20"/> -->
+      <!-- <AcousticPlaneWave point= "0.0 0.20" waveVector= "0 -0.01" waveLength= "0.2"/> -->
+      <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
+    </IniState>
+    <PointSources>
+      <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+    </PointSources>  
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="Trapezoid"
+   -->
+
+  <Solver polynomialsOrder="4" precision="double" integrator="DormandPrince"
+        tolerance="1e-3" maxScale="3e-3" maxTimeStep="1e-2" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        velocityErrorMult="1e-3" tensionErrorMult="1e-9" positionErrorMult="1e-0"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

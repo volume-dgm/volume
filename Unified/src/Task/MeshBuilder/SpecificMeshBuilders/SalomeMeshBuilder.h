@@ -18,12 +18,12 @@ public:
 
   virtual void LoadGeom(MeshIO<Space>* const mesh)
   {
-    mesh->Load(std::string(meshFileName + ".mesh").c_str(), IO::Ascii);
+    mesh->Load(std::string(AddExtensionToFileName(meshFileName, ".mesh")).c_str(), IO::Ascii);
   }
 
   virtual void BuildMediumParams(MeshIO<Space>* const mesh, std::vector<char>* mediumParams)
   {
-    std::fstream paramsFile(std::string(meshFileName + ".params").c_str(), std::fstream::in | std::fstream::binary);
+    std::fstream paramsFile(std::string(AddExtensionToFileName(meshFileName, ".params")).c_str(), std::fstream::in | std::fstream::binary);
     
     mediumParams->resize(mesh->GetCellsCount());
     if (paramsFile.fail())
@@ -51,7 +51,8 @@ public:
     // mesh->detectorsPositions.push_back(Vector(2, 0, 0));
     // mesh->detectorsPositions.push_back(Vector(2, 0, -1));
 
-    mesh->detectorsPositions.push_back(Vector(8, 0));
+    //what the fuck?! detectors are supported by salome plugin
+    //mesh->detectorsPositions.push_back(Vector(8, 0));
   }
 
 private:

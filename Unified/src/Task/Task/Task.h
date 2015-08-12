@@ -50,9 +50,9 @@ public:
   typedef typename ElasticSpace::Elastic                      Elastic;
   const static int dimsCount = ElasticSystemType::dimsCount;
 
-  // typedef PolynomialPrecomputer<Space, LagrangeSpace<Space, order> > FunctionSpace;
+  typedef PolynomialPrecomputer<Space, LagrangeSpace<Space, order> > FunctionSpace;
   // typedef PolynomialPrecomputer<Space, PolynomialSpace<Space, order> > FunctionSpace;
-  typedef DummyPrecomputer<Space, DubinerSpace<Space, order> > FunctionSpace;
+  //typedef DummyPrecomputer<Space, DubinerSpace<Space, order> > FunctionSpace;
 
   Task();
   virtual ~Task();
@@ -589,6 +589,7 @@ void Task<Space, order>::Run()
             Scalar desiredStep = fabs(lastSnapshotTimes[snapshotIndex] + settings.snapshots[snapshotIndex].timePeriod - currTime) / MaxHierarchyLevel;
             desiredStep = std::max(desiredStep, settings.solver.maxTimeStep * settings.solver.maxScale / MaxHierarchyLevel);
             timeStep = std::min(timeStep, desiredStep);
+            printf("Time step truncated by snapshot time\n");
           }
         }
 
@@ -601,6 +602,7 @@ void Task<Space, order>::Run()
           distributedElasticMeshes[domainNumber]->solver->InitStep(timeStep, settings.solver.tolerance, globalStepSuccessful);
           distributedElasticMeshes[domainNumber]->SetDamping(exp(-settings.solver.damping * timeStep));
         }
+
       }
 
       for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
