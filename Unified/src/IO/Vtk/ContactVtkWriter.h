@@ -1,9 +1,9 @@
 #pragma once
 
 #include "BasicVtkWriter.h"
-#include "../Maths/Spaces.h"
-#include "../Task/GeomMesh/GeomMesh/GeomMesh.h"
-#include "../Task/ElasticSystem/ElasticSystem.h"
+#include "../../Maths/Spaces.h"
+#include "../../Task/GeomMesh/GeomMesh/GeomMesh.h"
+#include "../../Task/ElasticSystem/ElasticSystem.h"
 
 using std::string;
 using std::fstream;

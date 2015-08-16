@@ -17,6 +17,18 @@ Space3::Vector ElasticSystemCommon<Space3>::ValueTypeCommon::GetVelocity() const
 }
 
 template <>
+Space2::Tensor ElasticSystemCommon<Space2>::ValueTypeCommon::GetTension() const
+{
+  return Tensor(values[0], values[2], values[1]);
+}
+
+template <>
+Space3::Tensor ElasticSystemCommon<Space3>::ValueTypeCommon::GetTension() const
+{
+  return Tensor(values[0], values[3], values[5], values[1], values[4], values[2]);
+}
+
+template <>
 void ElasticSystemCommon<Space2>::ValueTypeCommon::SetVelocity(const Vector& velocity)
 {
   values[3] = velocity.x;

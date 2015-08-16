@@ -16,6 +16,7 @@ struct GeomMeshCommon: public GeomMeshBase<Space>
 {
   SPACE_TYPEDEFS
   typedef typename GeomMeshBase<Space>::CellTopologyInfo CellTopologyInfo;
+  typedef IndexType NodeGroupSize;
 
   // geometry
   struct Node
@@ -142,6 +143,7 @@ struct GeomMeshCommon: public GeomMeshBase<Space>
 
   IndexType GetIncidentCellsCount(IndexType nodeIndex) const;
   IndexType GetIncidentCellIndex(IndexType nodeIndex, IndexType cellNumber) const;
+  NodeGroupSize GetNodeGroup(IndexType nodeIndex, std::vector<IndexType>& groupNodes) const;
 
   void BuildTopologyInfos();
   void BuildNodeTopologyInfos();

@@ -2,7 +2,7 @@
 
 #include "BasicVtkWriter.h"
 #include <vector>
-#include "../Utils/Base64.h"
+#include "../../Utils/Base64.h"
 #include <zlib.h>
 #include <zconf.h>
 

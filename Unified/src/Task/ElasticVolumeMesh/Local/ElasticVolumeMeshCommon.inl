@@ -196,16 +196,45 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
       volumeMesh.GetFixedCellIndices(cellIndex, cellIndices);
 
       Vector cellVertices[Space::NodesPerCell];
-      for(IndexType nodeNumber = 0; nodeNumber < Space::Dimension + 1; nodeNumber++)
+      for(IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
       {
         nodeVelocities[cellIndices[nodeNumber]] += InterpolateElastic(cellIndex, volumeMesh.nodes[cellIndices[nodeNumber]].pos).GetVelocity();
       }
     }
 
-    for(IndexType nodeIndex = 0; nodeIndex < volumeMesh.nodes.size(); nodeIndex++)
+    for (IndexType nodeIndex = 0; nodeIndex < volumeMesh.nodes.size(); nodeIndex++)
     {
       nodeVelocities[nodeIndex] /= Scalar(volumeMesh.GetIncidentCellsCount(nodeIndex));
     }
+    
+    if (allowDestruction)
+    {
+      std::fill(isNodeVelocityFound.begin(), isNodeVelocityFound.end(), false);
+
+      std::vector<IndexType> nodeGroupPool;
+      nodeGroupPool.reserve(16);
+
+      for (IndexType nodeIndex = 0; nodeIndex < volumeMesh.nodes.size(); ++nodeIndex)
+      {
+        if (!isNodeVelocityFound[nodeIndex])
+        {
+          IndexType nodeGroupSize = volumeMesh.GetNodeGroup(nodeIndex, nodeGroupPool);
+
+          Vector groupMeanVelocity = Vector::zero();
+          for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSize; ++nodeNumber)
+          {
+            groupMeanVelocity += nodeVelocities[nodeGroupPool[nodeNumber]];
+          }
+          groupMeanVelocity /= Scalar(nodeGroupSize);
+          for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSize; ++nodeNumber)
+          {
+            isNodeVelocityFound[nodeGroupPool[nodeNumber]] = true;
+            nodeVelocities[nodeGroupPool[nodeNumber]] = groupMeanVelocity;
+          }
+        }
+      }
+    }
+    
   }
 }
 
@@ -307,6 +336,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::Initialize(bool allowMovemen
   if (allowDestruction)
   {
     initialAdditionalCellInfos = volumeMesh.additionalCellInfos;
+    isNodeVelocityFound.resize(volumeMesh.nodes.size());
   }
 
   this->allowMovement = allowMovement;

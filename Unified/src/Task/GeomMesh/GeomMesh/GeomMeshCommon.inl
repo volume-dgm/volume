@@ -1,3 +1,6 @@
+#include <stack>
+#include <set>
+
 // Node
 template <typename Space>
 GeomMeshCommon<Space>::Node::Node()
@@ -902,3 +905,60 @@ void GeomMeshCommon<Space>::GetCellsPairOrientation(
   }
 }
 
+template <typename Space>
+typename GeomMeshCommon<Space>::NodeGroupSize 
+  GeomMeshCommon<Space>::GetNodeGroup(IndexType nodeIndex, std::vector<IndexType>& groupNodes) const
+{
+  assert(GetIncidentCellsCount(nodeIndex) > 0);
+  IndexType incidentCellIndex = GetIncidentCellIndex(nodeIndex, 0);
+
+  groupNodes.resize(0);
+  groupNodes.reserve(16);
+
+  std::stack<IndexType> s;
+  std::set<IndexType> used;
+  Vector node = nodes[nodeIndex].pos;
+
+  s.push(incidentCellIndex);
+  used.insert(incidentCellIndex);
+
+  while (!s.empty())
+  {
+    IndexType currentCellIndex = s.top();
+    s.pop();
+
+    IndexType minNodeNumber = 0;
+    for (IndexType nodeNumber = 1; nodeNumber < Space::NodesPerCell; ++nodeNumber)
+    {
+      if ((node - nodes[cells[currentCellIndex].incidentNodes[nodeNumber]].pos).SquareLen() <
+          (node - nodes[cells[currentCellIndex].incidentNodes[minNodeNumber]].pos).SquareLen())
+      minNodeNumber = nodeNumber;
+    }
+
+    groupNodes.push_back(cells[currentCellIndex].incidentNodes[minNodeNumber]);
+
+    Scalar minHeight = GetMinHeight(currentCellIndex);
+
+    for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+    {
+      IndexType correspondingCellIndex = GetCorrespondingCellIndex(currentCellIndex, faceNumber);
+      if (correspondingCellIndex != IndexType(-1))
+      {
+        bool isIncidentCellForNode = false;
+        for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
+        {
+          IndexType currentNodeIndex = cells[correspondingCellIndex].incidentNodes[nodeNumber];
+          if ((nodes[currentNodeIndex].pos - node).Len() < minHeight) isIncidentCellForNode = true;
+        }
+
+        if (isIncidentCellForNode && used.find(correspondingCellIndex) == used.end())
+        {
+          s.push(correspondingCellIndex);
+          used.insert(correspondingCellIndex);
+        }
+      }
+    }
+  } 
+
+  return groupNodes.size();
+}

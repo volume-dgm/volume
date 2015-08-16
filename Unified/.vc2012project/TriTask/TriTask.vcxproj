@@ -38,6 +38,11 @@
     <ClInclude Include="..\..\src\DifferentialSolvers\Solvers\RungeSolver12_14.h" />
     <ClInclude Include="..\..\src\DifferentialSolvers\Solvers\RungeSolver8_10.h" />
     <ClInclude Include="..\..\src\DifferentialSolvers\Solvers\TrapezoidSolver.h" />
+    <ClInclude Include="..\..\src\IO\Vtk\BasicVtkWriter.h" />
+    <ClInclude Include="..\..\src\IO\Vtk\ContactVtkWriter.h" />
+    <ClInclude Include="..\..\src\IO\Vtk\MeshVtkWriter.h" />
+    <ClInclude Include="..\..\src\IO\Vtk\SnapshotVtkWriter.h" />
+    <ClInclude Include="..\..\src\IO\Vtk\VtkReader.h" />
     <ClInclude Include="..\..\src\Maths\AABB2.h" />
     <ClInclude Include="..\..\src\Maths\AABB3.h" />
     <ClInclude Include="..\..\src\Maths\Coordinates2.h" />
@@ -112,13 +117,10 @@
     <ClInclude Include="..\..\src\Task\VolumeMethod\VolumeMesh\VolumeMesh.h" />
     <ClInclude Include="..\..\src\Utils\Base64.h" />
     <ClInclude Include="..\..\src\Utils\Utils.h" />
-    <ClInclude Include="..\..\src\Vtk\BasicVtkWriter.h" />
-    <ClInclude Include="..\..\src\Vtk\ContactVtkWriter.h" />
-    <ClInclude Include="..\..\src\Vtk\MeshVtkWriter.h" />
-    <ClInclude Include="..\..\src\Vtk\SnapshotVtkWriter.h" />
-    <ClInclude Include="..\..\src\Vtk\VtkReader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriter2.inl" />
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriter3.inl" />
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl" />
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystemCommon.inl" />
     <None Include="..\..\src\Task\ElasticVolumeMesh\Distributed\DistributedElasticVolumeMesh2.inl" />
@@ -142,8 +144,6 @@
     <None Include="..\..\src\Task\VolumeMethod\VolumeMesh\VolumeMesh2.inl" />
     <None Include="..\..\src\Task\VolumeMethod\VolumeMesh\VolumeMesh3.inl" />
     <None Include="..\..\src\Task\VolumeMethod\VolumeMesh\VolumeMeshCommon.inl" />
-    <None Include="..\..\src\Vtk\ContactVtkWriter2.inl" />
-    <None Include="..\..\src\Vtk\ContactVtkWriter3.inl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2E59DD03-9C51-4F40-86C9-D6DFEB840265}</ProjectGuid>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../GeomMesh/MeshIO/Local/MeshIO.h"
-#include "../../../Vtk/MeshVtkWriter.h"
+#include "../../../IO/Vtk/MeshVtkWriter.h"
 
 template <typename Space>
 class BasicMeshBuilder

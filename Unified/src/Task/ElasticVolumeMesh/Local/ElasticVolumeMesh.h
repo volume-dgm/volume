@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "../../ElasticSystem/ElasticSystem.h"
 #include "../../ElasticSystem/IniStates.h"
-#include "../../../Vtk/BasicVtkWriter.h"
+#include "../../../IO/Vtk/BasicVtkWriter.h"
 #include "../../../Maths/Spaces.h"
 #include "../../VolumeMethod/VolumeMesh/VolumeMesh.h"
 
@@ -103,6 +103,8 @@ protected:
   // for error computation
   Scalar elasticMults[dimsCount];
   Scalar damping;
+
+  std::vector<bool> isNodeVelocityFound;
 
 private:
   void ComputeElasticMults(Overload<Space2>)

@@ -12,13 +12,13 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "../../Vtk/MeshVtkWriter.h"
+#include "../../IO/Vtk/MeshVtkWriter.h"
 #include "../Task/SettingsParser/SettingsParser.h"
 #include "../../DifferentialSolvers/SolversFactory.h"
 
 // #define SPACE_FROM_SETTINGS
 
-typedef Space2                                        DefaultSpace;
+typedef Space3                                        DefaultSpace;
 
 template<typename Space>
 struct MeshBuilderTask

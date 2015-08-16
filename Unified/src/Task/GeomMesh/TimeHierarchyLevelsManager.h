@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../DifferentialSolvers/SolverState.h"
-#include "../../Vtk/MeshVtkWriter.h"
+#include "../../IO/Vtk/MeshVtkWriter.h"
 #include "BucketStorage.h"
 #include "GeomMesh/GeomMesh.h"
 

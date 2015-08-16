@@ -22,6 +22,9 @@
     <Filter Include="3rdparty\TinyXML">
       <UniqueIdentifier>{2279992c-a733-4ef5-9224-0b15bf4ee153}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Segy">
+      <UniqueIdentifier>{c42e1bc5-3d52-43a5-a031-e16469db894e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rdparty\tinyxml\tinyxml.h">
@@ -31,5 +34,13 @@
       <Filter>3rdparty\TinyXML</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Task\ResultCombiner\SampleIO.h" />
+    <ClInclude Include="..\..\src\IO\Segy\SegySeismo.h">
+      <Filter>Segy</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\IO\Segy\SegySeismo.inl">
+      <Filter>Segy</Filter>
+    </None>
   </ItemGroup>
 </Project>

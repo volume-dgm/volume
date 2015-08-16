@@ -124,6 +124,11 @@ public:
   TimeHierarchyLevelsManager<Space> timeHierarchyLevelsManager;
   void RebuildTimeHierarchyLevels(IndexType globalStepIndex, bool allowCollisions, bool externalInitialization = false);
 
+  Vector GetTotalImpulse() const;
+  Scalar GetTotalEnergy() const;
+
+  virtual Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const = 0;
+
 protected:
   std::vector<Scalar> cellMaxWaveSpeeds;
 
@@ -201,6 +206,7 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetHierarchyLevelsCount;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMaxHierarchyLevel;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetSolverPhasesCount;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellDeformJacobian;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::nodes;
   using VolumeMeshCommon<Space, FunctionSpace, System>::cells;
@@ -255,7 +261,7 @@ public:
 private:
   void BuildMatrices();
 
-  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
+  Scalar    GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
   Vector    GetRefXDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy) * J
   Vector    GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy) * J
 
@@ -323,6 +329,7 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetFaceSquare;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetGhostCellVertices;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetCellFaceVertices;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellDeformJacobian;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::nodes;
   using VolumeMeshCommon<Space, FunctionSpace, System>::cells;
@@ -380,7 +387,7 @@ private:
   void BuildMatrices();
   bool IsCellRegular(IndexType cellIndex) const;
 
-  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
+  Scalar    GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
   Vector    GetRefXDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy, dξ/dz) * J
   Vector    GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy, dη/dz) * J
   Vector    GetRefZDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dζ/dx, dζ/dy, dζ/dz) * J

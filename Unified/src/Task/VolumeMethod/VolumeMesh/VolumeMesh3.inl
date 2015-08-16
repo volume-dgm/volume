@@ -396,25 +396,25 @@ void VolumeMesh<Space3, FunctionSpace, System>::
 
 template< typename FunctionSpace, typename System>
 typename Space3::Scalar VolumeMesh<Space3, FunctionSpace, System>::
-  GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const
+GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const
 {
   // deform jacobian equals 6 * tetrahedron volume
-  return 
-    cellVertices[0].x * ( cellVertices[1].y * (cellVertices[3].z - cellVertices[2].z) +
-                          cellVertices[2].y * (cellVertices[1].z - cellVertices[3].z) +
-                          cellVertices[3].y * (cellVertices[2].z - cellVertices[1].z)) +
+  return
+    cellVertices[0].x * (cellVertices[1].y * (cellVertices[3].z - cellVertices[2].z) +
+    cellVertices[2].y * (cellVertices[1].z - cellVertices[3].z) +
+    cellVertices[3].y * (cellVertices[2].z - cellVertices[1].z)) +
 
-    cellVertices[1].x * ( cellVertices[0].y * (cellVertices[2].z - cellVertices[3].z) +
-                          cellVertices[2].y * (cellVertices[3].z - cellVertices[0].z) +
-                          cellVertices[3].y * (cellVertices[0].z - cellVertices[2].z)) +
+    cellVertices[1].x * (cellVertices[0].y * (cellVertices[2].z - cellVertices[3].z) +
+    cellVertices[2].y * (cellVertices[3].z - cellVertices[0].z) +
+    cellVertices[3].y * (cellVertices[0].z - cellVertices[2].z)) +
 
-    cellVertices[2].x * ( cellVertices[0].y * (cellVertices[3].z - cellVertices[1].z) +
-                          cellVertices[1].y * (cellVertices[0].z - cellVertices[3].z) +
-                          cellVertices[3].y * (cellVertices[1].z - cellVertices[0].z)) +
+    cellVertices[2].x * (cellVertices[0].y * (cellVertices[3].z - cellVertices[1].z) +
+    cellVertices[1].y * (cellVertices[0].z - cellVertices[3].z) +
+    cellVertices[3].y * (cellVertices[1].z - cellVertices[0].z)) +
 
-    cellVertices[3].x * ( cellVertices[0].y * (cellVertices[1].z - cellVertices[2].z) +
-                          cellVertices[1].y * (cellVertices[2].z - cellVertices[0].z) +
-                          cellVertices[2].y * (cellVertices[0].z - cellVertices[1].z));
+    cellVertices[3].x * (cellVertices[0].y * (cellVertices[1].z - cellVertices[2].z) +
+    cellVertices[1].y * (cellVertices[2].z - cellVertices[0].z) +
+    cellVertices[2].y * (cellVertices[0].z - cellVertices[1].z));
 }
 
 template<typename FunctionSpace, typename System>

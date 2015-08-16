@@ -677,3 +677,62 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   }
   return result;
 }
+
+template<typename Space, typename FunctionSpace, typename System>
+typename Space::Vector VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalImpulse() const
+{
+  Vector totalImpulse = Vector::zero();
+  Vector cellVertices[Space::NodesPerCell];
+  Vector intVel;
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+  {
+    intVel = Vector::zero();
+    for (IndexType pointIndex = 0; pointIndex < functionSpace->points.size(); ++pointIndex)
+    {
+      intVel += GetRefCellSolution(cellIndex, functionSpace->points[pointIndex]).GetVelocity() * functionSpace->weights[pointIndex];
+    }
+    GetCellVertices(cellIndex, cellVertices);
+    totalImpulse += GetCellDeformJacobian(cellVertices) * intVel / cellMediumParameters[cellIndex].invRho;
+  }
+  return totalImpulse;
+}
+
+template<typename Space, typename FunctionSpace, typename System>
+typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalEnergy() const
+{
+  Scalar totalEnergy     = 0;
+  Scalar kineticEnergy   = 0;
+  Scalar potencialEnergy = 0;
+
+  const Tensor identityTensor = Tensor(1);
+
+  Scalar lambda, mu;
+
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+  {
+    Vector cellVertices[Space::NodesPerCell];
+    GetCellVertices(cellIndex, cellVertices);
+    Scalar jacobian = GetCellDeformJacobian(cellVertices);
+
+    lambda = cellMediumParameters[cellIndex].lambda;
+    mu = cellMediumParameters[cellIndex].mju;
+
+    
+
+    for (IndexType pointIndex = 0; pointIndex < functionSpace->points.size(); ++pointIndex)
+    {
+      const auto& cellSolution = GetRefCellSolution(cellIndex, functionSpace->points[pointIndex]);
+      kineticEnergy += Scalar(0.5) * jacobian * cellSolution.GetVelocity().SquareLen() * 
+        functionSpace->weights[pointIndex] / cellMediumParameters[cellIndex].invRho;
+
+      Tensor t = cellSolution.GetTension();
+
+      Scalar s = lambda / (Space::Dimension * lambda + 2 * mu);
+
+      // from Chelnokov phd thesis
+      potencialEnergy += jacobian * 0.25 / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * functionSpace->weights[pointIndex];
+    }
+  }
+  totalEnergy = kineticEnergy + potencialEnergy;
+  return totalEnergy;
+}

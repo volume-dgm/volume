@@ -1,7 +1,9 @@
 #include "../../Utils/Utils.h"
-#include "../../Vtk/BasicVtkWriter.h"
-#include "../../Vtk/SnapshotVtkWriter.h"
-#include "../../Vtk/VtkReader.h"
+#include "../../IO/Vtk/BasicVtkWriter.h"
+#include "../../IO/Vtk/SnapshotVtkWriter.h"
+#include "../../IO/Vtk/VtkReader.h"
+#include "../../IO/Segy/SegySeismo.h"
+
 #include "../Task/SettingsParser/SettingsParser.h"
 #include "../ElasticSystem/ElasticSystem.h"
 #include "SampleIO.h"
@@ -178,8 +180,8 @@ private:
       assert(files[detectorIndex] != NULL);
     }
 
-    std::fstream outputVelocity("out/velocity_detector.csv", std::ios_base::out);
-    std::fstream outputPressure("out/pressure_detector.csv", std::ios_base::out);
+    std::fstream outputVelocity("out/velocity_data.csv", std::ios_base::out);
+    std::fstream outputPressure("out/pressure_data.csv", std::ios_base::out);
 
     assert(outputVelocity.fail() == false);
     assert(outputPressure.fail() == false);
@@ -226,6 +228,22 @@ private:
 
     outputVelocity.close();
     outputPressure.close();
+
+    // convert *.csv to *.segy
+    typedef CombinedSeismogramm<float, Space::Dimension>::Elastic SeismoElastic;
+    CombinedSeismogramm < float, Space::Dimension > s = CombinedSeismogramm < float, Space::Dimension >(1);
+
+    std::vector<std::string> in_files;
+    in_files.push_back("out/velocity_data");
+
+    const std::string dimNames = "xyz";
+    std::vector<std::string> out_files;
+    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+    {
+      out_files.push_back("v" + std::string(1, dimNames[dimIndex]) + ".segy");
+    }
+    s.Load(CSV, in_files);
+    s.Save(SEG_Y, out_files);
   }
 };
 

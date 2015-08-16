@@ -99,8 +99,8 @@
     </Data>
     <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
     <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
-    <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
   </Snapshot>
+  <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
 
   <Schedule domainsCount="1">
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Maths/Spaces.h"
+#include "../../Maths/Spaces.h"
 #include "BasicVtkWriter.h"
-#include "../Task/GeomMesh/GeomMesh/GeomMesh.h"
+#include "../../Task/GeomMesh/GeomMesh/GeomMesh.h"
 
 template < typename Space, typename CellInfo = typename AdditionalCellInfo<Space>:: template AuxInfo<char> >
 class MeshVtkWriter: public BasicVtkWriter<Space>

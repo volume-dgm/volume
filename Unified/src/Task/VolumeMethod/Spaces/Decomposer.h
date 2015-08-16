@@ -55,11 +55,12 @@ struct Decomposer
     return space.GetBasisFunctionValue(point, functionIndex);
   }
 
-protected:
+
   // for quadrature integration
   std::vector<Scalar> weights;
   std::vector<Vector> points;
 
+protected:
   Scalar cellVolumeIntegrals[functionsCount * functionsCount];
   Scalar cellVolumeIntegralsInv[functionsCount * functionsCount];
 

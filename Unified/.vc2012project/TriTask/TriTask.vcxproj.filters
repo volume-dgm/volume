@@ -16,9 +16,6 @@
     <Filter Include="VolumeMethod">
       <UniqueIdentifier>{58c2ff28-fdaf-4154-a64a-e90ccd832571}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Vtk">
-      <UniqueIdentifier>{e296634b-928b-48c3-893b-1e445ded4d52}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Network">
       <UniqueIdentifier>{f9a857a8-fe29-457d-84d9-93b2b20f4ece}</UniqueIdentifier>
     </Filter>
@@ -78,6 +75,12 @@
     </Filter>
     <Filter Include="3rdparty\QuadratureIntegration">
       <UniqueIdentifier>{c2f6de08-7374-458c-bc62-aa64d3766466}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{dd51f05f-975a-4c83-9f13-1031d320ea36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO\Vtk">
+      <UniqueIdentifier>{e296634b-928b-48c3-893b-1e445ded4d52}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -211,21 +214,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Maths\timer.h">
       <Filter>Maths</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Vtk\SnapshotVtkWriter.h">
-      <Filter>Vtk</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Vtk\BasicVtkWriter.h">
-      <Filter>Vtk</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Vtk\MeshVtkWriter.h">
-      <Filter>Vtk</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Vtk\ContactVtkWriter.h">
-      <Filter>Vtk</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Vtk\VtkReader.h">
-      <Filter>Vtk</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Task\ElasticSystem\BoundaryInfos.h">
       <Filter>ElasticSystem</Filter>
@@ -395,14 +383,23 @@
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\ResultCombinerSettingsParser.h">
       <Filter>Task\SettingsParser</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\IO\Vtk\BasicVtkWriter.h">
+      <Filter>IO\Vtk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\IO\Vtk\ContactVtkWriter.h">
+      <Filter>IO\Vtk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\IO\Vtk\MeshVtkWriter.h">
+      <Filter>IO\Vtk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\IO\Vtk\SnapshotVtkWriter.h">
+      <Filter>IO\Vtk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\IO\Vtk\VtkReader.h">
+      <Filter>IO\Vtk</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\Vtk\ContactVtkWriter2.inl">
-      <Filter>Vtk</Filter>
-    </None>
-    <None Include="..\..\src\Vtk\ContactVtkWriter3.inl">
-      <Filter>Vtk</Filter>
-    </None>
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl">
       <Filter>ElasticSystem</Filter>
     </None>
@@ -459,6 +456,12 @@
     </None>
     <None Include="..\..\src\Task\GeomMesh\GeomMesh\GeomMeshBase.inl">
       <Filter>GeomMesh\GeomMesh</Filter>
+    </None>
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriter2.inl">
+      <Filter>IO\Vtk</Filter>
+    </None>
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriter3.inl">
+      <Filter>IO\Vtk</Filter>
     </None>
   </ItemGroup>
 </Project>

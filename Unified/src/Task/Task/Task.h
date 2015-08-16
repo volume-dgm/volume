@@ -23,10 +23,10 @@
 
 #include "../ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh.h"
 
-#include "../../Vtk/BasicVtkWriter.h"
-#include "../../Vtk/SnapshotVtkWriter.h"
-#include "../../Vtk/MeshVtkWriter.h"
-#include "../../Vtk/ContactVtkWriter.h"
+#include "../../IO/Vtk/BasicVtkWriter.h"
+#include "../../IO/Vtk/SnapshotVtkWriter.h"
+#include "../../IO/Vtk/MeshVtkWriter.h"
+#include "../../IO/Vtk/ContactVtkWriter.h"
 
 #include "../../DifferentialSolvers/SolversFactory.h"
 
@@ -37,6 +37,7 @@
 #include "../../Maths/Spaces.h"
 
 #define PROFILING
+#define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
 class Task: public NotifyListener, public ReceiveListener
@@ -272,6 +273,9 @@ private:
   IndexType GetCurrentNodeDomainsCount() const;
   void      SetThreadsCount();
 
+  void WriteEnergyAndImpulseDeviation(const std::vector<Scalar>& initialEnergies, 
+    const std::vector<Vector>& initialImpulses);
+
 protected:
   Settings<Space> settings;
   SolverState     solverState;
@@ -452,6 +456,14 @@ void Task<Space, order>::Run()
 
   double startStep = MPI_Wtime();
 
+  std::vector<Scalar> initialEnergies;
+  std::vector<Vector> initialImpulses;
+  for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
+  {
+    initialEnergies.push_back(distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy());
+    initialImpulses.push_back(distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalImpulse());
+  }
+
   while(currTime < settings.task.destinationTime || settings.task.destinationTime < 0)
   {
     if (phaseAdvanced && solverState.AllHierarchyLevelsCompleted())
@@ -459,7 +471,7 @@ void Task<Space, order>::Run()
       if (lastInitialCurrTime < currTime && lastInitialGlobalStep < solverState.globalStepIndex)
       {
         double savingBegin = MPI_Wtime();
-        SaveDetectorsData(currTime, solverState.globalStepIndex / MaxHierarchyLevel);
+        SaveDetectorsData(currTime, solverState.globalStepIndex / MaxHierarchyLevel);        
         bool snapshot = false;
         for (IndexType snapshotIndex = 0; snapshotIndex < settings.snapshots.size(); ++snapshotIndex)
         {
@@ -474,6 +486,7 @@ void Task<Space, order>::Run()
         if (snapshot) 
         {
           SaveDetectorsDataToFile();
+          WriteEnergyAndImpulseDeviation(initialEnergies, initialImpulses);
         }
         lastInitialCurrTime = currTime;
         lastInitialGlobalStep = solverState.globalStepIndex;
@@ -1489,3 +1502,25 @@ void Task<Space, order>::SaveProfilingData(const std::string& info, double begin
     profilingDataFile << '[' << GetNodeId() << "," << solverState.globalStepIndex << "] " << info << ": " << elapsed_msecs << std::endl;
   #endif
 }
+
+template<typename Space, unsigned int order>
+void Task<Space, order>::WriteEnergyAndImpulseDeviation(const std::vector<Scalar>& initialEnergies,
+  const std::vector<Vector>& initialImpulses)
+{
+  #ifdef WRITE_ENERGY_AND_IMPULSE
+  for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
+  {
+    Vector totalImpulse = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalImpulse();
+    Scalar totalEnergy = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy();
+    std::cout << "Energy deviation: " << fabs(totalEnergy - initialEnergies[domainNumber]) / initialEnergies[domainNumber] * 100 << "%;"
+      << "Impulse deviation: " << (totalImpulse - initialImpulses[domainNumber]).Len() / initialImpulses[domainNumber].Len() * 100 << "%" << std::endl;
+    Vector impulseDeviation = totalImpulse - initialImpulses[domainNumber];
+    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+    {
+      std::cout << impulseDeviation[dimIndex] << " ";
+    }
+    std::cout << std::endl;
+  }
+  #endif // WRITE_ENERGY_AND_IMPULSE
+}
+

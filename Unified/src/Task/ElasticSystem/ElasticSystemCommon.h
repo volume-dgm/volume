@@ -48,6 +48,8 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
     void SetZeroValues();
     Vector GetVelocity() const;
     void SetVelocity(const Vector& velocity);
+
+    Tensor GetTension() const;
     void SetTension(const Tensor& tension);
 
     void MakeDimension(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult);
@@ -214,7 +216,7 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
 
     void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values)
     {
-      std::fill_n(values, dimsCount, 0);
+      std::fill(values, values + dimsCount, 0);
       Vector externalVelocity = (*velocityFunctor)(globalPoint, externalNormal, time) / velocityDimensionlessMult;
       SetVelocity(externalVelocity, values);
     }

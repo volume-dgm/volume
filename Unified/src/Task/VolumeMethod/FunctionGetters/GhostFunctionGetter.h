@@ -91,9 +91,25 @@ struct GhostCellFunctionGetter
     if (collisionProcessor.found) return;
   }
 
+  bool GetValue(const Vector& globalPoint, Scalar* values)
+  {
+    switch (getterType)
+    {
+      case Solution: std::fill(values, values + dimsCount, 0); break;
+      case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
+    }
+
+    CollisionProcessorT collisionProcessor(this, globalPoint, values);
+    mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(globalPoint, globalPoint), collisionProcessor);
+
+    return collisionProcessor.found;
+  }
+
   bool TryGhostCell(const Vector& testPoint, int neighbourCellIndex,
     Scalar* values)
   {
+    if (cellIndex == neighbourCellIndex) return false;
+
     IndexType neighbourCellIndices[Space::NodesPerCell];
     mesh->GetFixedCellIndices(neighbourCellIndex, neighbourCellIndices);
 
