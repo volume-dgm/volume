@@ -348,10 +348,10 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
                     seismogramms[dims*path_index + k].trace_header_data[i].trace_seq_num_line = i;
                     seismogramms[dims*path_index + k].trace_header_data[i].trace_seq_num_reel = i;
                     seismogramms[dims*path_index + k].trace_header_data[i].trace_id_code = i;
-                    seismogramms[dims*path_index + k].trace_header_data[i].receiver_x = rec_x[i];
-                    seismogramms[dims*path_index + k].trace_header_data[i].receiver_y = rec_y[i];
-                    seismogramms[dims*path_index + k].trace_header_data[i].source_x = source_x;
-                    seismogramms[dims*path_index + k].trace_header_data[i].source_y = source_y;
+                    seismogramms[dims*path_index + k].trace_header_data[i].receiver_x = uint32(rec_x[i]); // because of precision equals 1m %)
+                    seismogramms[dims*path_index + k].trace_header_data[i].receiver_y = uint32(rec_y[i]);
+                    seismogramms[dims*path_index + k].trace_header_data[i].source_x = uint32(source_x);
+                    seismogramms[dims*path_index + k].trace_header_data[i].source_y = uint32(source_y);
                     seismogramms[dims*path_index + k].trace_header_data[i].field_record_num = 1;
                     seismogramms[dims*path_index + k].trace_header_data[i].num_of_samples = header_data.samples_per_trace;
                     seismogramms[dims*path_index + k].trace_header_data[i].sample_interval = header_data.sample_interval;

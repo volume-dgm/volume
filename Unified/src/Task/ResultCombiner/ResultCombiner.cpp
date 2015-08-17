@@ -15,7 +15,7 @@
 
 typedef Space2 DefaultSpace;
 
- #define SPACE_FROM_SETTINGS
+ // #define SPACE_FROM_SETTINGS
 
 template <typename Space>
 class ResultCombinerTask
@@ -240,7 +240,8 @@ private:
     std::vector<std::string> out_files;
     for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
     {
-      out_files.push_back("v" + std::string(1, dimNames[dimIndex]) + ".segy");
+      // TODO: add some clear prefix
+      out_files.push_back(/*settings.mesh.meshFileName + */ "out/v" + std::string(1, dimNames[dimIndex]) + ".segy");
     }
     s.Load(CSV, in_files);
     s.Save(SEG_Y, out_files);
