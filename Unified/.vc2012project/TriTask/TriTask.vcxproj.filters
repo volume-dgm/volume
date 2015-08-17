@@ -395,6 +395,9 @@
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\ResultCombinerSettingsParser.h">
       <Filter>Task\SettingsParser</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Task\VolumeMethod\Spaces\DubinerPrecomputer.h">
+      <Filter>VolumeMethod\Spaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Vtk\ContactVtkWriter2.inl">

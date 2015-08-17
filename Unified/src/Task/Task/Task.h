@@ -16,10 +16,11 @@
 
 #include "../VolumeMethod/Spaces/Decomposer.h"
 #include "../VolumeMethod/Spaces/PolynomialPrecomputer.h"
+#include "../VolumeMethod/Spaces/DubinerPrecomputer.h"
+
 #include "../VolumeMethod/Spaces/PolynomialSpace.h"
 #include "../VolumeMethod/Spaces/FourierSpace2.h"
 #include "../VolumeMethod/Spaces/LagrangeSpace.h"
-#include "../VolumeMethod/Spaces/DubinerSpace.h"
 
 #include "../ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh.h"
 
@@ -50,9 +51,11 @@ public:
   typedef typename ElasticSpace::Elastic                      Elastic;
   const static int dimsCount = ElasticSystemType::dimsCount;
 
-  typedef PolynomialPrecomputer<Space, LagrangeSpace<Space, order> > FunctionSpace;
-  // typedef PolynomialPrecomputer<Space, PolynomialSpace<Space, order> > FunctionSpace;
-  //typedef DummyPrecomputer<Space, DubinerSpace<Space, order> > FunctionSpace;
+  //typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, LagrangeSpace<Space, order> > > FunctionSpace;
+  //typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, PolynomialSpace<Space, order> > > FunctionSpace;
+  typedef PolynomialPrecomputer<Space, NodalDecomposer <Space, LagrangeSpace<Space, order> > > FunctionSpace;
+
+  //typedef DubinerPrecomputer<Space, QuadratureDecomposer<Space, DubinerSpace<Space, order> > > FunctionSpace;
 
   Task();
   virtual ~Task();
@@ -65,6 +68,8 @@ protected:
   void LoadMeshes();
   void SaveVtkSnapshot(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, bool halfStepSolution = false);
 
+  void AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space2>);
+  void AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space3>);
 protected:
   void SaveDetectorsData(Scalar currTime, IndexType stepIndex);
   void SaveDetectorsDataToFile();
@@ -468,6 +473,10 @@ void Task<Space, order>::Run()
           {
             lastSnapshotTimes[snapshotIndex] = currTime;
             SaveVtkSnapshot(currTime, snapshotIndex, solverState.globalStepIndex);
+
+            //For task-specific snapshot analyzing and debugging purposes
+            //AnalyzeSnapshotData(currTime, snapshotIndex, solverState.globalStepIndex, Overload<Space>());
+
             snapshot = true;
           }
         }
@@ -847,6 +856,102 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
 }
 
 template<typename Space, unsigned int order>
+void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space3>)
+{
+  printf("This is debug processing code. Don't forget to turn it off for regular tasks.\n");
+}
+
+template<typename Space, unsigned int order>
+void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space2>)
+{
+  printf("This is debug processing code. Don't forget to turn it off for regular tasks.\n");
+
+  IniStateMaker<ElasticSpace> *dstStateMaker = stateMakers[0]; //state to match to
+
+  int sampleWidth = 512; //integration area resolution
+  int sampleHeight = 512;
+
+  Scalar eps = Scalar(1e-3); //to compute integral only in the mesh and avoid interpolating outside of it
+  Vector boxPoint1 = Vector(eps, eps); //integration area
+  Vector boxPoint2 = Vector(Scalar(1) - eps, Scalar(1) - eps);
+
+  std::string analysisFileName = "out/analysis<step>.txt"; //analysis file name
+
+  if(GetCurrentNodeDomainsCount() != 1) return;
+
+  char stepString[256];
+  char timeString[256];
+
+  int domainIndex = 0;
+  sprintf(stepString, "%.6d", (int)stepIndex);
+  sprintf(timeString, "%.5f", currTime);
+
+  ReplaceSubstring(analysisFileName, "<step>",    std::string(stepString));
+  ReplaceSubstring(analysisFileName, "<time>",    std::string(timeString));
+
+  std::fstream analysisDataFile;
+  analysisDataFile.open(analysisFileName, std::fstream::out);
+
+
+  std::vector<Elastic> sampleData;
+  sampleData.resize(sampleWidth * sampleHeight);
+
+
+  for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
+  {
+    // snapshot
+    // AABB2 snapshotArea = distributedElasticMeshes[domainNumber]->volumeMesh.GetComputationArea();
+    distributedElasticMeshes[domainNumber]->MakeSnapshot(sampleData.data(), 
+      sampleWidth, 
+      sampleHeight, 
+      boxPoint1, 
+      boxPoint2, false);
+
+    //distributedElasticMeshes[domainNumber]->
+    Vector2 stepSize = Vector((boxPoint2.x - boxPoint1.x) / Scalar(sampleWidth - 1), (boxPoint2.y - boxPoint1.y) / Scalar(sampleHeight - 1));
+
+    Scalar l2DiffSqr = 0;
+    Scalar lInfDiff = 0;
+    for(int y = 0; y < sampleHeight; y++)
+    {
+      {
+        for(int x = 0; x < sampleWidth; x++)
+        {
+          Vector point(boxPoint1.x + Scalar(x) * stepSize.x,
+                       boxPoint1.y + Scalar(y) * stepSize.y);
+          assert(stateMakers.size() > 0);
+
+          ElasticSpace::MediumParametersType material;
+          material.SetFromVelocities(2, 1, 1);
+
+          assert(stateMakers.size() > 0);
+          Elastic dstValue = dstStateMaker->GetValue(point, material.lambda, material.mju, material.invRho);
+          Elastic value = sampleData[x + y * sampleWidth];
+
+          Scalar err = (dstValue.GetVelocity() - value.GetVelocity()).Len();
+          l2DiffSqr += (stepSize.x * stepSize.y) * Sqr(err);
+          lInfDiff = std::max(lInfDiff, abs(err));
+        }
+      }
+    }
+    Scalar l2Diff = sqrt(l2DiffSqr);
+    std::stringstream analysisLineStr;
+    analysisLineStr << 
+      "L2 error: " << l2Diff << std::endl << 
+      "L Inf diff: " << lInfDiff << std::endl <<
+      "Domain: " << domainNumber << std::endl << 
+      "Step: " << stepIndex << std::endl << 
+      "Time " << currTime << std::endl;
+
+    analysisDataFile << analysisLineStr.str();
+  }
+  analysisDataFile.close();
+}
+
+
+
+
+template<typename Space, unsigned int order>
 void Task<Space, order>::LoadGeom(IndexType domainNumber)
 {
   LoadGeom(Overload<Space>(), domainNumber);
@@ -885,12 +990,12 @@ void Task<Space, order>::LoadMeshes()
         typename MediumParamsSection::PerSubmeshInfo perSubmeshInfo =
           settings.mesh.mediumParamsSection.perSubmeshInfos[paramsDesc.infoIndex];
 
-        std::string paramsFileName = AddExtensionToFileName(perSubmeshInfo.fileName, ".params");
-
+        std::string paramsFileName = perSubmeshInfo.fileName;
         if(paramsFileName == "")
         {
-          paramsFileName = AddExtensionToFileName(settings.mesh.meshFileName, ".params");
+          paramsFileName = settings.mesh.meshFileName;
         }
+        paramsFileName = AddExtensionToFileName(paramsFileName, ".params");
 
         ReplaceSubstring(paramsFileName, "<domain>", domainString);
 
