@@ -5,20 +5,40 @@
 #include "../../../Maths/QuadraturePrecomputer.h"
 #include <assert.h>
 
-template<typename Space, typename PolynomialSpace>
-struct Decomposer
+template<typename Space, typename FunctionSpaceT>
+struct QuadratureDecomposer : public FunctionSpaceT
 {
   SPACE_TYPEDEFS
 
-  const static IndexType functionsCount = PolynomialSpace::functionsCount;
-  const static IndexType order = PolynomialSpace::order;
-  PolynomialSpace space;
+  typedef FunctionSpaceT FunctionSpace;
 
-  virtual Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) = 0;
+  using FunctionSpace::functionsCount;
+  using FunctionSpace::order;
 
-  Decomposer()
+  QuadratureDecomposer()
   {
+    //building quadrature points and weights
     QuadraturePrecomputer::BuildQuadrature<Space>(order, weights, points);
+
+    //building function integrals
+    std::fill_n(cellVolumeIntegrals, functionsCount * functionsCount, 0);
+
+    for (IndexType functionIndex0 = 0; functionIndex0 < functionsCount; functionIndex0++)
+    {
+
+      for (IndexType functionIndex1 = 0; functionIndex1 < functionsCount; functionIndex1++)
+      {
+        for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+        {
+          Scalar functionValue0 = this->GetBasisFunctionValue(points[pointIndex], functionIndex0);
+          Scalar functionValue1 = this->GetBasisFunctionValue(points[pointIndex], functionIndex1);
+
+          cellVolumeIntegrals[functionIndex0 * functionsCount + functionIndex1] += functionValue0 * functionValue1 * weights[pointIndex];
+        }
+      }
+    }
+
+    MatrixInverse<Scalar, IndexType>(cellVolumeIntegrals, cellVolumeIntegralsInv, functionsCount);
   }
 
   template<typename Function, int ValuesCount>
@@ -34,7 +54,7 @@ struct Decomposer
 
       for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
       {
-        Scalar basisFunctionValue = space.GetBasisFunctionValue(points[pointIndex], functionIndex);
+        Scalar basisFunctionValue = this->GetBasisFunctionValue(points[pointIndex], functionIndex);
         for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
         {
           correlations[valueIndex * functionsCount + functionIndex] += basisFunctionValue * values[valueIndex] * weights[pointIndex];
@@ -50,80 +70,47 @@ struct Decomposer
           correlations[valueIndex * functionsCount + j] * cellVolumeIntegralsInv[j * functionsCount + i];
   }
 
-  Scalar GetBasisFunctionValue(Vector point, IndexType functionIndex) const
+  /*Scalar GetBasisFunctionValue(Vector point, IndexType functionIndex) const
   {
     return space.GetBasisFunctionValue(point, functionIndex);
-  }
-
+  }*/
 
   // for quadrature integration
   std::vector<Scalar> weights;
   std::vector<Vector> points;
 
 protected:
-  Scalar cellVolumeIntegrals[functionsCount * functionsCount];
-  Scalar cellVolumeIntegralsInv[functionsCount * functionsCount];
-
-  void ComputeVolumeIntegrals()
-  {
-    for (IndexType functionIndex0 = 0; functionIndex0 < functionsCount; functionIndex0++)
-    {
-      for (IndexType functionIndex1 = 0; functionIndex1 < functionsCount; functionIndex1++)
-      {
-        cellVolumeIntegrals[functionIndex0 * functionsCount + functionIndex1] =
-          ComputeCellVolumeIntegral(functionIndex1, functionIndex0);
-      }
-    }
-    MatrixInverse<Scalar, IndexType>(cellVolumeIntegrals, cellVolumeIntegralsInv, functionsCount);
-  }
+  Scalar cellVolumeIntegrals[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
+  Scalar cellVolumeIntegralsInv[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
 };
 
-template<typename Space, typename PolynomialSpace>
-struct DummyPrecomputer: public Decomposer<Space, PolynomialSpace>
+template<typename Space, typename PolynomialSpaceT>
+struct NodalDecomposer : public PolynomialSpaceT
 {
   SPACE_TYPEDEFS
 
-  using Decomposer<Space, PolynomialSpace>::functionsCount;
-  using Decomposer<Space, PolynomialSpace>::order;
-  using Decomposer<Space, PolynomialSpace>::space;
+  typedef PolynomialSpaceT PolynomialSpace;
 
-  DummyPrecomputer()
+  using PolynomialSpace::functionsCount;
+  using PolynomialSpace::order;
+
+  NodalDecomposer()
   {
-    Decomposer<Space, PolynomialSpace>::ComputeVolumeIntegrals();
   }
 
-  inline Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // <Ô1, Ô2>
+  template<typename Function, int ValuesCount>
+  void Decompose(Function& func, Scalar* coords)
   {
-    return space.ComputeCellVolumeIntegral(functionIndex0, functionIndex1);
-  }
+    for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    {
+      Vector basisPoint = this->GetBasisPoint(functionIndex);
+      Scalar values[ValuesCount];
+      func(basisPoint, values);
 
-  inline Scalar GetBasisFunctionValue(const Vector& point, IndexType functionIndex) const
-  {
-    return space.GetBasisFunctionValue(point, functionIndex);
-  }
-
-  inline Scalar ComputeCellVolumeIntegral(IndexType functionIndex)
-  {
-    return space.ComputeCellVolumeIntegral(functionIndex);
-  }
-
-  inline Vector ComputeDerivativeVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // {<dÔ1/dx, Ô2>, <dÔ1/dy, Ô2>}
-  {
-    return space.ComputeDerivativeVolumeIntegral(functionIndex0, functionIndex1);
-  }
-
-  inline Scalar ComputeOutgoingFlux(IndexType srcEdgeNumber, IndexType functionIndex0, IndexType functionIndex1)
-  {
-    return space.ComputeOutgoingFlux(srcEdgeNumber, functionIndex0, functionIndex1);
-  }
-
-  inline Scalar ComputeIncomingFlux(IndexType srcEdgeNumber, IndexType dstEdgeNumber, IndexType functionIndex0, IndexType functionIndex1)
-  {
-    return space.ComputeIncomingFlux(srcEdgeNumber, dstEdgeNumber, functionIndex0, functionIndex1);
-  }
-
-  inline Scalar ComputeEdgeFlux(IndexType edgeNumber, IndexType functionIndex)
-  {
-    return space.ComputeEdgeFlux(edgeNumber, functionIndex);
+      for(IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+      {
+        coords[valueIndex * functionsCount + functionIndex] = values[valueIndex];
+      }
+    }
   }
 };

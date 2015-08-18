@@ -3,27 +3,25 @@
 #include "../Cell.h"
 #include "Decomposer.h" 
 
-template<typename Space, typename PolynomialSpace>
+template<typename Space, typename Decomposer>
 struct PolynomialPrecomputer;
 
-template<typename PolynomialSpace>
-struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2, PolynomialSpace>
+template<typename Decomposer>
+struct PolynomialPrecomputer<Space2, Decomposer>: public Decomposer
 {
   SPACE2_TYPEDEFS
   typedef Space2 Space;
 
-  using Decomposer<Space, PolynomialSpace>::functionsCount;
-  using Decomposer<Space, PolynomialSpace>::order;
-  using Decomposer<Space, PolynomialSpace>::space;
+  using Decomposer::functionsCount;
+  using Decomposer::order;
 
   PolynomialPrecomputer()
   {
-    Decomposer<Space, PolynomialSpace>::ComputeVolumeIntegrals();
   }
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)
   {
-    Polynomial<Scalar, IndexType, 2> function = space.GetBasisPolynomial(functionIndex);
+    Polynomial<Scalar, IndexType, 2> function = this->GetBasisPolynomial(functionIndex);
 
     Scalar coords[2];
     coords[0] = point.x;
@@ -39,14 +37,14 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2,
 
   Scalar ComputeCellVolumeIntegral(IndexType functionIndex) 
   {
-    Polynomial<Scalar, IndexType, 2> function = space.GetBasisPolynomial(functionIndex);
+    Polynomial<Scalar, IndexType, 2> function = this->GetBasisPolynomial(functionIndex);
     return function.ComputeSubspaceIntegral(2);
   }
 
   Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // <Ф1, Ф2>
   {
-    Polynomial<Scalar, IndexType, 2> function0 = space.GetBasisPolynomial(functionIndex0);
-    Polynomial<Scalar, IndexType, 2> function1 = space.GetBasisPolynomial(functionIndex1);
+    Polynomial<Scalar, IndexType, 2> function0 = this->GetBasisPolynomial(functionIndex0);
+    Polynomial<Scalar, IndexType, 2> function1 = this->GetBasisPolynomial(functionIndex1);
 
     Polynomial<Scalar, IndexType, 2> correlation = function0 * function1;
     return correlation.ComputeSubspaceIntegral(2);
@@ -75,8 +73,8 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2,
 
   Vector ComputeDerivativeVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // {<Ф2, dФ1/dx>, <Ф2, dФ1/dy>, <Ф2, dФ1/dz>}
   {
-    Polynomial<Scalar, IndexType, 2> function0 = space.GetBasisPolynomial(functionIndex0);
-    Polynomial<Scalar, IndexType, 2> function1 = space.GetBasisPolynomial(functionIndex1);
+    Polynomial<Scalar, IndexType, 2> function0 = this->GetBasisPolynomial(functionIndex0);
+    Polynomial<Scalar, IndexType, 2> function1 = this->GetBasisPolynomial(functionIndex1);
 
     Vector res;
 
@@ -131,8 +129,8 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2,
     } 
     return res;*/
 
-    Polynomial<Scalar, IndexType, 2> function0 = space.GetBasisPolynomial(basisFunction0);
-    Polynomial<Scalar, IndexType, 2> function1 = space.GetBasisPolynomial(basisFunction1);
+    Polynomial<Scalar, IndexType, 2> function0 = this->GetBasisPolynomial(basisFunction0);
+    Polynomial<Scalar, IndexType, 2> function1 = this->GetBasisPolynomial(basisFunction1);
 
 
     Polynomial<Scalar, IndexType, 1> edgeToRef[2];
@@ -186,8 +184,8 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2,
     } */
     //return res;
 
-    Polynomial<Scalar, IndexType, 2> function0 = space.GetBasisPolynomial(basisFunction0);
-    Polynomial<Scalar, IndexType, 2> function1 = space.GetBasisPolynomial(basisFunction1);
+    Polynomial<Scalar, IndexType, 2> function0 = this->GetBasisPolynomial(basisFunction0);
+    Polynomial<Scalar, IndexType, 2> function1 = this->GetBasisPolynomial(basisFunction1);
 
 
     Polynomial<Scalar, IndexType, 1> srcEdgeToRef[2];
@@ -231,7 +229,7 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2,
 
   Scalar ComputeEdgeFlux(IndexType refEdgeNumber, IndexType basisFunction)
   {
-    Polynomial<Scalar, IndexType, 2> function = space.GetBasisPolynomial(basisFunction);
+    Polynomial<Scalar, IndexType, 2> function = this->GetBasisPolynomial(basisFunction);
 
     Polynomial<Scalar, IndexType, 1> edgeToRef[2];
     Cell<Space2>::GetEdgeRefTransitionPolynomials(refEdgeNumber, edgeToRef);
@@ -259,24 +257,22 @@ struct PolynomialPrecomputer<Space2, PolynomialSpace>: public Decomposer<Space2,
   }
 };
 
-template<typename PolynomialSpace>
-struct PolynomialPrecomputer<Space3, PolynomialSpace>: public Decomposer<Space3, PolynomialSpace>
+template<typename Decomposer>
+struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
 {
   SPACE3_TYPEDEFS
   typedef Space3 Space;
 
-  using Decomposer<Space, PolynomialSpace>::functionsCount;
-  using Decomposer<Space, PolynomialSpace>::order;
-  using Decomposer<Space, PolynomialSpace>::space;
+  using Decomposer::functionsCount;
+  using Decomposer::order;
 
-  PolynomialPrecomputer(): Decomposer<Space3, PolynomialSpace>()
+  PolynomialPrecomputer()
   {
-    Decomposer<Space, PolynomialSpace>::ComputeVolumeIntegrals();
   }
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)
   {
-    Polynomial<Scalar, IndexType, 3> function = space.GetBasisPolynomial(functionIndex);
+    Polynomial<Scalar, IndexType, 3> function = this->GetBasisPolynomial(functionIndex);
 
     Scalar coords[3];
     coords[0] = point.x;
@@ -294,8 +290,8 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>: public Decomposer<Space3,
 
   Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // <Ô1, Ô2>
   {
-    Polynomial<Scalar, IndexType, 3> function0 = space.GetBasisPolynomial(functionIndex0);
-    Polynomial<Scalar, IndexType, 3> function1 = space.GetBasisPolynomial(functionIndex1);
+    Polynomial<Scalar, IndexType, 3> function0 = this->GetBasisPolynomial(functionIndex0);
+    Polynomial<Scalar, IndexType, 3> function1 = this->GetBasisPolynomial(functionIndex1);
 
     Polynomial<Scalar, IndexType, 3> correlation = function0 * function1;
     return correlation.ComputeSubspaceIntegral(3);
@@ -325,8 +321,8 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>: public Decomposer<Space3,
 
   Vector ComputeDerivativeVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // {<Ô2, dÔ1/dx>, <Ô2, dÔ1/dy>, <Ô2, dÔ1/dz>}
   {
-    Polynomial<Scalar, IndexType, 3> function0 = space.GetBasisPolynomial(functionIndex0);
-    Polynomial<Scalar, IndexType, 3> function1 = space.GetBasisPolynomial(functionIndex1);
+    Polynomial<Scalar, IndexType, 3> function0 = this->GetBasisPolynomial(functionIndex0);
+    Polynomial<Scalar, IndexType, 3> function1 = this->GetBasisPolynomial(functionIndex1);
 
     Vector res;
 
@@ -396,8 +392,8 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>: public Decomposer<Space3,
     }
     return res;*/
 
-    Polynomial<Scalar, IndexType, 3> function0 = space.GetBasisPolynomial(basisFunction0);
-    Polynomial<Scalar, IndexType, 3> function1 = space.GetBasisPolynomial(basisFunction1);
+    Polynomial<Scalar, IndexType, 3> function0 = this->GetBasisPolynomial(basisFunction0);
+    Polynomial<Scalar, IndexType, 3> function1 = this->GetBasisPolynomial(basisFunction1);
 
 
     Polynomial<Scalar, IndexType, 2> faceToRef[3];
@@ -478,8 +474,8 @@ struct PolynomialPrecomputer<Space3, PolynomialSpace>: public Decomposer<Space3,
     } */
     //return res;
 
-    Polynomial<Scalar, IndexType, 3> function0 = space.GetBasisPolynomial(basisFunction0);
-    Polynomial<Scalar, IndexType, 3> function1 = space.GetBasisPolynomial(basisFunction1);
+    Polynomial<Scalar, IndexType, 3> function0 = this->GetBasisPolynomial(basisFunction0);
+    Polynomial<Scalar, IndexType, 3> function1 = this->GetBasisPolynomial(basisFunction1);
 
 
     Polynomial<Scalar, IndexType, 2> srcFaceToRef[3];
