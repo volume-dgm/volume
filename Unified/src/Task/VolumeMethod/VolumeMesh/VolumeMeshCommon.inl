@@ -717,8 +717,6 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalE
     lambda = cellMediumParameters[cellIndex].lambda;
     mu = cellMediumParameters[cellIndex].mju;
 
-    
-
     for (IndexType pointIndex = 0; pointIndex < functionSpace->points.size(); ++pointIndex)
     {
       const auto& cellSolution = GetRefCellSolution(cellIndex, functionSpace->points[pointIndex]);

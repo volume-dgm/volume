@@ -52,10 +52,9 @@ public:
   typedef typename ElasticSpace::Elastic                      Elastic;
   const static int dimsCount = ElasticSystemType::dimsCount;
 
-  //typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, LagrangeSpace<Space, order> > > FunctionSpace;
-  typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, PolynomialSpace<Space, order> > > FunctionSpace;
+  typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, LagrangeSpace<Space, order> > > FunctionSpace;
+  //typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, PolynomialSpace<Space, order> > > FunctionSpace;
   // typedef PolynomialPrecomputer<Space, NodalDecomposer <Space, LagrangeSpace<Space, order> > > FunctionSpace;
-
   //typedef DubinerPrecomputer<Space, QuadratureDecomposer<Space, DubinerSpace<Space, order> > > FunctionSpace;
 
   Task();

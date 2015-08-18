@@ -79,7 +79,6 @@ struct QuadratureDecomposer : public FunctionSpaceT
   std::vector<Scalar> weights;
   std::vector<Vector> points;
 
-protected:
   Scalar cellVolumeIntegrals[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
   Scalar cellVolumeIntegralsInv[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
 };
