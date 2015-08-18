@@ -36,6 +36,12 @@ public:
     yDerivativeVolumeIntegralsSparse(functionsCount, functionsCount)
   {
     functionSpace = new FunctionSpace;
+
+    QuadraturePrecomputer::BuildQuadrature<Space::BorderSpace>(FunctionSpace::order,
+      quadratureWeightsForBorder, quadraturePointsForBorder);
+
+    QuadraturePrecomputer::BuildQuadrature<Space>(FunctionSpace::order,
+      quadratureWeights, quadraturePoints);
   }
 
   virtual ~VolumeMeshCommon()
@@ -164,8 +170,11 @@ protected:
   bool debugMode;
 
   // for quadtature integration
+  std::vector<Scalar> quadratureWeightsForBorder;
+  std::vector<typename BorderSpace::Vector> quadraturePointsForBorder;
+
   std::vector<Scalar> quadratureWeights;
-  std::vector<typename BorderSpace::Vector> quadraturePoints;
+  std::vector<Vector> quadraturePoints;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -237,8 +246,8 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::halfStepCellSolutions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::allowDynamicCollisions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::time;
-  using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeights;
-  using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePoints;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeightsForBorder;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePointsForBorder;
 
 public:
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
@@ -364,8 +373,8 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::halfStepCellSolutions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::allowDynamicCollisions;
   using VolumeMeshCommon<Space, FunctionSpace, System>::time;
-  using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeights;
-  using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePoints;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeightsForBorder;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePointsForBorder;
 
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
     VolumeMeshCommon<Space3, FunctionSpace, System>(solverPhasesCount, hierarchyLevelsCount)

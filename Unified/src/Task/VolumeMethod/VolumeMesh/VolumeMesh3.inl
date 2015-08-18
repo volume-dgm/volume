@@ -27,7 +27,6 @@ void VolumeMesh<Space3, FunctionSpace, System>::
     std::copy(mediumParameters, mediumParameters + cellsCount, cellMediumParameters.begin());
   }
 
-  QuadraturePrecomputer::BuildQuadrature<Space::BorderSpace>(FunctionSpace::order, quadratureWeights, quadraturePoints);
   printf("Loading done \n");
 }
 
@@ -253,10 +252,10 @@ void VolumeMesh<Space3, FunctionSpace, System>::
             flux.setZero();
 
             // quadrature integration of numerical flux
-            for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+            for (IndexType pointIndex = 0; pointIndex < quadraturePointsForBorder.size(); ++pointIndex)
             {
-              Vector globalPoint = (faceGlobalVertices[1] - faceGlobalVertices[0]) * quadraturePoints[pointIndex].x + 
-                                   (faceGlobalVertices[2] - faceGlobalVertices[0]) * quadraturePoints[pointIndex].y +
+              Vector globalPoint = (faceGlobalVertices[1] - faceGlobalVertices[0]) * quadraturePointsForBorder[pointIndex].x +
+                                   (faceGlobalVertices[2] - faceGlobalVertices[0]) * quadraturePointsForBorder[pointIndex].y +
                                                             faceGlobalVertices[0];
               Vector refPoint = GlobalToRefVolumeCoords(globalPoint, cellVertices);
 
@@ -286,7 +285,7 @@ void VolumeMesh<Space3, FunctionSpace, System>::
                 for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
                 {
                   flux(valueIndex, functionIndex) +=
-                    quadratureWeights[pointIndex] *
+                    quadratureWeightsForBorder[pointIndex] *
                     riemannSolution.values[valueIndex] *
                     functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
                 }

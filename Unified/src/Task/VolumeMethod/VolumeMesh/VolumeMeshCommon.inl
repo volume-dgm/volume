@@ -687,9 +687,9 @@ typename Space::Vector VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalI
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
   {
     intVel = Vector::zero();
-    for (IndexType pointIndex = 0; pointIndex < functionSpace->points.size(); ++pointIndex)
+    for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
     {
-      intVel += GetRefCellSolution(cellIndex, functionSpace->points[pointIndex]).GetVelocity() * functionSpace->weights[pointIndex];
+      intVel += GetRefCellSolution(cellIndex, quadraturePoints[pointIndex]).GetVelocity() * quadratureWeights[pointIndex];
     }
     GetCellVertices(cellIndex, cellVertices);
     totalImpulse += GetCellDeformJacobian(cellVertices) * intVel / cellMediumParameters[cellIndex].invRho;
@@ -717,18 +717,18 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalE
     lambda = cellMediumParameters[cellIndex].lambda;
     mu = cellMediumParameters[cellIndex].mju;
 
-    for (IndexType pointIndex = 0; pointIndex < functionSpace->points.size(); ++pointIndex)
+    for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
     {
-      const auto& cellSolution = GetRefCellSolution(cellIndex, functionSpace->points[pointIndex]);
+      typename System::ValueType cellSolution = GetRefCellSolution(cellIndex, quadraturePoints[pointIndex]);
       kineticEnergy += Scalar(0.5) * jacobian * cellSolution.GetVelocity().SquareLen() * 
-        functionSpace->weights[pointIndex] / cellMediumParameters[cellIndex].invRho;
+        quadratureWeights[pointIndex] / cellMediumParameters[cellIndex].invRho;
 
       Tensor t = cellSolution.GetTension();
 
       Scalar s = lambda / (Space::Dimension * lambda + 2 * mu);
 
       // from Chelnokov phd thesis
-      potencialEnergy += jacobian * 0.25 / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * functionSpace->weights[pointIndex];
+      potencialEnergy += jacobian * 0.25 / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * quadratureWeights[pointIndex];
     }
   }
   totalEnergy = kineticEnergy + potencialEnergy;

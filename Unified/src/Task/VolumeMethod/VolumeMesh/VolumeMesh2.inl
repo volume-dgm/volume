@@ -28,7 +28,6 @@ void VolumeMesh<Space2, FunctionSpace, System>::
     std::copy(mediumParameters, mediumParameters + cellsCount, cellMediumParameters.begin());
   }
 
-  QuadraturePrecomputer::BuildQuadrature<Space::BorderSpace>(FunctionSpace::order, quadratureWeights, quadraturePoints);
   printf("Loading done \n");
 }
 
@@ -158,8 +157,6 @@ void VolumeMesh<Space2, FunctionSpace, System>::
     Eigen::Matrix<Scalar, 1, dimsCount> rightContactMatrix;
 
     Eigen::Matrix<Scalar, dimsCount, functionsCount> boundaryInfoValues;
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> ghostValues;
-    // Eigen::Matrix<Scalar, MediumParameters::ParamsCount, functionsCount> ghostParams;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> sourceValues;
     Eigen::Matrix<Scalar, dimsCount, functionsCount> sourcePointValues;
 
@@ -270,28 +267,25 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             GetGhostCellVertices(cellIndex, edgeNumber, ghostCellVertices);
             GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, edgeNormal, ghostCellVertices, time,
               GhostCellFunctionGetter<VolumeMeshT>::Solution);
-            functionSpace->template Decompose< GhostCellFunctionGetter<VolumeMeshT>, dimsCount >(functionGetter, ghostValues.data());
-
+          
             GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, edgeNormal, ghostCellVertices, time,
               GhostCellFunctionGetter<VolumeMeshT>::MediumParams);
-
-            /* functionSpace->template Decompose<GhostCellFunctionGetter<VolumeMeshT>, MediumParameters::ParamsCount>
-              (paramsGetter, ghostParams.data()); */
 
             flux.setZero();
 
             // quadrature integration of numerical flux
-            for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+            for (IndexType pointIndex = 0; pointIndex < quadraturePointsForBorder.size(); ++pointIndex)
             {
-              Vector globalPoint = (edgeGlobalVertices[1] - edgeGlobalVertices[0]) * quadraturePoints[pointIndex] + edgeGlobalVertices[0];
+              Vector globalPoint = (edgeGlobalVertices[1] - edgeGlobalVertices[0]) * quadraturePointsForBorder[pointIndex] + edgeGlobalVertices[0];
               Vector refPoint = GlobalToRefVolumeCoords(globalPoint, cellVertices);
 
               Vector ghostRefPoint = GlobalToRefVolumeCoords(globalPoint, ghostCellVertices);
 
               typename System::ValueType interiorSolution = GetRefCellSolution(cellIndex, refPoint);
-              typename System::ValueType exteriorSolution = GetRefCellSolution(ghostValues.data(), ghostRefPoint);
+              typename System::ValueType exteriorSolution;
+              functionGetter(ghostRefPoint, exteriorSolution.values);
 
-              MediumParameters exteriorParams; // = GetRefCellParams(ghostParams.data(), ghostRefPoint);
+              MediumParameters exteriorParams;
               paramsGetter.operator()(ghostRefPoint, exteriorParams.params);                 
 
               Scalar tmp[dimsCount];
@@ -312,7 +306,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
                 for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
                 {
                   flux(valueIndex, functionIndex) += 
-                    quadratureWeights[pointIndex] * 
+                    quadratureWeightsForBorder[pointIndex] *
                     riemannSolution.values[valueIndex] * 
                     functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
                 }

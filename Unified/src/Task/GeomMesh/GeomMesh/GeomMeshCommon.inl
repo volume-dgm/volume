@@ -915,6 +915,7 @@ typename GeomMeshCommon<Space>::NodeGroupSize
   groupNodes.resize(0);
   groupNodes.reserve(16);
 
+  // TODO: replace with stack-memory-allocated structure
   std::stack<IndexType> s;
   std::set<IndexType> used;
   Vector node = nodes[nodeIndex].pos;

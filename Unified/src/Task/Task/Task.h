@@ -38,7 +38,7 @@
 #include "../../Maths/Spaces.h"
 
 #define PROFILING
-#define WRITE_ENERGY_AND_IMPULSE
+// #define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
 class Task: public NotifyListener, public ReceiveListener
@@ -52,10 +52,10 @@ public:
   typedef typename ElasticSpace::Elastic                      Elastic;
   const static int dimsCount = ElasticSystemType::dimsCount;
 
-  typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, LagrangeSpace<Space, order> > > FunctionSpace;
+  // typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, LagrangeSpace<Space, order> > > FunctionSpace;
   //typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, PolynomialSpace<Space, order> > > FunctionSpace;
-  // typedef PolynomialPrecomputer<Space, NodalDecomposer <Space, LagrangeSpace<Space, order> > > FunctionSpace;
-  //typedef DubinerPrecomputer<Space, QuadratureDecomposer<Space, DubinerSpace<Space, order> > > FunctionSpace;
+  typedef PolynomialPrecomputer<Space, NodalDecomposer <Space, LagrangeSpace<Space, order> > > FunctionSpace;
+  // typedef DubinerPrecomputer<Space, QuadratureDecomposer<Space, DubinerSpace<Space, order> > > FunctionSpace;
 
   Task();
   virtual ~Task();
@@ -959,9 +959,6 @@ void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshot
   }
   analysisDataFile.close();
 }
-
-
-
 
 template<typename Space, unsigned int order>
 void Task<Space, order>::LoadGeom(IndexType domainNumber)
