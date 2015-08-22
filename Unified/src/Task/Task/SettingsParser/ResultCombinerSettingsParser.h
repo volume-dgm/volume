@@ -25,26 +25,28 @@ struct ResultCombinerSettings
     if(seismogramsElement)
     {
       ParseString(seismogramsElement, "detectorsFileName", &detectorsFileName);
-      ParseString(seismogramsElement, "refDetectorsFileName", &refDetectorsFileName);
 
       ParseString(seismogramsElement, "detectorsLocationsFile", &detectorsLocationsFile);
 
-      ParseString(seismogramsElement, "velocityScvName", &velocityScvName);
-      ParseString(seismogramsElement, "pressureScvName", &pressureScvName);
+      ParseString(seismogramsElement, "velocityCsvName", &velocityCsvName);
+      ParseString(seismogramsElement, "velocityRefCsvData", &velocityRefCsvName);
+      ParseString(seismogramsElement, "pressureCsvName", &pressureCsvName);
 
       ParseString(seismogramsElement, "velocityCoordSegyName", &velocityCoordSegyName);
+      ParseString(seismogramsElement, "velocityDiffCoordSegyName", &velocityDiffCoordSegyName);
     }
   }
 
   int snapshotsCount;
 
   std::string detectorsFileName;
-  std::string refDetectorsFileName;
 
   std::string detectorsLocationsFile;
 
-  std::string velocityScvName;
-  std::string pressureScvName;
+  std::string velocityCsvName;
+  std::string velocityRefCsvName;
+  std::string pressureCsvName;
 
   std::string velocityCoordSegyName;
+  std::string velocityDiffCoordSegyName;
 };

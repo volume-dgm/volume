@@ -85,6 +85,7 @@ public:
   std::vector<struct segy_trace_header> trace_header_data;
 
 private:
+  std::vector<Scalar> interpolationIntervals;
   void swap_header_endian();
   void swap_trace_header_endian(struct segy_trace_header * ptr_header);
   void swap_all_trace_headers_endian();
@@ -194,7 +195,7 @@ public:
   struct Elastic
   {
     typedef Scalar ScalarType;
-    Scalar values[(dims + 1) * (dims + 2) / 2 - 1];
+    Scalar values[(dims + 1) * (dims + 2) / 2 - 1]; //WHAT THE FUCK
   };
 
   struct ComponentInfo
@@ -211,7 +212,7 @@ public:
 
   CombinedSeismogramm(Scalar interpolation_multiplier = 1) : interpolation_multiplier(interpolation_multiplier) {}
 
-  void Load(SeismoType type, std::vector<std::string> paths);
+  void Load(SeismoType type, std::vector<std::string> paths, const CombinedSeismogramm<Scalar, dims> *compatibleSeismogram = 0);
 
   void Save(SeismoType type, std::vector<std::string> paths);
   void Save(SeismoType type);
@@ -220,7 +221,10 @@ public:
 
   void AddComponent(const std::string& path, ValueGetter<Elastic, dims>* getter);
 
+  CombinedSeismogramm<Scalar, dims> &operator -=(const CombinedSeismogramm<Scalar, dims> & other);
+
 private:
+  std::vector<Scalar> interpolationIntervals;
   void interpolate_data_on_equal_time_intervals(Scalar time_interval);
 };
 

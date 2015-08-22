@@ -84,8 +84,8 @@
     <Snapshots count="300000" />
 
     <Seismograms
-      velocityScvName="out/velocity_data.csv"
-      pressureScvName="out/pressure_data.csv"
+      velocityCsvName="out/velocity_data.csv"
+      pressureCsvName="out/pressure_data.csv"
       velocityCoordSegyName="out/velocity_<coord>.segy"/>    
   </ResultCombiner>          
 </Settings>

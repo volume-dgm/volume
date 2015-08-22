@@ -108,10 +108,14 @@
 
     <Seismograms
       detectorsFileName="out/detectors[<domain>]<detector>.csv" 
-      refDetectorsFileName="out/ref/detectors[<domain>]<detector>.csv" 
-      velocityScvName="out/velocity_data.csv"
-      pressureScvName="out/pressure_data.csv"
-      velocityCoordSegyName="out/velocity_<coord>.segy"/>
+
+      velocityCsvName="out/velocity_data.csv"
+      pressureCsvName="out/pressure_data.csv"
+
+      velocityRefCsvData="out/ref/velocity_data.csv" 
+
+      velocityCoordSegyName="out/velocity_<coord>.segy"
+      velocityDiffCoordSegyName="out/velocity_diff_<coord>.segy" />
 
   </ResultCombiner>       
   

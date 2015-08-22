@@ -147,7 +147,6 @@ private:
     std::string detectorsFileNamePattern = settings.detectors.filename;
     if(settings.resultCombiner.detectorsFileName != "")
       detectorsFileNamePattern = settings.resultCombiner.detectorsFileName;
-    std::string detectorsRefFileNamePattern = settings.resultCombiner.refDetectorsFileName;
 
     std::string locationsFile = settings.resultCombiner.detectorsLocationsFile;
     if(locationsFile == "")
@@ -170,7 +169,6 @@ private:
     }
 
     std::vector<FILE*> detectorFiles(detectorsCount, NULL);
-    std::vector<FILE*> refDetectorFiles(detectorsCount, NULL);
 
     for (IndexType detectorIndex = 0; detectorIndex < detectorsCount; ++detectorIndex)
     {
@@ -187,33 +185,21 @@ private:
         std::cerr << "Can`t open file: " << fileName << "\n";
       }
       assert(detectorFiles[detectorIndex] != NULL);
-
-      if(detectorsRefFileNamePattern != "")
-      {
-        std::string fileName = detectorsRefFileNamePattern;
-        ReplaceSubstring(fileName, "<detector>", std::string(detectorString));
-        ReplaceSubstring(fileName, "<domain>", std::string(domainString));
-        if ((refDetectorFiles[detectorIndex] = fopen(fileName.c_str(), "r")) == NULL)
-        {
-          std::cerr << "Can`t open file: " << fileName << "\n";
-        }
-        assert(refDetectorFiles[detectorIndex] != NULL);
-      }
     }
 
     std::fstream outputVelocity;
     std::fstream outputPressure;
 
-    if(settings.resultCombiner.velocityScvName != "")
+    if(settings.resultCombiner.velocityCsvName != "")
     {
       printf("Making velocity csv file\n");
-      outputVelocity.open(settings.resultCombiner.velocityScvName, std::ios_base::out);
+      outputVelocity.open(settings.resultCombiner.velocityCsvName, std::ios_base::out);
       assert(outputVelocity.fail() == false);
     }
-    if(settings.resultCombiner.pressureScvName != "")
+    if(settings.resultCombiner.pressureCsvName != "")
     {
       printf("Making pressure csv file\n");
-      outputPressure.open(settings.resultCombiner.pressureScvName, std::ios_base::out);
+      outputPressure.open(settings.resultCombiner.pressureCsvName, std::ios_base::out);
       assert(outputPressure.fail() == false);
     }
 
@@ -252,19 +238,6 @@ private:
           continue;
         }
 
-        Vector refVelocity = Vector::zero();
-        Scalar refTime = 0;
-        Tensor refSigma;
-        if(refDetectorFiles[detectorIndex])
-        {
-          ReadSample<Space>(refDetectorFiles[detectorIndex], refTime, refVelocity, refSigma);
-        }
-        if (refDetectorFiles[detectorIndex] && feof(refDetectorFiles[detectorIndex]))
-        {
-          eof = true;
-          continue;
-        }
-
         if (detectorIndex == 0)
         {
           if(outputVelocity.is_open())
@@ -272,7 +245,7 @@ private:
           if(outputPressure.is_open())
             outputPressure << time << ";";
         }
-        WriteSample<Space>(outputVelocity, outputPressure, time - refTime, v - refVelocity, sigma - refSigma); //has is_open() inside
+        WriteSample<Space>(outputVelocity, outputPressure, time, v, sigma); //has is_open() inside
       }
       if(outputVelocity.is_open())
         outputVelocity << "\n";
@@ -286,26 +259,58 @@ private:
       outputPressure.close();
     // convert *.csv to *.segy
     typedef CombinedSeismogramm<float, Space::Dimension>::Elastic SeismoElastic;
-    CombinedSeismogramm < float, Space::Dimension > s = CombinedSeismogramm < float, Space::Dimension >(1);
+    CombinedSeismogramm < float, Space::Dimension > combinedSeismogram = CombinedSeismogramm < float, Space::Dimension >(1);
 
-    if(settings.resultCombiner.velocityScvName != "" && settings.resultCombiner.velocityCoordSegyName != "")
+    bool saveSegY = settings.resultCombiner.velocityCoordSegyName != "";
+    bool saveSegYDiff = settings.resultCombiner.velocityDiffCoordSegyName != "";
+    if(settings.resultCombiner.velocityCsvName != "" && (saveSegY || saveSegYDiff))
     {
       printf("Combining seismograms into segy\n");
-      std::vector<std::string> in_files;
-      in_files.push_back(settings.resultCombiner.velocityScvName);
+      std::vector<std::string> srcScvFiles;
+      srcScvFiles.push_back(settings.resultCombiner.velocityCsvName);
 
       const std::string dimNames = "xyz";
-      std::vector<std::string> out_files;
-      for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
-      {
-        // TODO: add some clear prefix
-        std::string fileName = settings.resultCombiner.velocityCoordSegyName;
-        ReplaceSubstring(fileName, "<coord>", std::string(1, dimNames[dimIndex]));
+      std::vector<std::string> dstSegyFiles;
+      std::vector<std::string> dstSegyDiffFiles;
 
-        out_files.push_back(fileName);
+      if(saveSegY)
+      {
+        for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+        {
+          std::string fileName = settings.resultCombiner.velocityCoordSegyName;
+          ReplaceSubstring(fileName, "<coord>", std::string(1, dimNames[dimIndex]));
+
+          dstSegyFiles.push_back(fileName);
+        }
       }
-      s.Load(CSV, in_files);
-      s.Save(SEG_Y, out_files);
+      if(saveSegYDiff)
+      {
+        for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+        {
+          std::string fileName = settings.resultCombiner.velocityDiffCoordSegyName;
+          ReplaceSubstring(fileName, "<coord>", std::string(1, dimNames[dimIndex]));
+
+          dstSegyDiffFiles.push_back(fileName);
+        }
+      }
+
+
+      combinedSeismogram.Load(CSV, srcScvFiles);
+
+      if(settings.resultCombiner.velocityRefCsvName != "" && saveSegYDiff)
+      {
+
+        std::vector<std::string> refPath;
+        refPath.push_back(settings.resultCombiner.velocityRefCsvName);
+        CombinedSeismogramm < float, Space::Dimension > refSeismogram = CombinedSeismogramm < float, Space::Dimension >(1);
+        refSeismogram.Load(CSV, refPath, &combinedSeismogram);
+        printf("Subtracting ref seismogram\n");
+        refSeismogram -= combinedSeismogram;
+
+        refSeismogram.Save(SEG_Y, dstSegyDiffFiles);
+      }
+      if(saveSegY)
+        combinedSeismogram.Save(SEG_Y, dstSegyFiles);
     }
     printf("Done");
   }

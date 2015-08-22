@@ -148,15 +148,15 @@
       detectorsFileName="out/detectors[<domain>]<detector>.csv"
       refDetectorsFileName="out/ref/detectors[<domain>]<detector>.csv" 
       detectorsLocationsFile="meshes/detectorsLocations.loc"
-      velocityScvName="out/velocity_data.csv"
-      pressureScvName="out/pressure_data.csv"
+      velocityCsvName="out/velocity_data.csv"
+      pressureCsvName="out/pressure_data.csv"
       velocityCoordSegyName="out/velocity_<coord>.segy"/>  -->
     <!-- detectorsFileName - name of seismodetectors files. if not specified, name from Detectors/filename will be used instead. [optional]-->
-    <!-- refDetectorsFileName - name of reference detectors file, their readings will be substracted from main seismodetectors. used for differential seismology, skip this parameter if not needed [optional]-->
     <!-- detectorsLocationsFile - name of file containing seismodetector locations. if not presents, Detectors/locationsFileName will be used [optional]-->
-    <!-- velocityScvName - name of csv file to save combined detector velocity data to. if not present, no velocity data will be save [required] -->
-    <!-- pressureScvName - name of csv file to save combined detector velocity data to. if not present, no velocity data will be save [optional] -->
-    <!-- velocityCoordSegyName - name of segy per-coord velocity seismogram. <coord> is macro for coord(x/y/z), velocityScvName must be specified to use this [optional] -->
+    <!-- velocityCsvName - name of csv file to save combined detector velocity data to. if not present, no velocity data will be save [required] -->
+    <!-- refVelocityCsvName - name of reference csv velocity file, its readings will be substracted from main seismograms. used for differential seismology, skip this parameter if not needed [optional]-->
+    <!-- pressureCsvName - name of csv file to save combined detector velocity data to. if not present, no velocity data will be save [optional] -->
+    <!-- velocityCoordSegyName - name of segy per-coord velocity seismogram. <coord> is macro for coord(x/y/z), velocityCsvName must be specified to use this [optional] -->
   </ResultCombiner>
 
 </Settings>

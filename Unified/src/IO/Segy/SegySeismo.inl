@@ -134,7 +134,7 @@ void Seismogramm<Scalar>::SaveSegY(const std::string& path, const std::vector<Sc
         text_header[i] = 0;
     outf.write(text_header, 3200);
 
-    swap_header_endian();
+    swap_header_endian();    //TODO: this basically breaks header. the class becomes unusable after saving.
     swap_all_trace_headers_endian();
     swap_data_endian();
 
@@ -160,9 +160,8 @@ void Seismogramm<Scalar>::AddValue(const Sample& value, IndexType detectorIndex)
 // |||||||||||||||||||||||| CombinedSeismogramm ||||||||||||||||||||||||||||||||||| \\
 // |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| \\
 
-
 template <typename Scalar, int dims>
-void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::string> paths)
+void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::string> paths, const CombinedSeismogramm<Scalar, dims> *compatibleSeismogram)
 {
     seismogramms.resize(componentInfos.size());
     if (type == SEG_Y)
@@ -237,20 +236,25 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
 
             // Interpolating results on eqidistant time grid
             // ///////////////////////////////////////
+            assert(path_index < compatibleSeismogram->interpolationIntervals->size());
+            interpolationIntervals.resize(path_index + 1);
+            if(compatibleSeismogram)
+              this->interpolationIntervals[path_index] = compatibleSeismogram->interpolationIntervals[path_index];
+            else
+              this->interpolationIntervals[path_index] = (times[num_of_times-1] - times[0]) / (num_of_times - 1);
 
-            Scalar interval = (times[num_of_times-1] - times[0]) / (num_of_times - 1);
-            std::cout << "interval: " << interval << std::endl;
-            interpolate_data_on_equal_time_intervals(interval * interpolation_multiplier);
+            std::cout << "interval: " << this->interpolationIntervals[path_index] << std::endl;
+            interpolate_data_on_equal_time_intervals(this->interpolationIntervals[path_index] * interpolation_multiplier);
             num_of_times = times.size();
             std::cout << "num_of_times: " << num_of_times << std::endl;
-            interval = times[1] - times[0];
-            std::cout << "interval: " << interval << std::endl;
+            this->interpolationIntervals[path_index] = times[1] - times[0];
+            std::cout << "interval: " <<   this->interpolationIntervals[path_index] << std::endl;
 
 
             // Set binary header data
             // ///////////////////////////////////////
             struct segy_bin_header_data header_data;
-            header_data.sample_interval = (uint32)(floor(interval * 1000000.0 + 0.5));
+            header_data.sample_interval = (uint32)(floor(this->interpolationIntervals[path_index] * 1000000.0 + 0.5));
             header_data.sample_interval_reel = header_data.sample_interval;
 
 
@@ -491,3 +495,21 @@ void CombinedSeismogramm<Scalar, dims>::AddComponent(const std::string& path, Va
     componentInfos.push_back(ComponentInfo(path, getter));
 }
 
+template <typename Scalar, int dims>
+CombinedSeismogramm<Scalar, dims> &CombinedSeismogramm<Scalar, dims>::operator -=(const CombinedSeismogramm<Scalar, dims> & other)
+{
+    assert(seismogramms.size() == other.seismogramms.size());
+    for (IndexType seism_i = 0; seism_i < seismogramms.size(); seism_i++)
+    {
+        assert(seismogramms[seism_i].data.size() == other.seismogramms[seism_i].data.size());
+        for (IndexType trace_i = 0; trace_i < seismogramms[seism_i].data.size(); trace_i++)
+        {
+            IndexType minTime = std::min(seismogramms[seism_i].data[trace_i].size(), other.seismogramms[seism_i].data[trace_i].size());
+            for (IndexType time_i = 0; time_i < minTime; time_i++)
+            {
+                seismogramms[seism_i].data[trace_i][time_i] -= other.seismogramms[seism_i].data[trace_i][time_i];
+            }
+        }
+    }
+    return *this;
+}
