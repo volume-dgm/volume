@@ -16,9 +16,9 @@
 #include "../Task/SettingsParser/SettingsParser.h"
 #include "../../DifferentialSolvers/SolversFactory.h"
 
-// #define SPACE_FROM_SETTINGS
+#define SPACE_FROM_SETTINGS //don't change. meshbuilder compilation is fast enough and it's extremely difficult to detect Space2/Space3 mismatch because nothing crashes
 
-typedef Space3                                        DefaultSpace;
+// typedef Space3                                        DefaultSpace;
 
 template<typename Space>
 struct MeshBuilderTask
@@ -267,7 +267,7 @@ private:
     std::cout << "\n";
   
     // save detectors locations (global index -> domain index + detector number)
-    std::fstream detectorsLocations("meshes/detectorsLocations.txt", std::ios_base::out);
+    std::fstream detectorsLocations(settings.detectors.locationsFileName, std::ios_base::out);
 
     assert(detectorsLocations.fail() == false);
 

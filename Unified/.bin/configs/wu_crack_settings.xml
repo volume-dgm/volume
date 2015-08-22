@@ -6,10 +6,6 @@
     <OutFile fileName= "temp_meshes/wu_crack[<domain>].mesh" />
   </MeshBuilder>
 
-  <ResultCombiner>
-    <Snapshots count="300000" />
-  </ResultCombiner>
-
   <Mesh fileName="meshes/wu_crack[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.001">
     <MediumParams>
     <PerSubmesh fileName = "meshes/wu_crack[<domain>].params">
@@ -44,7 +40,9 @@
     <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
   </Snapshot>
 
-  <Detectors fileName="out/detectors[<domain>]<detector>.csv" />
+  <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    locationsFileName="meshes/detectorsLocations.loc" />
 
   <Schedule domainsCount="1">
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
@@ -69,7 +67,6 @@
       <MonopoleSource point="12.78 18" peakFrequency="3e+3" pressure="1e+3" latency="0.0"/>
     </PointSources>  
   </Task>
-"1e-0"/> -->
 
   <!-- 
        integrator="Euler" 
@@ -82,4 +79,14 @@
         allowMovement="false" allowPlasticity="false" allowDestruction="false" 
         tensionErrorMult="1e+0" velocityErrorMult="1e+8" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+
+    <Seismograms
+      velocityScvName="out/velocity_data.csv"
+      pressureScvName="out/pressure_data.csv"
+      velocityCoordSegyName="out/velocity_<coord>.segy"/>    
+  </ResultCombiner>        
+
 </Settings>

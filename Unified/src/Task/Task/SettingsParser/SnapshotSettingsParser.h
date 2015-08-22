@@ -91,9 +91,11 @@ struct DetectorsSettings
 {
   DetectorsSettings():
     filename("out/<domain>_detectors<detector>.csv"),
+    locationsFileName("meshes/detectorsLocations.txt"),
     used(true), samplesPeriod(1)
   {}
   std::string filename;
+  std::string locationsFileName;
   bool used;
   typename Space::IndexType samplesPeriod;
 
@@ -201,6 +203,7 @@ void DetectorsSettings<Space>::Parse(TiXmlElement* settingsElement)
   } else
   {
     ParseString(detectorsElement, "fileName", &filename);
+    ParseString(detectorsElement, "locationsFileName", &locationsFileName);
     ParseUnsigned(detectorsElement, "samplesPeriod", &samplesPeriod);
   }
 }

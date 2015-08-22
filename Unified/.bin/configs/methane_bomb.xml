@@ -6,10 +6,6 @@
     <!-- <OutFile fileName= "temp_meshes/methane_bomb[<domain>].mesh" /> -->
   </MeshBuilder>
 
-  <ResultCombiner>
-    <Snapshots count="300000" />
-  </ResultCombiner>
-  
   <Mesh fileName="meshes/methane_bomb[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01">
     <MediumParams>
       <PerSubmesh fileName = "meshes/methane_bomb[<domain>].mesh.params">
@@ -48,7 +44,9 @@
   </Snapshot>
 
 
-  <Detectors fileName="out/detectors[<domain>]<detector>.csv" />
+  <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    locationsFileName="meshes/detectorsLocaitons.loc" />
 
   <Schedule domainsCount="1">
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
@@ -86,4 +84,14 @@
         allowMovement="false" allowPlasticity="false" allowDestruction="false" 
         velocityErrorMult="1e-3" tensionErrorMult="1e-9" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+
+    <Seismograms
+      detectorsFileName="out/detectors[<domain>]<detector>.csv" 
+      velocityScvName="out/velocity_data.csv"
+      pressureScvName="out/pressure_data.csv"
+      velocityCoordSegyName="out/velocity_<coord>.segy"/>    
+  </ResultCombiner>        
 </Settings>

@@ -57,7 +57,10 @@
     <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
   </Snapshot>
 
-    <Detectors fileName="out/detectors[<domain>]<detector>.csv" samplesPeriod="1"/> 
+  <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    locationsFileName="meshes/detectorsLocations.loc" 
+    samplesPeriod="1" />
 
 
   <Schedule domainsCount="1">
@@ -98,4 +101,13 @@
         allowMovement="false" allowPlasticity="false" allowDestruction="false" 
         tensionErrorMult="1e+1" velocityErrorMult="1e+1" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+
+    <Seismograms
+      velocityScvName="out/velocity_data.csv"
+      pressureScvName="out/pressure_data.csv"
+      velocityCoordSegyName="out/velocity_<coord>.segy"/>    
+  </ResultCombiner>          
 </Settings>

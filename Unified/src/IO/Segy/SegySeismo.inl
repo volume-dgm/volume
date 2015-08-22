@@ -179,7 +179,7 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
         {
             // Calculating number of time steps and number of traces
             // ///////////////////////////////////////
-            std::string filename = paths[path_index] + ".csv";
+            std::string filename = paths[path_index];
             IndexType num_of_times = -1;
             IndexType num_of_all_traces = 0;
             IndexType num_of_receivers;

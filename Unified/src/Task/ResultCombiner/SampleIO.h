@@ -45,14 +45,18 @@ template <>
 void WriteSample<Space2>(std::fstream& velocityFile, std::fstream& pressureFile,
   Space2::Scalar time, const Space2::Vector& v, const Space2::Tensor& sigma)
 {
-  velocityFile << v.x << ";" << v.y << ";";
-  pressureFile << -(sigma.xx + sigma.yy) / Space2::Scalar(2.0) << ";";
+  if(velocityFile.is_open())
+    velocityFile << v.x << ";" << v.y << ";";
+  if(pressureFile.is_open())
+    pressureFile << -(sigma.xx + sigma.yy) / Space2::Scalar(2.0) << ";";
 }
 
 template <>
 void WriteSample<Space3>(std::fstream& velocityFile, std::fstream& pressureFile,
   Space3::Scalar time, const Space3::Vector& v, const Space3::Tensor& sigma)
 {
-  velocityFile << v.x << ";" << v.y << ";" << v.z << ";";
-  pressureFile << -(sigma.xx + sigma.yy + sigma.zz) / Space3::Scalar(3.0) << ";";
+  if(velocityFile.is_open())
+    velocityFile << v.x << ";" << v.y << ";" << v.z << ";";
+  if(pressureFile.is_open())
+    pressureFile << -(sigma.xx + sigma.yy + sigma.zz) / Space3::Scalar(3.0) << ";";
 }

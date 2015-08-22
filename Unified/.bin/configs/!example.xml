@@ -6,10 +6,6 @@
     <!-- <OutFile fileName= "temp_meshes/3d_double_box[<domain>]" /> --> <!-- mesh builder out file. no extension needed. Mesh/fileName is used not provided. [optional, defValue = Mesh/fileName] -->
   </MeshBuilder>
 
-  <ResultCombiner> <!-- required by result combiner, optional otherwise -->
-    <Snapshots count="300000" /> <!-- number of snapshots to combine. [required] -->
-  </ResultCombiner>
-
   <Mesh fileName="meshes/3d_double_box[<domain>]" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01"> <!-- Mesh section used by Task. [required] -->
     <!-- 
     fileName - mesh file name without extension. <domain> is replaced for every domain with its own index. [required]
@@ -100,7 +96,10 @@
     <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
     <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
   </Snapshot>
-  <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
+
+  <!-- <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    locationsFileName="meshes/detectorsLocations.loc" /> -->
 
   <Schedule domainsCount="1">
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
@@ -123,6 +122,7 @@
     </PointSources>  
   </Task>
 
+
   <!--for steel-->
   <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
 
@@ -137,4 +137,26 @@
         allowMovement="false" allowPlasticity="false" allowDestruction="false" 
         tensionErrorMult="1e+2" velocityErrorMult="1e+2" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+
+
+  <ResultCombiner> <!-- required by result combiner, optional otherwise -->
+    <!-- <Snapshots count="300000" /> --> <!-- Snapshot combining section. If section is not present, no snapshot will be combined[optional] -->
+    <!-- count - number of snapshots to combine. <step> from snapshot name is used as a number -->
+
+    <!-- Section related to combining seismodetectors' data. No detectores are processed if section is not present. [optional]-->
+    <!-- <Seismograms 
+      detectorsFileName="out/detectors[<domain>]<detector>.csv"
+      refDetectorsFileName="out/ref/detectors[<domain>]<detector>.csv" 
+      detectorsLocationsFile="meshes/detectorsLocations.loc"
+      velocityScvName="out/velocity_data.csv"
+      pressureScvName="out/pressure_data.csv"
+      velocityCoordSegyName="out/velocity_<coord>.segy"/>  -->
+    <!-- detectorsFileName - name of seismodetectors files. if not specified, name from Detectors/filename will be used instead. [optional]-->
+    <!-- refDetectorsFileName - name of reference detectors file, their readings will be substracted from main seismodetectors. used for differential seismology, skip this parameter if not needed [optional]-->
+    <!-- detectorsLocationsFile - name of file containing seismodetector locations. if not presents, Detectors/locationsFileName will be used [optional]-->
+    <!-- velocityScvName - name of csv file to save combined detector velocity data to. if not present, no velocity data will be save [required] -->
+    <!-- pressureScvName - name of csv file to save combined detector velocity data to. if not present, no velocity data will be save [optional] -->
+    <!-- velocityCoordSegyName - name of segy per-coord velocity seismogram. <coord> is macro for coord(x/y/z), velocityScvName must be specified to use this [optional] -->
+  </ResultCombiner>
+
 </Settings>

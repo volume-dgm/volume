@@ -141,13 +141,20 @@ private:
   void CombineDetectors()
   {
     SPACE_TYPEDEFS
-      if (!settings.detectors.used) return;
 
     std::cout << "Combine detectors\n";
 
     std::string detectorsFileNamePattern = settings.detectors.filename;
+    if(settings.resultCombiner.detectorsFileName != "")
+      detectorsFileNamePattern = settings.resultCombiner.detectorsFileName;
+    std::string detectorsRefFileNamePattern = settings.resultCombiner.refDetectorsFileName;
 
-    std::fstream detectorsLocationsFile("meshes/detectorsLocations.txt", std::ios_base::in);
+    std::string locationsFile = settings.resultCombiner.detectorsLocationsFile;
+    if(locationsFile == "")
+    {
+      locationsFile = settings.detectors.locationsFileName;
+    }
+    std::fstream detectorsLocationsFile(locationsFile, std::ios_base::in);
     assert(detectorsLocationsFile.fail() == false);
 
     IndexType detectorsCount = 0;
@@ -162,7 +169,9 @@ private:
         detectorsLocations[detectorIndex].localIndex;
     }
 
-    std::vector<FILE*> files(detectorsCount, NULL);
+    std::vector<FILE*> detectorFiles(detectorsCount, NULL);
+    std::vector<FILE*> refDetectorFiles(detectorsCount, NULL);
+
     for (IndexType detectorIndex = 0; detectorIndex < detectorsCount; ++detectorIndex)
     {
       char detectorString[9];
@@ -173,29 +182,57 @@ private:
       std::string fileName = detectorsFileNamePattern;
       ReplaceSubstring(fileName, "<detector>", std::string(detectorString));
       ReplaceSubstring(fileName, "<domain>", std::string(domainString));
-      if ((files[detectorIndex] = fopen(fileName.c_str(), "r")) == NULL)
+      if ((detectorFiles[detectorIndex] = fopen(fileName.c_str(), "r")) == NULL)
       {
         std::cerr << "Can`t open file: " << fileName << "\n";
       }
-      assert(files[detectorIndex] != NULL);
+      assert(detectorFiles[detectorIndex] != NULL);
+
+      if(detectorsRefFileNamePattern != "")
+      {
+        std::string fileName = detectorsRefFileNamePattern;
+        ReplaceSubstring(fileName, "<detector>", std::string(detectorString));
+        ReplaceSubstring(fileName, "<domain>", std::string(domainString));
+        if ((refDetectorFiles[detectorIndex] = fopen(fileName.c_str(), "r")) == NULL)
+        {
+          std::cerr << "Can`t open file: " << fileName << "\n";
+        }
+        assert(refDetectorFiles[detectorIndex] != NULL);
+      }
     }
 
-    std::fstream outputVelocity("out/velocity_data.csv", std::ios_base::out);
-    std::fstream outputPressure("out/pressure_data.csv", std::ios_base::out);
+    std::fstream outputVelocity;
+    std::fstream outputPressure;
 
-    assert(outputVelocity.fail() == false);
-    assert(outputPressure.fail() == false);
+    if(settings.resultCombiner.velocityScvName != "")
+    {
+      printf("Making velocity csv file\n");
+      outputVelocity.open(settings.resultCombiner.velocityScvName, std::ios_base::out);
+      assert(outputVelocity.fail() == false);
+    }
+    if(settings.resultCombiner.pressureScvName != "")
+    {
+      printf("Making pressure csv file\n");
+      outputPressure.open(settings.resultCombiner.pressureScvName, std::ios_base::out);
+      assert(outputPressure.fail() == false);
+    }
 
-    outputVelocity << "Time;";
-    outputPressure << "Time;";
+    if(outputVelocity.is_open())
+      outputVelocity << "Time;";
+    if(outputPressure.is_open())
+      outputPressure << "Time;";
 
     for (IndexType detectorIndex = 0; detectorIndex < detectorsCount; ++detectorIndex)
     {
-      WriteVelocityHandle<Space>(outputVelocity);
-      outputPressure << "Vx;";
+      if(outputVelocity.is_open())
+        WriteVelocityHandle<Space>(outputVelocity);
+      if(outputPressure.is_open())
+        outputPressure << "Vx;";
     }
-    outputVelocity << "\n";
-    outputPressure << "\n";
+    if(outputVelocity.is_open())
+      outputVelocity << "\n";
+    if(outputPressure.is_open())
+      outputPressure << "\n";
 
     bool eof;
     do
@@ -207,9 +244,22 @@ private:
         Scalar time = 0;
         Tensor sigma;
 
-        ReadSample<Space>(files[detectorIndex], time, v, sigma);
+        ReadSample<Space>(detectorFiles[detectorIndex], time, v, sigma);
 
-        if (feof(files[detectorIndex]))
+        if (feof(detectorFiles[detectorIndex]))
+        {
+          eof = true;
+          continue;
+        }
+
+        Vector refVelocity = Vector::zero();
+        Scalar refTime = 0;
+        Tensor refSigma;
+        if(refDetectorFiles[detectorIndex])
+        {
+          ReadSample<Space>(refDetectorFiles[detectorIndex], refTime, refVelocity, refSigma);
+        }
+        if (refDetectorFiles[detectorIndex] && feof(refDetectorFiles[detectorIndex]))
         {
           eof = true;
           continue;
@@ -217,34 +267,47 @@ private:
 
         if (detectorIndex == 0)
         {
-          outputVelocity << time << ";";
-          outputPressure << time << ";";
+          if(outputVelocity.is_open())
+            outputVelocity << time << ";";
+          if(outputPressure.is_open())
+            outputPressure << time << ";";
         }
-        WriteSample<Space>(outputVelocity, outputPressure, time, v, sigma);
+        WriteSample<Space>(outputVelocity, outputPressure, time - refTime, v - refVelocity, sigma - refSigma); //has is_open() inside
       }
-      outputVelocity << "\n";
-      outputPressure << "\n";
+      if(outputVelocity.is_open())
+        outputVelocity << "\n";
+      if(outputPressure.is_open())
+        outputPressure << "\n";
     } while (!eof);
 
-    outputVelocity.close();
-    outputPressure.close();
-
+    if(outputVelocity.is_open())
+      outputVelocity.close();
+    if(outputPressure.is_open())
+      outputPressure.close();
     // convert *.csv to *.segy
     typedef CombinedSeismogramm<float, Space::Dimension>::Elastic SeismoElastic;
     CombinedSeismogramm < float, Space::Dimension > s = CombinedSeismogramm < float, Space::Dimension >(1);
 
-    std::vector<std::string> in_files;
-    in_files.push_back("out/velocity_data");
-
-    const std::string dimNames = "xyz";
-    std::vector<std::string> out_files;
-    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+    if(settings.resultCombiner.velocityScvName != "" && settings.resultCombiner.velocityCoordSegyName != "")
     {
-      // TODO: add some clear prefix
-      out_files.push_back(/*settings.mesh.meshFileName + */ "out/v" + std::string(1, dimNames[dimIndex]) + ".segy");
+      printf("Combining seismograms into segy\n");
+      std::vector<std::string> in_files;
+      in_files.push_back(settings.resultCombiner.velocityScvName);
+
+      const std::string dimNames = "xyz";
+      std::vector<std::string> out_files;
+      for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+      {
+        // TODO: add some clear prefix
+        std::string fileName = settings.resultCombiner.velocityCoordSegyName;
+        ReplaceSubstring(fileName, "<coord>", std::string(1, dimNames[dimIndex]));
+
+        out_files.push_back(fileName);
+      }
+      s.Load(CSV, in_files);
+      s.Save(SEG_Y, out_files);
     }
-    s.Load(CSV, in_files);
-    s.Save(SEG_Y, out_files);
+    printf("Done");
   }
 };
 

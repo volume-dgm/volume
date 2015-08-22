@@ -365,4 +365,7 @@ profiling*.txt
 *.pvd
 *.mesh
 *.params
+*.csv
+*.segy
+*.loc
 

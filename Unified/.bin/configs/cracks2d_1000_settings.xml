@@ -36,8 +36,11 @@
      <!-- <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" /> -->
      <!-- <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
   </Snapshot>
-  <Detectors fileName="out/detectors[<domain>]<detector>.csv" samplesPeriod="10"/> 
 
+  <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    locationsFileName="meshes/detectorsLocations.loc"
+    samplesPeriod="10"/>
   <!--
   <Snapshot>
     <Period time="2e-3"/>    
@@ -73,4 +76,13 @@
         allowMovement="false" allowPlasticity="false" allowDestruction="false" 
         tensionErrorMult="1e-7" velocityErrorMult="1e-0" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+
+    <Seismograms
+      velocityScvName="out/velocity_data.csv"
+      pressureScvName="out/pressure_data.csv"
+      velocityCoordSegyName="out/velocity_<coord>.segy"/>    
+  </ResultCombiner>          
 </Settings>
