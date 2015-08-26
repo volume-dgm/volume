@@ -47,13 +47,15 @@ MAKE_DIRECTORY(${CMAKE_SOURCE_DIR}/.bin)
 add_definitions(-DTIXML_USE_STL)
 
 set(VtkSrc
-  ${CMAKE_SOURCE_DIR}/src/Vtk/BasicVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/Vtk/ContactVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/Vtk/MeshVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/Vtk/SnapshotVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/Vtk/VtkReader.h
-  ${CMAKE_SOURCE_DIR}/src/Vtk/ContactVtkWriter2.inl
-  ${CMAKE_SOURCE_DIR}/src/Vtk/ContactVtkWriter3.inl
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/BasicVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/MeshVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/SnapshotVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/VtkReader.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter2.inl
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter3.inl
+  ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.inl
 )
 
 set(UtilsSrc

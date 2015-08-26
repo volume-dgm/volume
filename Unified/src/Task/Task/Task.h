@@ -37,7 +37,7 @@
 #include "../GeomMesh/MeshIO/Distributed/DistributedMeshIO.h"
 #include "../../Maths/Spaces.h"
 
-#define PROFILING
+// #define PROFILING
 // #define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
@@ -278,7 +278,7 @@ private:
   void      SetThreadsCount();
 
   void WriteEnergyAndImpulseDeviation(const std::vector<Scalar>& initialEnergies, 
-    const std::vector<Vector>& initialImpulses);
+    const std::vector<Vector>& initialImpulses, Scalar currTime);
 
 protected:
   Settings<Space> settings;
@@ -494,7 +494,7 @@ void Task<Space, order>::Run()
         if (snapshot) 
         {
           SaveDetectorsDataToFile();
-          WriteEnergyAndImpulseDeviation(initialEnergies, initialImpulses);
+          WriteEnergyAndImpulseDeviation(initialEnergies, initialImpulses, currTime);
         }
         lastInitialCurrTime = currTime;
         lastInitialGlobalStep = solverState.globalStepIndex;
@@ -902,7 +902,7 @@ void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshot
   ReplaceSubstring(analysisFileName, "<time>",    std::string(timeString));
 
   std::fstream analysisDataFile;
-  analysisDataFile.open(analysisFileName, std::fstream::out);
+  analysisDataFile.open(analysisFileName.c_str(), std::fstream::out);
 
 
   std::vector<Elastic> sampleData;
@@ -933,7 +933,7 @@ void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshot
                        boxPoint1.y + Scalar(y) * stepSize.y);
           assert(stateMakers.size() > 0);
 
-          ElasticSpace::MediumParametersType material;
+          typename ElasticSpace::MediumParametersType material;
           material.SetFromVelocities(2, 1, 1);
 
           assert(stateMakers.size() > 0);
@@ -1606,22 +1606,27 @@ void Task<Space, order>::SaveProfilingData(const std::string& info, double begin
 
 template<typename Space, unsigned int order>
 void Task<Space, order>::WriteEnergyAndImpulseDeviation(const std::vector<Scalar>& initialEnergies,
-  const std::vector<Vector>& initialImpulses)
+  const std::vector<Vector>& initialImpulses, Scalar currTime)
 {
   #ifdef WRITE_ENERGY_AND_IMPULSE
+  std::fstream file("out/energy.txt", std::fstream::out | std::fstream::app);
+  if (!file.is_open()) return;
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
     Vector totalImpulse = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalImpulse();
     Scalar totalEnergy = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy();
-    std::cout << "Energy deviation: " << fabs(totalEnergy - initialEnergies[domainNumber]) / initialEnergies[domainNumber] * 100 << "%;"
-      << "Impulse deviation: " << (totalImpulse - initialImpulses[domainNumber]).Len() / initialImpulses[domainNumber].Len() * 100 << "%" << std::endl;
-    Vector impulseDeviation = totalImpulse - initialImpulses[domainNumber];
+    file << currTime << " " 
+                     << "Energy deviation: " << totalEnergy - initialEnergies[domainNumber] << "; "
+                     << "Energy: " << totalEnergy << "; " 
+                     << "Impulse deviation: " << (totalImpulse - initialImpulses[domainNumber]).Len() << "; "
+                     << "Impulse: ";
     for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
     {
-      std::cout << impulseDeviation[dimIndex] << " ";
+      file << totalImpulse[dimIndex] << " ";
     }
-    std::cout << std::endl;
+    file << std::endl;
   }
+  file.close();
   #endif // WRITE_ENERGY_AND_IMPULSE
 }
 

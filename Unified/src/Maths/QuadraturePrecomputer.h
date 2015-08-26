@@ -18,13 +18,15 @@ template <>
 void QuadraturePrecomputer::BuildQuadrature<Space1>(int order, std::vector<Space1::Scalar>& weights, std::vector<Space1::Vector>& points)
 {
   typedef Space1::Scalar Scalar;
+  // http://people.sc.fsu.edu/~jburkardt/cpp_src/legendre_rule/legendre_rule.html
+  // if we have N Gauss points then integral is absoltely presice for polynoms of up to 2N-1 degree
 
-  weights.resize(order + 1);
-  points.resize(order + 1); 
+  weights.resize(order);
+  points.resize(order); 
   const int    kind = 1; // gauss
   const Scalar alpha = 0;
   const Scalar beta = 0;
-  cgqf(order + 1, kind, alpha, beta, 0, 1, points.data(), weights.data());
+  cgqf(int((order + 1.0) / 2 + 0.5) /* number of points */, kind, alpha, beta, 0, 1, points.data(), weights.data());
 }
 
 template <>
@@ -33,7 +35,7 @@ void QuadraturePrecomputer::BuildQuadrature<Space2>(int order, std::vector<Space
   typedef Space2::Scalar Scalar;
 
   // variable "rule" sets number of gauss-legendre-lobatto points, i.e. accuracy of integration
-  // http://people.sc.fsu.edu/~jburkardt/cpp_src/triangle_fekete_rule/triangle_fekete_rule.html/
+  // http://people.sc.fsu.edu/~jburkardt/cpp_src/triangle_fekete_rule/triangle_fekete_rule.html
 
   /*Rule	Order	Precision
      1	   10	        3
@@ -46,7 +48,7 @@ void QuadraturePrecomputer::BuildQuadrature<Space2>(int order, std::vector<Space
 
   const int Precisions[] = {3, 6, 9, 12, 12, 15, 18};
   int rule = 1;
-  while (rule <= 7 && order >= Precisions[rule - 1])
+  while (rule <= 7 && order > Precisions[rule - 1])
     rule++;
 
   int rule_num = ::fekete_rule_num();
@@ -73,12 +75,12 @@ void QuadraturePrecomputer::BuildQuadrature<Space3>(int order, std::vector<Space
 
   // from http://people.sc.fsu.edu/~jburkardt/c_src/tetrahedron_arbq_rule/tetrahedron_arbq_rule.html
 
-  int order_num = ::tetrahedron_arbq_size(order + 1);
+  int order_num = ::tetrahedron_arbq_size(order);
 
   std::vector<Scalar> xyz(3 * order_num);
   std::vector<Scalar> w(order_num);
 
-  ::tetrahedron_arbq(order + 1, order_num, xyz.data(), w.data());
+  ::tetrahedron_arbq(order, order_num, xyz.data(), w.data());
 
   for (int i = 0; i < order_num; ++i)
   {

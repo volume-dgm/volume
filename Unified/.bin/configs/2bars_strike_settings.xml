@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Settings dimsCount = "2">
-  <Mesh fileName="meshes/2bars_strike[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.00999"> 
+
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome/Salome_2bars_strike" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "meshes/2bars_strike[<domain>]" />
+  </MeshBuilder>
+
+  <Mesh fileName="meshes/2bars_strike[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.0099"> 
     <MediumParams>
       <!-- <Uniform pSpeed = "5700" sSpeed = "3100" rho = "7800" />  -->
       <Uniform pSpeed = "2" sSpeed = "1" rho = "1" /> 
@@ -80,5 +87,9 @@
         allowMovement="true" allowPlasticity="false" allowDestruction="false" 
         tensionErrorMult="1e-0" velocityErrorMult="1e-0" positionErrorMult="1e+0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
 
 </Settings>

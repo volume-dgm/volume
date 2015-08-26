@@ -18,7 +18,7 @@ struct QuadratureDecomposer : public FunctionSpaceT
   QuadratureDecomposer()
   {
     //building quadrature points and weights
-    QuadraturePrecomputer::BuildQuadrature<Space>(order, weights, points);
+    QuadraturePrecomputer::BuildQuadrature<Space>(2 * order, weights, points);
 
     //building function integrals
     std::fill_n(cellVolumeIntegrals, functionsCount * functionsCount, 0);

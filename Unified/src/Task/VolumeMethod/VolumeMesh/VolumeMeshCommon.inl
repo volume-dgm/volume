@@ -704,18 +704,15 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalE
   Scalar kineticEnergy   = 0;
   Scalar potencialEnergy = 0;
 
-  const Tensor identityTensor = Tensor(1);
-
-  Scalar lambda, mu;
-
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
   {
     Vector cellVertices[Space::NodesPerCell];
     GetCellVertices(cellIndex, cellVertices);
     Scalar jacobian = GetCellDeformJacobian(cellVertices);
 
-    lambda = cellMediumParameters[cellIndex].lambda;
-    mu = cellMediumParameters[cellIndex].mju;
+    const Scalar lambda = cellMediumParameters[cellIndex].lambda;
+    const Scalar mu = cellMediumParameters[cellIndex].mju;
+    const Tensor identityTensor = Tensor(1);
 
     for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
     {
@@ -728,7 +725,7 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalE
       Scalar s = lambda / (Space::Dimension * lambda + 2 * mu);
 
       // from Chelnokov phd thesis
-      potencialEnergy += jacobian * 0.25 / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * quadratureWeights[pointIndex];
+      potencialEnergy += jacobian * Scalar(0.25) / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * quadratureWeights[pointIndex];
     }
   }
   totalEnergy = kineticEnergy + potencialEnergy;

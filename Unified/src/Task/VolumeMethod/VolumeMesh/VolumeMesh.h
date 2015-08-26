@@ -37,10 +37,11 @@ public:
   {
     functionSpace = new FunctionSpace;
 
-    QuadraturePrecomputer::BuildQuadrature<Space::BorderSpace>(FunctionSpace::order,
+    // *2 because of we compute integrals from product of two functions of order-th degree
+    QuadraturePrecomputer::BuildQuadrature<typename Space::BorderSpace>(2 * FunctionSpace::order,
       quadratureWeightsForBorder, quadraturePointsForBorder);
 
-    QuadraturePrecomputer::BuildQuadrature<Space>(FunctionSpace::order,
+    QuadraturePrecomputer::BuildQuadrature<Space>(2 * FunctionSpace::order,
       quadratureWeights, quadraturePoints);
   }
 
