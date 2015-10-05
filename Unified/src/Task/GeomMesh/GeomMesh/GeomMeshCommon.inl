@@ -620,6 +620,7 @@ template <typename Space>
 void GeomMeshCommon<Space>::UpdateAABBTree()
 {
   for (IndexType cellIndex = 0; cellIndex < cells.size(); cellIndex++)
+  if (IsCellInAABBTree(cellIndex))
   {
     aabbTree.UpdateNode(treeNodeCellIndices[cellIndex], GetCellAABB(cellIndex));
   }
@@ -649,6 +650,36 @@ typename Space::AABB GeomMeshCommon<Space>::GetAABB() const
 }
 
 template <typename Space>
+void GeomMeshCommon<Space>::RemoveCellFromAABBTree(IndexType cellIndex)
+{ 
+  if (!treeNodeCellIndices.empty())
+  {
+    IndexType treeNodeCellIndex = treeNodeCellIndices[cellIndex];
+    if (treeNodeCellIndex != IndexType(-1))
+    {
+      treeNodeCellIndices[cellIndex] = IndexType(-1);
+      aabbTree.RemoveNode(treeNodeCellIndex);
+    }
+  }
+}
+
+template <typename Space>
+void GeomMeshCommon<Space>::AddToAABBTree(IndexType cellIndex)
+{
+  if (!treeNodeCellIndices.empty())
+  {
+    treeNodeCellIndices[cellIndex] = aabbTree.InsertNode(GetCellAABB(cellIndex));
+    aabbTree.SetUserData(treeNodeCellIndices[cellIndex], cellIndex);
+  }
+}
+
+template <typename Space>
+inline bool GeomMeshCommon<Space>::IsCellInAABBTree(IndexType cellIndex) const
+{
+  return !treeNodeCellIndices.empty() && treeNodeCellIndices[cellIndex] != IndexType(-1);
+}
+
+template <typename Space>
 typename Space::IndexType GeomMeshCommon<Space>::GetIncidentCellsCount(IndexType nodeIndex) const
 {
   return nodeTopologyInfos[nodeIndex].incidentCellsCount;
@@ -670,6 +701,31 @@ template <>
 Space3::IndexType GeomMeshCommon<Space3>::GetCorrespondingCellIndex(IndexType cellIndex, IndexType faceNumber) const
 {
   return additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingCellIndex;
+}
+
+template <>
+Space2::IndexType GeomMeshCommon<Space2>::GetCorrespondingFaceNumber(IndexType cellIndex, IndexType edgeNumber) const
+{
+  return additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber;
+}
+
+template <>
+Space3::IndexType GeomMeshCommon<Space3>::GetCorrespondingFaceNumber(IndexType cellIndex, IndexType faceNumber) const
+{
+  return additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingFaceNumber;
+}
+
+
+template <>
+Space2::IndexType GeomMeshCommon<Space2>::GetInteractionType(IndexType cellIndex, IndexType edgeNumber) const
+{
+  return additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].interactionType;
+}
+
+template <>
+Space3::IndexType GeomMeshCommon<Space3>::GetInteractionType(IndexType cellIndex, IndexType faceNumber) const
+{
+  return additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].interactionType;
 }
 
 template <>
@@ -819,6 +875,33 @@ bool GeomMeshCommon<Space2>::IsBoundaryCell(IndexType cellIndex) const
   return false;
 }
 
+template <>
+Space2::Scalar GeomMeshCommon<Space2>::GetAspectRatio(IndexType cellIndex) const
+{
+  Vector cellVertices[Space::NodesPerCell];
+  GetCellVertices(cellIndex, cellVertices);
+
+  Scalar area = Scalar(0.5) * fabs( (cellVertices[2] - cellVertices[0]) ^ (cellVertices[1] - cellVertices[0]) );
+
+  Scalar perimeter = 0;
+  Scalar maxEdge = 0;
+  for (IndexType nodeNumber = 0; nodeNumber < Space2::NodesPerCell; ++nodeNumber)
+  {
+    Vector edge = cellVertices[(nodeNumber + 1) % Space2::NodesPerCell] - cellVertices[nodeNumber];
+    maxEdge = std::max(maxEdge, edge.Len());
+    perimeter += edge.Len();
+  }
+  Scalar aspectRatio = maxEdge * perimeter * Scalar(0.25) / sqrt(3) / area;
+  return aspectRatio;
+}
+
+template <>
+Space3::Scalar GeomMeshCommon<Space3>::GetAspectRatio(IndexType cellIndex) const
+{
+  // TODO
+  return 1;
+}
+
 /*
 template <>
 bool GeomMeshCommon<Space2>::IsBoundaryNode(IndexType nodeIndex) const
@@ -962,4 +1045,20 @@ typename GeomMeshCommon<Space>::NodeGroupSize
   } 
 
   return groupNodes.size();
+}
+
+template <>
+Space2::Scalar GeomMeshCommon<Space2>::GetVolume(IndexType cellIndex) const
+{
+  Vector cellVertices[Space::NodesPerCell];
+  GetCellVertices(cellIndex, cellVertices);
+  return Scalar(0.5) * fabs((cellVertices[2] - cellVertices[0]) ^ (cellVertices[1] - cellVertices[0]));
+}
+
+template <>
+Space3::Scalar GeomMeshCommon<Space3>::GetVolume(IndexType cellIndex) const
+{
+  Vector cellVertices[Space::NodesPerCell];
+  GetCellVertices(cellIndex, cellVertices);
+  return fabs(MixedProduct(cellVertices[3] - cellVertices[0], cellVertices[2] - cellVertices[0], cellVertices[1] - cellVertices[0])) / Scalar(6.0);
 }

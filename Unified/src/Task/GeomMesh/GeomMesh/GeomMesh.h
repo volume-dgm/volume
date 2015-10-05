@@ -20,6 +20,10 @@ struct GeomMesh<Space2>: public GeomMeshCommon<Space2>
 
   // geometry
   using GeomMeshCommon<Space>::GetCellIndex;
+  using GeomMeshCommon<Space>::GetCorrespondingCellIndex;
+  using GeomMeshCommon<Space>::GetCorrespondingFaceNumber;
+  using GeomMeshCommon<Space>::GetInteractionType;
+  
   IndexType GetCellIndex(IndexType node0, IndexType node1, IndexType node2) const;
 
   struct BoundaryEdge: public EdgeIndices
@@ -67,7 +71,10 @@ public:
   SPACE3_TYPEDEFS
   typedef Space3 Space;
 
-  using GeomMeshCommon<Space3>::GetCellIndex;
+  using GeomMeshCommon<Space>::GetCellIndex;
+  using GeomMeshCommon<Space>::GetCorrespondingCellIndex;
+  using GeomMeshCommon<Space>::GetCorrespondingFaceNumber;
+  using GeomMeshCommon<Space>::GetInteractionType;
 
   void BuildAdditionalGroupsInfo(IndexType* submeshNodesCount, IndexType submeshesCount,
     FacePairIndices* contactFaces,  IndexType* contactFacesCount,  IndexType contactTypesCount,

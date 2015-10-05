@@ -1,4 +1,11 @@
+#pragma once
+
+#include "../../../../3rdparty/tinyxml/tinyxml.h"
+#include "../../../../3rdparty/tinyxml/tinystr.h"
+#include "ParserUtil.h"
+
 #include <string>
+#include <limits>
 
 template<typename Space>
 struct SolverSettings
@@ -8,7 +15,8 @@ struct SolverSettings
   SolverSettings(): tolerance(0.0), maxScale(1.0), maxTimeStep(1.0),
     tensionErrorMult(1.0), velocityErrorMult(1.0), positionErrorMult(1.0),
     velocityDimensionlessMult(1.0), tensionDimensionlessMult(1.0),
-    allowMovement(false), allowPlasticity(false), allowDestruction(false),
+    allowMovement(false), allowPlasticity(false), 
+    allowDiscreteDestruction(false), allowContinuousDestruction(false),
     integrator("Euler"), precision("double"), polynomialsOrder(1), hierarchyLevelsCount(1), damping(0.0)
   {
   }
@@ -26,7 +34,8 @@ struct SolverSettings
 
   bool allowMovement;
   bool allowPlasticity;
-  bool allowDestruction;
+  bool allowDiscreteDestruction;
+  bool allowContinuousDestruction;
 
   std::string integrator;
   std::string precision;
@@ -34,17 +43,27 @@ struct SolverSettings
   IndexType hierarchyLevelsCount;
   Scalar damping;
 
+  struct Erosion
+  {
+    Erosion() : cellAspectRatio(std::numeric_limits<Scalar>::max() / 2),
+      minHeightRatio(0)
+    {
+    }
+    Scalar cellAspectRatio;
+    Scalar minHeightRatio;
+  } erosion;
+
   void Parse(TiXmlElement* solverElement);
 };
 
-template<typename GeomSpace>
-void SolverSettings<GeomSpace>::Parse(TiXmlElement *solverElement)
+template<typename Space>
+void SolverSettings<Space>::Parse(TiXmlElement *solverElement)
 {
   if (ParseString(solverElement, "integrator", &integrator) != TIXML_SUCCESS)
   {
     std::cerr << "There is no integrator attribute";
   }
-
+  
   if (ParseUnsigned(solverElement, "hierarchyLevelsCount", &hierarchyLevelsCount) != TIXML_SUCCESS)
   {
     std::cerr << "There is no hierarchyLevelsCount attribute";
@@ -85,9 +104,14 @@ void SolverSettings<GeomSpace>::Parse(TiXmlElement *solverElement)
     std::cerr << "There is no allowPlasticity attribute";
   }
       
-  if (ParseBool(solverElement, "allowDestruction", &allowDestruction) != TIXML_SUCCESS)
+  if (ParseBool(solverElement, "allowContinuousDestruction", &allowContinuousDestruction) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no allowDestructions attribute";
+    std::cerr << "There is no allowContinuousDestructions attribute";
+  }
+
+  if (ParseBool(solverElement, "allowDiscreteDestruction", &allowDiscreteDestruction) != TIXML_SUCCESS)
+  {
+    std::cerr << "There is no allowDiscreteDestructions attribute";
   }
 
   if (ParseScalar(solverElement, "tensionErrorMult", &tensionErrorMult) != TIXML_SUCCESS)
@@ -108,4 +132,11 @@ void SolverSettings<GeomSpace>::Parse(TiXmlElement *solverElement)
   ParseScalar(solverElement, "velocityDimensionlessMult", &velocityDimensionlessMult);  
   ParseScalar(solverElement, "tensionDimensionlessMult", &tensionDimensionlessMult);
   ParseScalar(solverElement, "damping", &damping);
+
+  TiXmlElement* erosionElement = solverElement->FirstChildElement("Erosion");
+  if (erosionElement)
+  {
+    ParseScalar(erosionElement, "cellAspectRatio", &erosion.cellAspectRatio);
+    ParseScalar(erosionElement, "minHeightRatio",  &erosion.minHeightRatio);
+  }
 }

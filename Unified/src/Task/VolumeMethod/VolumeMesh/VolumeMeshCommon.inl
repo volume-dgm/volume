@@ -648,6 +648,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::Initialize()
     threadsCount = omp_get_num_threads();
   }
 
+  isCellAvailable.resize(cells.size(), true);
   inBuffer.resize(cells.size(), 0);
   threadCellsCount.resize(threadsCount    * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2);
   threadCellOffsets.resize(threadsCount   * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2);
@@ -698,36 +699,119 @@ typename Space::Vector VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalI
 }
 
 template<typename Space, typename FunctionSpace, typename System>
+void VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy(IndexType cellIndex, Scalar& kineticEnergy, Scalar& potentialEnergy) const
+{
+  kineticEnergy = potentialEnergy = 0;
+
+  Vector cellVertices[Space::NodesPerCell];
+  GetCellVertices(cellIndex, cellVertices);
+  Scalar jacobian = GetCellDeformJacobian(cellVertices);
+
+  const Scalar lambda = cellMediumParameters[cellIndex].lambda;
+  const Scalar mu = cellMediumParameters[cellIndex].mju;
+  const Tensor identityTensor = Tensor(1);
+
+  for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+  {
+    typename System::ValueType cellSolution = GetRefCellSolution(cellIndex, quadraturePoints[pointIndex]);
+    kineticEnergy += Scalar(0.5) * jacobian * cellSolution.GetVelocity().SquareLen() *
+      quadratureWeights[pointIndex] / cellMediumParameters[cellIndex].invRho;
+
+    Tensor t = cellSolution.GetTension();
+
+    Scalar s = lambda / (Space::Dimension * lambda + 2 * mu);
+
+    // from Chelnokov phd thesis
+    potentialEnergy += jacobian * Scalar(0.25) / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * quadratureWeights[pointIndex];
+  }
+}
+
+template<typename Space, typename FunctionSpace, typename System>
 typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalEnergy() const
 {
-  Scalar totalEnergy     = 0;
   Scalar kineticEnergy   = 0;
-  Scalar potencialEnergy = 0;
+  Scalar potentialEnergy = 0;
 
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
   {
-    Vector cellVertices[Space::NodesPerCell];
-    GetCellVertices(cellIndex, cellVertices);
-    Scalar jacobian = GetCellDeformJacobian(cellVertices);
+    Scalar kineticCellEnergy;
+    Scalar potentialCellEnergy;
+    GetCellEnergy(cellIndex, kineticCellEnergy, potentialCellEnergy);
+    kineticEnergy += kineticCellEnergy;
+    potentialEnergy += potentialCellEnergy;
+  }
+  Scalar totalEnergy = kineticEnergy + potentialEnergy;
+  return totalEnergy;
+}
 
-    const Scalar lambda = cellMediumParameters[cellIndex].lambda;
-    const Scalar mu = cellMediumParameters[cellIndex].mju;
-    const Tensor identityTensor = Tensor(1);
-
-    for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+template<typename Space, typename FunctionSpace, typename System>
+typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalMass() const
+{
+  Scalar totalMass = 0;
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+  {
+    if (IsCellInAABBTree(cellIndex))
     {
-      typename System::ValueType cellSolution = GetRefCellSolution(cellIndex, quadraturePoints[pointIndex]);
-      kineticEnergy += Scalar(0.5) * jacobian * cellSolution.GetVelocity().SquareLen() * 
-        quadratureWeights[pointIndex] / cellMediumParameters[cellIndex].invRho;
-
-      Tensor t = cellSolution.GetTension();
-
-      Scalar s = lambda / (Space::Dimension * lambda + 2 * mu);
-
-      // from Chelnokov phd thesis
-      potencialEnergy += jacobian * Scalar(0.25) / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * quadratureWeights[pointIndex];
+      totalMass += GetVolume(cellIndex) / cellMediumParameters[cellIndex].invRho;
     }
   }
-  totalEnergy = kineticEnergy + potencialEnergy;
-  return totalEnergy;
+  return totalMass;
+}
+
+
+template<typename Space, typename FunctionSpace, typename System>
+bool VolumeMeshCommon<Space, FunctionSpace, System>::IsCellHasDynamicBoundary(IndexType cellIndex) const
+{
+  bool isCellHasDynamicBoundary = false;
+
+  for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+  {
+    IndexType correspondingCellIndex = GetCorrespondingCellIndex(cellIndex, faceNumber);
+    IndexType correspondingFaceNumber = GetCorrespondingFaceNumber(cellIndex, faceNumber);
+    IndexType interactionType = GetInteractionType(cellIndex, faceNumber);
+
+    if (correspondingCellIndex == IndexType(-1) && correspondingFaceNumber == IndexType(-1) && interactionType != IndexType(-1))
+    {
+      IndexType dynamicContactType = system.GetBoundaryDynamicContactType(interactionType);
+      if (dynamicContactType != IndexType(-1))
+      {
+        isCellHasDynamicBoundary = true;
+        break;
+      }
+    }
+  }
+  return isCellHasDynamicBoundary;
+}
+
+template<typename Space, typename FunctionSpace, typename System>
+bool VolumeMeshCommon<Space, FunctionSpace, System>::IsReadyForCollisionCell(IndexType cellIndex) const
+{
+  bool isReadyForCollisionCell = IsCellHasDynamicBoundary(cellIndex);
+  
+  for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+  {
+    IndexType correspondingCellIndex = GetCorrespondingCellIndex(cellIndex, faceNumber);
+
+    if (correspondingCellIndex != IndexType(-1) && IsCellHasDynamicBoundary(correspondingCellIndex))
+    {
+      isReadyForCollisionCell = true;
+      break;
+    }
+  }
+  return isReadyForCollisionCell;
+}
+
+template<typename Space, typename FunctionSpace, typename System>
+void VolumeMeshCommon<Space, FunctionSpace, System>::BuildAABBTree()
+{
+  printf("Building AABB tree for boundary cells\n");
+  treeNodeCellIndices.resize(cells.size(), IndexType(-1));
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); cellIndex++)
+  {
+    // if (IsReadyForCollisionCell(cellIndex))
+    {
+      treeNodeCellIndices[cellIndex] = aabbTree.InsertNode(GetCellAABB(cellIndex));
+      aabbTree.SetUserData(treeNodeCellIndices[cellIndex], cellIndex);
+    }
+  }
 }

@@ -119,6 +119,9 @@ struct GeomMeshCommon: public GeomMeshBase<Space>
   Scalar GetMinHeight(IndexType cellIndex) const;
   Scalar GetMinHeight() const;
 
+  Scalar GetAspectRatio(IndexType cellIndex) const;
+  Scalar GetVolume(IndexType cellIndex) const;
+
   bool IsBoundaryCell(IndexType cellIndex) const;
   // bool IsBoundaryNode(IndexType nodeIndex) const;
 
@@ -211,7 +214,9 @@ struct GeomMeshCommon: public GeomMeshBase<Space>
 
   // additional cell info
   std::vector< AdditionalCellInfo<Space> > additionalCellInfos;
-  IndexType GetCorrespondingCellIndex(IndexType cellIndex, IndexType faceNumber) const;
+  IndexType GetCorrespondingCellIndex( IndexType cellIndex, IndexType faceNumber) const;
+  IndexType GetCorrespondingFaceNumber(IndexType cellIndex, IndexType faceNumber) const;
+  IndexType GetInteractionType(        IndexType cellIndex, IndexType faceNumber) const;
 
   std::vector<IndexType> originalCellIndices; // map from new cell indices to original
   std::vector<IndexType> updatedCellIndices;  // map from old cell indices to original 
@@ -219,12 +224,15 @@ struct GeomMeshCommon: public GeomMeshBase<Space>
   void BuildUpdatedCellIndices(IndexType* originalIndices, IndexType cellsCount);
 
   // aabb tree
-  void BuildAABBTree();
-  void UpdateAABBTree();
+  virtual void BuildAABBTree();
+  virtual void UpdateAABBTree();
   AABBTree<Space, IndexType> aabbTree;
   std::vector<IndexType> treeNodeCellIndices;
   AABB GetAABB() const;
   AABB GetCellAABB(IndexType cellIndex) const;
+  void RemoveCellFromAABBTree(IndexType cellIndex);
+  void AddToAABBTree(IndexType cellIndex);
+  bool IsCellInAABBTree(IndexType cellIndex) const;
 };
 
 #include "GeomMeshCommon.inl"

@@ -1,3 +1,6 @@
+#include "ElasticVolumeMesh.h"
+#include "../../VolumeMethod/FunctionGetters/ContactFinder.h"
+
 template<typename FunctionSpace>
 ElasticVolumeMesh<Space2, FunctionSpace>::ElasticVolumeMesh(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount):
   ElasticVolumeMeshCommon<Space2, FunctionSpace>(solver, tolerance, hierarchyLevelsCount)
@@ -147,53 +150,6 @@ void ElasticVolumeMesh<Space2, FunctionSpace>::MakeSnapshot(Elastic* destData,
 }
 
 /*
-  s:s < 2k^2 -- von Mises criterion;
-  k = k0 - a * pressure, a > 0.
-*/
-template<typename MeshType>
-struct PlasticityCorrector
-{
-  typedef typename MeshType::Scalar    Scalar;
-  typedef typename MeshType::Vector    Vector;
-  typedef typename MeshType::Tensor    Tensor;
-  typedef typename MeshType::IndexType IndexType;
-  typedef typename MeshType::Elastic   Elastic;
-
-  PlasticityCorrector(MeshType* const mesh, IndexType cellIndex):
-    mesh(mesh), cellIndex(cellIndex)
-  {
-  }
-
-  void operator()(const Vector& refPoint, Scalar* values) const
-  {
-    Scalar k0 = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
-    Scalar  a = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
-
-    Elastic elastic = mesh->InterpolateElasticRef(cellIndex, refPoint);
-
-    Scalar pressure = elastic.GetPressure();
-    Scalar k = k0 + a * pressure;
-    //plasticity v0 (by vlad) show history
-    //plasticity v1 (by kolya, actually should be the same)
-    {
-      Tensor tension = elastic.GetTension();
-      tension += pressure; //pressure 
-      Scalar ss = DoubleConvolution(tension, tension);
-
-      if (ss > 2 * Sqr(k))
-      {
-        tension *= sqrt(2 * Sqr(k) / ss);
-        tension += -pressure;
-        elastic.SetTension(tension);
-      }
-      std::copy(elastic.values, elastic.values + mesh->dimsCount, values);
-    }
-  }
-  MeshType* const mesh;
-  IndexType cellIndex;
-};
-
-/*
   if a cell is destructed then only compress and shear tensions exist
 
   s:s < 2k^2 -- von Mises criterion;
@@ -216,48 +172,47 @@ struct ContinuousDestructionCorrector
 
   void operator()(const Vector& refPoint, Scalar* values) const
   {
-    Scalar k0 = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
-    Scalar  a = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
-
+    bool brittle = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
     Elastic elastic = mesh->InterpolateElasticRef(cellIndex, refPoint);
 
-    Scalar pressure = elastic.GetPressure();
-    Scalar k = k0 + a * pressure;
-
-    Tensor tension = elastic.GetTension();
-    tension += pressure; //pressure 
-    Scalar ss = DoubleConvolution(tension, tension);
-
-    if (ss > 2 * Sqr(k))
+    if (brittle) 
     {
-      mesh->DestroyCellMaterial(cellIndex, Scalar(0.1));
-    }
+      const Scalar k0 = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
+      const Scalar  a = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
+      const Scalar pressure = elastic.GetPressure();
+      const Scalar k = k0 + a * pressure;
 
-    if (mesh->volumeMesh.cellMediumParameters[cellIndex].destroyed)
-    {
-      Scalar mainStresses[2];
-      Scalar maxTangentStress = Scalar(0.5) * (sqrt(Sqr(elastic.GetXX() - elastic.GetYY()) + 4 * Sqr(elastic.GetXY())));
+      Tensor tension = elastic.GetTension();
+      tension += pressure; //pressure 
+      Scalar ss = DoubleConvolution(tension, tension);
 
-      mainStresses[0] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) + maxTangentStress;
-      mainStresses[1] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) - maxTangentStress;
-
-      Vector normal = Vector(mainStresses[0] - elastic.GetYY(), elastic.GetXY()).GetNorm();
-
-      for (IndexType stressIndex = 0; stressIndex < 2; ++stressIndex)
+      if (ss > 2 * Sqr(k))
       {
-        mainStresses[stressIndex] = std::min<Scalar>(0, mainStresses[stressIndex]);
+        mesh->DestroyCellMaterial(cellIndex, Scalar(0.01));
       }
 
-      // rotate from local main tensions axes to global coordinates
-      elastic.SetTension(mainStresses[0] * Sqr(normal.x) + mainStresses[1] * Sqr(normal.y), 
-        mainStresses[0] * Sqr(normal.y) + mainStresses[1] * Sqr(normal.x),
-        (mainStresses[0] - mainStresses[1]) * normal.x * normal.y);
-    }
+      if (mesh->volumeMesh.cellMediumParameters[cellIndex].destroyed)
+      {
+        Scalar mainStresses[2];
+        Scalar maxTangentStress = Scalar(0.5) * (sqrt(Sqr(elastic.GetXX() - elastic.GetYY()) + 4 * Sqr(elastic.GetXY())));
 
-    for (IndexType valueIndex = 0; valueIndex < mesh->volumeMesh.dimsCount; ++valueIndex)
-    {
-      values[valueIndex] = elastic.values[valueIndex];
+        mainStresses[0] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) + maxTangentStress;
+        mainStresses[1] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) - maxTangentStress;
+
+        Vector normal = Vector(mainStresses[0] - elastic.GetYY(), elastic.GetXY()).GetNorm();
+
+        for (IndexType stressIndex = 0; stressIndex < 2; ++stressIndex)
+        {
+          mainStresses[stressIndex] = std::min<Scalar>(0, mainStresses[stressIndex]);
+        }
+
+        // rotate from local main tensions axes to global coordinates
+        elastic.SetTension(mainStresses[0] * Sqr(normal.x) + mainStresses[1] * Sqr(normal.y), 
+          mainStresses[0] * Sqr(normal.y) + mainStresses[1] * Sqr(normal.x),
+          (mainStresses[0] - mainStresses[1]) * normal.x * normal.y);
+      }
     }
+    std::copy(elastic.values, elastic.values + mesh->volumeMesh.dimsCount, values);
   }
   MeshType* mesh;
   IndexType cellIndex;
@@ -271,252 +226,200 @@ void ElasticVolumeMesh<Space2, FunctionSpace>::HandleContinuousDestruction()
 }
 
 template<typename FunctionSpace>
-void ElasticVolumeMesh<Space2, FunctionSpace>::HandlePlasticity()
-{
-  typedef PlasticityCorrector< ElasticVolumeMesh<Space2, FunctionSpace> > PlasticityCorrectorType;
-  ApplyCorrector< ElasticVolumeMesh<Space2, FunctionSpace>, PlasticityCorrectorType>(this);
-}
-
-template<typename FunctionSpace>
 void ElasticVolumeMesh<Space2, FunctionSpace>::FindDestructions(EdgePairIndices* contactEdges, 
                                                                       IndexType* contactEdgesCount, 
                                                                       IndexType contactTypesCount,
                                                                       std::vector<bool>* isContactBroken,
                                                                       std::vector<bool>* isCellBroken)
 { 
-  HandleContinuousDestruction();
-  for (IndexType cellIndex = 0; cellIndex < volumeMesh.cellMediumParameters.size(); ++cellIndex)
+  if (allowContinuousDestruction)
   {
-    (*isCellBroken)[cellIndex] = volumeMesh.cellMediumParameters[cellIndex].destroyed;
+    HandleContinuousDestruction();
+    for (IndexType cellIndex = 0; cellIndex < volumeMesh.cellMediumParameters.size(); ++cellIndex)
+    {
+      (*isCellBroken)[cellIndex] = volumeMesh.cellMediumParameters[cellIndex].destroyed;
+    }
   }
 
-  IndexType offset = 0;
-  for (IndexType contactTypeIndex = 0; contactTypeIndex < contactTypesCount; ++contactTypeIndex)
+  if (allowDiscreteDestruction)
   {
-    Scalar maxLongitudinalStress;
-    Scalar maxShearStress;
+    IndexType offset = 0;
+    for (IndexType contactTypeIndex = 0; contactTypeIndex < contactTypesCount; ++contactTypeIndex)
+    {
+      Scalar maxLongitudinalStress;
+      Scalar maxShearStress;
 
-    IndexType dynamicBoundaryType = volumeMesh.system.GetContactDynamicBoundaryType(contactTypeIndex);
-    if(dynamicBoundaryType != IndexType(-1))
-    {
-      volumeMesh.system.GetContactCriticalInfo(contactTypeIndex, maxShearStress, maxLongitudinalStress);
-    } else
-    {
-      continue;
-    }
-
-    struct DetectionApproaches
-    {
-      enum Types
+      IndexType dynamicBoundaryType = volumeMesh.system.GetContactDynamicBoundaryType(contactTypeIndex);
+      if(dynamicBoundaryType != IndexType(-1))
       {
-        Volumetric = 0x01, Surface = 0x02, Combined = 0x01 | 0x02
+        volumeMesh.system.GetContactCriticalInfo(contactTypeIndex, maxShearStress, maxLongitudinalStress);
+      } else
+      {
+        continue;
+      }
+
+      struct DetectionApproaches
+      {
+        enum Types
+        {
+          Volumetric = 0x01, Surface = 0x02, Combined = 0x01 | 0x02
+        };
       };
-    };
 
-    // IndexType detectionApproach = DetectionApproaches::Volumetric;
-    // IndexType detectionApproach = DetectionApproaches::Surface;
-    IndexType detectionApproach = DetectionApproaches::Combined;
+      const IndexType detectionApproach = 
+         DetectionApproaches::Volumetric;
+      // DetectionApproaches::Surface;
+      // DetectionApproaches::Combined;
 
-    for (IndexType contactEdgeIndex = 0; contactEdgeIndex < contactEdgesCount[contactTypeIndex]; ++contactEdgeIndex)
-    {
-      EdgeLocationPair contactEdgesLocation = volumeMesh.BuildEdgeLocation(contactEdges[offset + contactEdgeIndex]);
-      bool isCurrentContactBroken = false;
-
-      for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
+      for (IndexType contactEdgeIndex = 0; contactEdgeIndex < contactEdgesCount[contactTypeIndex]; ++contactEdgeIndex)
       {
-        IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
-        IndexType edgeNumber = contactEdgesLocation.edges[edgeIndex].edgeNumber;
+        EdgeLocationPair contactEdgesLocation = volumeMesh.BuildEdgeLocation(contactEdges[offset + contactEdgeIndex]);
+        bool isCurrentContactBroken = false;
 
-        // average value in the cell was used, because of presence of spurious oscillations
-        Vector edgeVertices[2];
-        volumeMesh.GetCellEdgeVertices(cellIndex, edgeNumber, edgeVertices);
-
-        Vector edgeTangent = (edgeVertices[1] - edgeVertices[0]).GetNorm();
-        Vector2 edgeNormal = volumeMesh.GetEdgeExternalNormal(cellIndex, edgeNumber); // internal for cell normal 
-
-        if (detectionApproach & DetectionApproaches::Surface)
+        for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
         {
-          Elastic elastic = GetAverageEdgeElastic(cellIndex, edgeNumber);
+          IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
+          IndexType edgeNumber = contactEdgesLocation.edges[edgeIndex].edgeNumber;
 
-          // formulas from http://www.soprotmat.ru/tns.html
-          // longitudinal stress
-          Scalar normalStress = elastic.GetXX() * edgeNormal.x * edgeNormal.x +  
-                                elastic.GetYY() * edgeNormal.y * edgeNormal.y +  
-                                elastic.GetXY() * edgeNormal.x * edgeNormal.y * 2;
+          // average value in the cell was used, because of presence of spurious oscillations
+          Vector edgeVertices[2];
+          volumeMesh.GetCellEdgeVertices(cellIndex, edgeNumber, edgeVertices);
 
-          // shear stress
-          Scalar shearStress = (elastic.GetYY() - elastic.GetXX()) * edgeNormal.x  * edgeNormal.y +                                 
-                                elastic.GetXY() * (edgeNormal.x * edgeNormal.x - edgeNormal.y * edgeNormal.y);
+          Vector edgeTangent = (edgeVertices[1] - edgeVertices[0]).GetNorm();
+          Vector2 edgeNormal = volumeMesh.GetEdgeExternalNormal(cellIndex, edgeNumber); // internal for cell normal 
+
+          if (detectionApproach & DetectionApproaches::Surface)
+          {
+            Elastic elastic = GetAverageEdgeElastic(cellIndex, edgeNumber);
+
+            // formulas from http://www.soprotmat.ru/tns.html
+            // longitudinal stress
+            Scalar normalStress = elastic.GetXX() * edgeNormal.x * edgeNormal.x +  
+                                  elastic.GetYY() * edgeNormal.y * edgeNormal.y +  
+                                  elastic.GetXY() * edgeNormal.x * edgeNormal.y * 2;
+
+            // shear stress
+            Scalar shearStress = (elastic.GetYY() - elastic.GetXX()) * edgeNormal.x  * edgeNormal.y +                                 
+                                  elastic.GetXY() * (edgeNormal.x * edgeNormal.x - edgeNormal.y * edgeNormal.y);
       
-          if (fabs(shearStress) > maxShearStress || normalStress > maxLongitudinalStress) 
-          {
-            isCurrentContactBroken = true;
-            break;
-          }
-        }
-
-        if (detectionApproach & DetectionApproaches::Volumetric)
-        {
-          Elastic elastic = GetAverageCellElastic(cellIndex);
-
-          Scalar mainStresses[2];
-          Scalar maxTangentStress = Scalar(0.5) * (sqrt(Sqr(elastic.GetXX() - elastic.GetYY()) + 4 * Sqr(elastic.GetXY())));
-
-          mainStresses[0] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) + maxTangentStress;
-          mainStresses[1] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) - maxTangentStress;
-
-          Vector2 mainNormals[2];
-          bool    normalsUsed[2];
-          std::fill_n(normalsUsed, 2, false);
-
-          for (IndexType stressIndex = 0; stressIndex < 2; ++stressIndex)
-          {
-            mainNormals[stressIndex] = Vector2(mainStresses[stressIndex] - elastic.GetYY(), elastic.GetXY()).GetNorm();
-            /* only extension */
-            if (mainStresses[stressIndex] > fabs(maxLongitudinalStress))
-            {
-              normalsUsed[stressIndex] = true;
-            }
-          }
-
-          for (IndexType normalIndex = 0; normalIndex < 2; ++normalIndex)
-          {
-            if (!normalsUsed[normalIndex]) continue;
-            const Vector2& mainNormal = mainNormals[normalIndex];
-
-            // minimun cos of angle between normal to crack and edge tangent
-            Scalar minCosOfAngle = std::numeric_limits<Scalar>::max() * Scalar(0.5);
-            IndexType bestEdgeNumber = IndexType(-1);
-
-            for (IndexType edge = 0; edge < 3; edge++)
-            {
-              Vector2 edgeVertices[2];
-              volumeMesh.GetCellEdgeVertices(cellIndex, edge, edgeVertices);
-
-              Vector2 edgeTangent = (edgeVertices[1] - edgeVertices[0]).GetNorm();
-              // because of crack grows in perpendicular direction to main normal
-              if (minCosOfAngle > fabs(mainNormal * edgeTangent))
-              {
-                minCosOfAngle = fabs(mainNormal * edgeTangent);
-                bestEdgeNumber = edge;
-              }
-            }
-
-            if (bestEdgeNumber == edgeNumber)
+            if (fabs(shearStress) > maxShearStress || normalStress > maxLongitudinalStress) 
             {
               isCurrentContactBroken = true;
               break;
             }
           }
-        }
-      }
 
-      if (isCurrentContactBroken && !(*isContactBroken)[offset + contactEdgeIndex])
-      {
-        (*isContactBroken)[offset + contactEdgeIndex] = true;
-        for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
-        {
-          IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
-          IndexType edgeNumber = contactEdgesLocation.edges[edgeIndex].edgeNumber;
-          if (volumeMesh.cellMediumParameters[cellIndex].destroyed) continue;
-
-          IndexType correspondingCellIndex = volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex;
-          if (correspondingCellIndex == IndexType(-1) || volumeMesh.cellMediumParameters[correspondingCellIndex].destroyed) continue;
-
-          volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex = IndexType(-1);
-          volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber = IndexType(-1);
-          volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].interactionType = dynamicBoundaryType;
-        }
-      }
-      DisjoinMergedCells(contactEdgesLocation, dynamicBoundaryType);
-    }
-    offset += contactEdgesCount[contactTypeIndex];
-  }
-  MergeSeparateCells();
-}
-
-template<typename FunctionSpace>
-bool ElasticVolumeMesh<Space2, FunctionSpace>::IsProperContact(EdgeLocationPair contactEdgesLocation)
-{
-  Vector edgeCenters[2];
-  Elastic values[2];
-
-  // checking if distance between two merged destroyed cells is greater than some characteristic size...
-  for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
-  {
-    IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
-    IndexType edgeNumber = contactEdgesLocation.edges[edgeIndex].edgeNumber;
-    edgeCenters[edgeIndex] = volumeMesh.GetCellEdgeMiddle(cellIndex, edgeNumber);
-    values[edgeIndex] = GetAverageCellElastic(cellIndex);
-  }
-  Vector distance = edgeCenters[1] - edgeCenters[0];
-
-  return GetSystem()->IsProperContact(values[0], values[1], distance.GetNorm()) && distance.Len() < 2 * volumeMesh.collisionWidth;
-}
-
-template<typename FunctionSpace>
-void ElasticVolumeMesh<Space2, FunctionSpace>::DisjoinMergedCells(EdgeLocationPair contactEdgesLocation, IndexType dynamicBoundaryType)
-{
-  bool isSeparateCells = true;
-
-  for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
-  {
-    IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
-    if (!volumeMesh.cellMediumParameters[cellIndex].destroyed)
-    {
-      isSeparateCells = false;
-    }
-  }
-
-  if (isSeparateCells && !IsProperContact(contactEdgesLocation))
-  {
-    for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
-    {
-      IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
-      IndexType edgeNumber = contactEdgesLocation.edges[edgeIndex].edgeNumber;
-      volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex = IndexType(-1);
-      volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber = IndexType(-1);
-      volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].interactionType = dynamicBoundaryType;
-    }
-  }
-}
-
-template<typename FunctionSpace>
-void ElasticVolumeMesh<Space2, FunctionSpace>::MergeSeparateCells()
-{
-  for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
-  {
-    bool separateCell = true;
-    for (IndexType edgeNumber = 0; edgeNumber < 3; ++edgeNumber)
-    {
-      IndexType correspondingCellIndex = volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex;
-      if (correspondingCellIndex != IndexType(-1) && !volumeMesh.cellMediumParameters[correspondingCellIndex].destroyed)
-      {
-        separateCell = false;
-      }
-    }
-
-    if (separateCell)
-    {
-      DestroyCellMaterial(cellIndex, Scalar(0.1));
-
-      for (IndexType edgeNumber = 0; edgeNumber < 3; ++edgeNumber)
-      {
-        IndexType correspondingCellIndex = initialAdditionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex;
-        IndexType correspondingEdgeNumber = initialAdditionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber;
-
-        if (correspondingCellIndex != IndexType(-1) && correspondingEdgeNumber != IndexType(-1))
-        {
-          if (IsProperContact(EdgeLocationPair(EdgeLocation(cellIndex, edgeNumber), 
-            EdgeLocation(correspondingCellIndex, correspondingEdgeNumber))))
+          if (detectionApproach & DetectionApproaches::Volumetric)
           {
-            volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber] = 
-              initialAdditionalCellInfos[cellIndex].neighbouringEdges[edgeNumber];
+            Elastic elastic = GetAverageCellElastic(cellIndex);
+
+            Scalar mainStresses[2];
+            Scalar maxTangentStress = Scalar(0.5) * (sqrt(Sqr(elastic.GetXX() - elastic.GetYY()) + 4 * Sqr(elastic.GetXY())));
+
+            mainStresses[0] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) + maxTangentStress;
+            mainStresses[1] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) - maxTangentStress;
+
+            Vector2 mainNormals[2];
+            bool    normalsUsed[2];
+            std::fill_n(normalsUsed, 2, false);
+
+            for (IndexType stressIndex = 0; stressIndex < 2; ++stressIndex)
+            {
+              mainNormals[stressIndex] = Vector2(mainStresses[stressIndex] - elastic.GetYY(), elastic.GetXY()).GetNorm();
+              /* only extension */
+              if (mainStresses[stressIndex] > fabs(maxLongitudinalStress))
+              {
+                normalsUsed[stressIndex] = true;
+              }
+            }
+
+            for (IndexType normalIndex = 0; normalIndex < 2; ++normalIndex)
+            {
+              if (!normalsUsed[normalIndex]) continue;
+              const Vector2& mainNormal = mainNormals[normalIndex];
+
+              // minimun cos of angle between normal to crack and edge tangent
+              Scalar minCosOfAngle = std::numeric_limits<Scalar>::max() * Scalar(0.5);
+              IndexType bestEdgeNumber = IndexType(-1);
+
+              for (IndexType edge = 0; edge < 3; edge++)
+              {
+                Vector2 edgeVertices[2];
+                volumeMesh.GetCellEdgeVertices(cellIndex, edge, edgeVertices);
+
+                Vector2 edgeTangent = (edgeVertices[1] - edgeVertices[0]).GetNorm();
+                // because of crack grows in perpendicular direction to main normal
+                if (minCosOfAngle > fabs(mainNormal * edgeTangent))
+                {
+                  minCosOfAngle = fabs(mainNormal * edgeTangent);
+                  bestEdgeNumber = edge;
+                }
+              }
+
+              if (bestEdgeNumber == edgeNumber)
+              {
+                isCurrentContactBroken = true;
+                break;
+              }
+            }
+          }
+        }
+
+        if (isCurrentContactBroken && !(*isContactBroken)[offset + contactEdgeIndex])
+        {
+          (*isContactBroken)[offset + contactEdgeIndex] = true;
+          for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
+          {
+            IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
+            IndexType edgeNumber = contactEdgesLocation.edges[edgeIndex].edgeNumber;
+            if (volumeMesh.cellMediumParameters[cellIndex].destroyed) continue;
+
+            // if this cell is deleted due to erosion
+            if (!volumeMesh.isCellAvailable[cellIndex]) continue;
+
+            IndexType correspondingCellIndex = volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex;
+            IndexType correspondingEdgeNumber = volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber;
+            if (correspondingCellIndex == IndexType(-1) || 
+                correspondingEdgeNumber == IndexType(-1) || 
+                volumeMesh.cellMediumParameters[correspondingCellIndex].destroyed) continue;
+
+            // check if it is last non-destructed edge for this cell
+            IndexType incidentCellsCount = 0;
+            for (IndexType faceNumber = 0; faceNumber < Space::EdgesPerCell; ++faceNumber)
+            {
+              if (volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber) != IndexType(-1) &&
+                  volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber) != IndexType(-1))
+              {
+                incidentCellsCount++;
+              }
+            }
+
+            if (incidentCellsCount == 1)
+            {
+              DestroyCellMaterial(cellIndex, Scalar(0.01));
+              (*isCellBroken)[cellIndex] = true;
+              continue;
+            }
+
+            if (volumeMesh.isCellAvailable[cellIndex])
+            {
+            //  volumeMesh.AddToAABBTree(cellIndex);
+            }
+
+            if (volumeMesh.isCellAvailable[correspondingCellIndex])
+            {
+            //  volumeMesh.AddToAABBTree(correspondingCellIndex);
+            }
+
+            DestroyFace(cellIndex, edgeNumber, dynamicBoundaryType);
           }
         }
       }
+      offset += contactEdgesCount[contactTypeIndex];
     }
   }
+
+  HandleMaterialErosion();
 }
 
 template<typename FunctionSpace>

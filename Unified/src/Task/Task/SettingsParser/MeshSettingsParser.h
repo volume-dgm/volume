@@ -37,16 +37,22 @@ struct MeshSettings
 
     struct MediumParams
     {
-      MediumParams():
+      MediumParams() :
         lambda(2.0),
         mju(1.0),
         rho(1.0),
         k(std::numeric_limits<Scalar>::max() * 0.5),
         alpha(0.0),
-        flowVelocity(Vector::zero())
+        flowVelocity(Vector::zero()),
+        brittle(false),
+        fixed(false),
+        maxPlasticWork(std::numeric_limits<Scalar>::max() * 0.5)
       {}
       Scalar lambda, mju, rho, k, alpha;
       Vector flowVelocity;
+      bool brittle;
+      bool fixed;
+      Scalar maxPlasticWork;
     };
 
     struct PerSubmeshInfo
@@ -90,12 +96,34 @@ struct MeshSettings
       ParseScalar(element, "rho", &(params->rho));
       ParseScalar(element, "k", &(params->k));
       ParseScalar(element, "alpha", &(params->alpha));
+      ParseBool(element, "brittle", &(params->brittle));
+      ParseBool(element, "fixed", &(params->fixed));
+      ParseScalar(element, "maxPlasticWork", &(params->maxPlasticWork));
 
       Scalar pSpeed(-1.0);
       Scalar sSpeed(-1.0);
 
       ParseScalar(element, "pSpeed", &pSpeed);
       ParseScalar(element, "sSpeed", &sSpeed);
+
+      Scalar E(-1.0);
+      Scalar mu(-1);
+      Scalar G(-1);
+
+      ParseScalar(element, "E", &E);
+      ParseScalar(element, "mu", &mu);
+      ParseScalar(element, "G", &G);
+
+      if (E >= 0 && mu >= 0)
+      {
+        G = E / (1 + mu) * Scalar(0.5);
+      }
+
+      if (E >= 0 && G >= 0)
+      {
+        pSpeed = sqrt(E / params->rho);
+        sSpeed = sqrt(G / params->rho);
+      }
 
       if (pSpeed >= 0 && sSpeed >= 0)
       {
@@ -303,7 +331,7 @@ struct MeshSettings
     struct FreeInfo
     {
       FreeInfo():
-        dynamicContactInteractionType(-1)
+        dynamicContactInteractionType(IndexType(-1))
       {}
       IndexType dynamicContactInteractionType;
       std::vector<VectorFunctor> forceFunctors;
@@ -511,7 +539,7 @@ struct MeshSettings
     struct GlueInfo
     {
       GlueInfo():
-        dynamicBoundaryInteractionType(-1),
+        dynamicBoundaryInteractionType(IndexType(-1)),
         maxShearStress(std::numeric_limits<Scalar>::max() * 0.5),
         maxLongitudinalStress(std::numeric_limits<Scalar>::max() * 0.5)
       {}
@@ -534,7 +562,7 @@ struct MeshSettings
     struct FrictionInfo
     {
       FrictionInfo():
-        dynamicBoundaryInteractionType(-1),
+        dynamicBoundaryInteractionType(IndexType(-1)),
         frictionCoeff(0)
       {}
       IndexType dynamicBoundaryInteractionType;

@@ -38,10 +38,7 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
 
     ValueTypeCommon& operator=(const ValueTypeCommon& other)
     {
-      for (IndexType valueIndex = 0; valueIndex < ElasticSystemBase<Space>::dimsCount; ++valueIndex)
-      {
-        values[valueIndex] = other.values[valueIndex];
-      }
+      std::copy(other.values, other.values + ElasticSystemBase<Space>::dimsCount, values);
       return *this;
     }
 
@@ -101,21 +98,25 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
 
     struct Plasticity
     {
-      /* 
-          plasticity: 
-          s:s < 2 * k^2 
-          k = k0 + a * pressure
-      */
-      Plasticity(): k0(std::numeric_limits<Scalar>::infinity()), a(0) // without plasticity
+      // plasticity: 
+      // s:s < 2 * k^2 
+      // k = k0 + a * pressure
+      Plasticity(): k0(std::numeric_limits<Scalar>::infinity()), a(0) /* without plasticity */, brittle(false),
+        maxPlasticWork(std::numeric_limits<Scalar>::infinity())
       {}
       Scalar k0;
       Scalar a;
-    } plasticity;
+      bool brittle;
+      Scalar maxPlasticWork;
+    };
+    Plasticity plasticity;
+    bool fixed;
   };
-
+  
   void BuildXMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xMatrix);
+  
   void BuildYMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& yMatrix);
-
+  
   void BuildRMatrix(const MediumParameters& interiorMediumParameters, 
                     const MediumParameters& exteriorMediumParameters, 
                     Eigen::Matrix<Scalar, dimsCount, dimsCount>& rMatrix);
@@ -137,7 +138,7 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   void BuildContactMatrices(IndexType interactionType,
     Eigen::Matrix<Scalar, 1, dimsCount>& leftContactMatrix,
     Eigen::Matrix<Scalar, 1, dimsCount>& rightContactMatrix);
-
+  
   Scalar GetMaxWaveSpeed(const MediumParameters& mediumParameters) const;
 
   bool IsProperContact(const ValueTypeCommon& value0, const ValueTypeCommon& value1, 
@@ -166,8 +167,8 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
 
   ContactConditions::Types GetContactType(IndexType interactionType) const;
 
-  IndexType GetContactDynamicBoundaryType(IndexType contactInteractionType );
-  IndexType GetBoundaryDynamicContactType(IndexType boundaryInteractionType);
+  IndexType GetContactDynamicBoundaryType(IndexType contactInteractionType ) const;
+  IndexType GetBoundaryDynamicContactType(IndexType boundaryInteractionType) const;
 
   void GetContactCriticalInfo(IndexType interactionType, 
     Scalar& maxShearStress, Scalar& maxLongitudinalStress);
@@ -239,7 +240,10 @@ protected:
   std::vector< GlueContactInfo<Space> >     glueContactInfos;
   std::vector< FrictionContactInfo<Space> > frictionContactInfos;
   std::vector< ContactDescription >         contactDescriptions;
-  SourceFunctorT* sourceFunctor;
+  SourceFunctorT* sourceFunctor; 
+
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 #include "ElasticSystemCommon.inl"

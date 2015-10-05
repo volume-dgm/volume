@@ -39,6 +39,10 @@ public:
   {
   }
 
+  virtual void BuildAdditionalContacts(MeshIO<Space>* const)
+  {
+  }
+
 private:
   std::string meshFileName;
 };

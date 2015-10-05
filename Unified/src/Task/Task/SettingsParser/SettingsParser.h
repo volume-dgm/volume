@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../../../../3rdparty/tinyxml/tinyxml.h"
 #include "../../../../3rdparty/tinyxml/tinystr.h"
 #include <limits>

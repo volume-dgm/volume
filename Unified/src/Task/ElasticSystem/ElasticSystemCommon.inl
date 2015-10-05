@@ -633,25 +633,27 @@ void ElasticSystemCommon<Space>::SetGlideContact(IndexType interactionType)
 }
 
 template<typename Space>
-typename Space::IndexType ElasticSystemCommon<Space>::GetContactDynamicBoundaryType(IndexType contactInteractionType )
+typename Space::IndexType ElasticSystemCommon<Space>::GetContactDynamicBoundaryType(IndexType contactInteractionType) const
 {
-  if(contactDescriptions[contactInteractionType].type == ContactConditions::Glue &&
+  if(contactInteractionType < contactDescriptions.size() && 
+     contactDescriptions[contactInteractionType].type == ContactConditions::Glue &&
      contactDescriptions[contactInteractionType].infoIndex != IndexType(-1))
   {
     IndexType glueInfoIndex = contactDescriptions[contactInteractionType].infoIndex;
-    return glueContactInfos[glueInfoIndex].dynamicBoundaryInteractionType;
+    return glueInfoIndex != IndexType(-1) ? glueContactInfos.at(glueInfoIndex).dynamicBoundaryInteractionType : IndexType(-1);
   }
   return IndexType(-1);
 }
 
 template<typename Space>
-typename Space::IndexType ElasticSystemCommon<Space>::GetBoundaryDynamicContactType(IndexType boundaryInteractionType)
+typename Space::IndexType ElasticSystemCommon<Space>::GetBoundaryDynamicContactType(IndexType boundaryInteractionType) const
 {
-  if(boundaryDescriptions[boundaryInteractionType].type == BoundaryConditions::Free &&
+  if(boundaryInteractionType < boundaryDescriptions.size() &&
+     boundaryDescriptions[boundaryInteractionType].type == BoundaryConditions::Free &&
      boundaryDescriptions[boundaryInteractionType].infoIndex != IndexType(-1))
   {
     IndexType freeInfoIndex = boundaryDescriptions[boundaryInteractionType].infoIndex;
-    return freeBoundaryInfos[freeInfoIndex].dynamicContactInteractionType;
+    return freeInfoIndex != IndexType(-1) ? freeBoundaryInfos[freeInfoIndex].dynamicContactInteractionType : IndexType(-1);
   }
   return IndexType(-1);
 }
@@ -748,7 +750,8 @@ ElasticSystemCommon<Space>::MediumParameters::MediumParameters():
   mju(Scalar(1.0)), 
   invRho(Scalar(1.0)),
   destroyed(false),
-  dimensionless(false)
+  dimensionless(false),
+  fixed(false)
 {
 }
 
@@ -759,7 +762,8 @@ ElasticSystemCommon<Space>::MediumParameters::MediumParameters(
   mju(mju), 
   invRho(invRho),
   destroyed(false),
-  dimensionless(false)
+  dimensionless(false),
+  fixed(false)
 {
 }
 

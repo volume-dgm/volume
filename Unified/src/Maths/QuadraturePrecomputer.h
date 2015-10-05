@@ -26,7 +26,8 @@ void QuadraturePrecomputer::BuildQuadrature<Space1>(int order, std::vector<Space
   const int    kind = 1; // gauss
   const Scalar alpha = 0;
   const Scalar beta = 0;
-  cgqf(int((order + 1.0) / 2 + 0.5) /* number of points */, kind, alpha, beta, 0, 1, points.data(), weights.data());
+  const int numberOfGaussPoints = int((order + Scalar(1.0)) / 2 + 1 - std::numeric_limits<Scalar>::epsilon());
+  cgqf(numberOfGaussPoints , kind, alpha, beta, 0, 1, points.data(), weights.data());
 }
 
 template <>

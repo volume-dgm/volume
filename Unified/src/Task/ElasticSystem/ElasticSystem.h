@@ -18,6 +18,8 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
   typedef ElasticSystemCommon<Space2>::ValueTypeCommon  ValueTypeCommon;
   typedef ElasticSystemCommon<Space2>::MediumParameters MediumParameters;
 
+  using ElasticSystemCommon<Space2>::GetContactDynamicBoundaryType;
+
   struct ValueType: public ValueTypeCommon
   {
     using ValueTypeCommon::SetTension;
@@ -53,9 +55,10 @@ template <>
 struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
 {
   SPACE3_TYPEDEFS
-  typedef Space3                                        Space;
-  using ElasticSystemCommon<Space3>::ValueTypeCommon;
+  typedef Space3            Space;
+  using ElasticSystemCommon<Space>::ValueTypeCommon;
   using ElasticSystemCommon<Space>::MediumParameters;
+  using ElasticSystemCommon<Space3>::GetContactDynamicBoundaryType;
 
   struct ValueType: public ValueTypeCommon
   {

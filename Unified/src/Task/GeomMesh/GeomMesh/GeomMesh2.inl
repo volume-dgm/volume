@@ -268,7 +268,7 @@ void GeomMesh<Space2>::GetGhostCellVertices(IndexType cellIndex, IndexType bound
 
 Space2::Vector GeomMesh<Space2>::GetEdgeExternalNormal(IndexType cellIndex, IndexType edgeNumber) const
 {
-  Vector points[3];
+  Vector points[Space2::NodesPerCell];
   GetCellVertices(cellIndex, points);
   Vector edge = points[(edgeNumber + 1) % 3] - points[edgeNumber];
   return -edge.GetPerpendicular().GetNorm();

@@ -55,6 +55,7 @@
 
 // 7.18.1 Integer types
 
+#if (_MSC_VER < 1700)
 // 7.18.1.1 Exact-width integer types
 typedef __int8            int8_t;
 typedef __int16           int16_t;
@@ -84,6 +85,9 @@ typedef uint8_t   uint_fast8_t;
 typedef uint16_t  uint_fast16_t;
 typedef uint32_t  uint_fast32_t;
 typedef uint64_t  uint_fast64_t;
+#else
+  #include <stdint.h>
+#endif
 
 // 7.18.1.4 Integer types capable of holding object pointers
 #ifdef _WIN64 // [

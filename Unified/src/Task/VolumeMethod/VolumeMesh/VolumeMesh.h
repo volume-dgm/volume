@@ -66,6 +66,14 @@ public:
       Copy(other);
       return *this;
     }
+
+    void SetToZero()
+    {
+      for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+      {
+        std::fill(basisVectors[functionIndex].values, basisVectors[functionIndex].values + dimsCount, 0);
+      }
+    }
   private:
     void Copy(const CellSolution& other)
     {
@@ -85,12 +93,19 @@ public:
   using GeomMesh<Space>::nodes;
   using GeomMesh<Space>::cells;
   using GeomMesh<Space>::aabbTree;
+  using GeomMesh<Space>::RemoveCellFromAABBTree;
+  using GeomMesh<Space>::IsCellInAABBTree;
 
   using GeomMesh<Space>::additionalCellInfos;
   using GeomMesh<Space>::GetMassCenter;
   using GeomMesh<Space>::GetCellVertices;
   using GeomMesh<Space>::GetFixedCellIndices;
   using GeomMesh<Space>::GetGhostCellVertices;
+  using GeomMesh<Space>::GetAspectRatio;
+  using GeomMesh<Space>::GetCorrespondingCellIndex;
+  using GeomMesh<Space>::GetCorrespondingFaceNumber;
+  using GeomMesh<Space>::GetInteractionType;
+  using GeomMesh<Space>::AddToAABBTree;
 
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
   typename System::ValueType GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepCellSolution = false) const;
@@ -125,16 +140,23 @@ public:
   Scalar collisionWidth;
   bool allowDynamicCollisions;
 
+  // if cell isn`t available then all it derivatives is not calculated and merely is set to zeros. for example it is used for erosion. 
+  std::vector<bool>               isCellAvailable;
+
   std::vector<CellSolution>       cellSolutions;
   std::vector<MediumParameters>   cellMediumParameters;
 
   TimeHierarchyLevelsManager<Space> timeHierarchyLevelsManager;
   void RebuildTimeHierarchyLevels(IndexType globalStepIndex, bool allowCollisions, bool externalInitialization = false);
 
+  void   GetCellEnergy(IndexType cellIndex, Scalar& kineticEnergy, Scalar& potentialEnergy) const;
   Vector GetTotalImpulse() const;
   Scalar GetTotalEnergy() const;
+  Scalar GetTotalMass() const;
 
   virtual Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const = 0;
+
+  void BuildAABBTree();
 
 protected:
   std::vector<Scalar> cellMaxWaveSpeeds;
@@ -176,6 +198,13 @@ protected:
 
   std::vector<Scalar> quadratureWeights;
   std::vector<Vector> quadraturePoints;
+
+  // only this cells may collide with each other.
+  bool IsReadyForCollisionCell(IndexType cellIndex) const;
+
+private:
+  // has non -1 dynamic boundary type
+  bool IsCellHasDynamicBoundary(IndexType cellIndex) const;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -249,6 +278,11 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::time;
   using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeightsForBorder;
   using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePointsForBorder;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetAspectRatio;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::isCellAvailable;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::IsReadyForCollisionCell;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::AddToAABBTree;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy;
 
 public:
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
@@ -376,6 +410,11 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::time;
   using VolumeMeshCommon<Space, FunctionSpace, System>::quadratureWeightsForBorder;
   using VolumeMeshCommon<Space, FunctionSpace, System>::quadraturePointsForBorder;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetAspectRatio;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::isCellAvailable;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::IsReadyForCollisionCell;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::AddToAABBTree;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy;
 
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
     VolumeMeshCommon<Space3, FunctionSpace, System>(solverPhasesCount, hierarchyLevelsCount)

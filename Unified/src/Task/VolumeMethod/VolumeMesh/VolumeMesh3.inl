@@ -159,225 +159,231 @@ void VolumeMesh<Space3, FunctionSpace, System>::
 
       timeDerivatives.setZero();
 
-      bool useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, true);
-      for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+      if (isCellAvailable[cellIndex] && !cellMediumParameters[cellIndex].fixed)
       {
-        for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+
+        bool useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, true);
+        for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
         {
-          currCellValues(valueIndex, functionIndex) =
-            useHalfStepSolution ?
-            halfStepCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] :
-            cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
-        }
-      }
-
-      GetCellVertices(cellIndex, cellVertices);
-      Scalar invJacobian = Scalar(1.0) / fabs(GetCellDeformJacobian(cellVertices));
-
-      system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
-      system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
-      system.BuildZMatrix(cellMediumParameters[cellIndex], zMatrix);
-
-      for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; faceNumber++)
-      {
-        Vector faceGlobalVertices[Space::NodesPerFace];
-        GetCellFaceVertices(cellIndex, faceNumber, faceGlobalVertices);
-
-        system.BuildFaceTransformMatrix(faceGlobalVertices, faceTransformMatrix);
-        system.BuildFaceTransformMatrixInv(faceGlobalVertices, faceTransformMatrixInv);
-
-        Scalar faceDeformJacobian = Scalar(2.0) * GetFaceSquare(faceGlobalVertices);
-        Vector faceNormal = GetFaceExternalNormal(cellIndex, faceNumber);
-
-        IndexType correspondingCellIndex       = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingCellIndex;
-        IndexType correspondingFaceNumber      = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingFaceNumber;
-        IndexType correspondingFaceOrientation = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].orientation;
-        IndexType interactionType              = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].interactionType;
-
-        if (interactionType == IndexType(-1)) continue;
-
-        // interior matrix
-        system.BuildXnInteriorMatrix(
-          cellMediumParameters[cellIndex],
-          //cellMediumParameters[cellIndex],
-          cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
-          faceNormal, xInteriorMatrix);
-
-        // exterior matrix
-        system.BuildXnExteriorMatrix(
-          cellMediumParameters[cellIndex],
-          //cellMediumParameters[cellIndex], 
-          cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
-          faceNormal, xExteriorMatrix);
-
-        bool outgoingFluxAdded = false;
-
-        if (correspondingCellIndex == IndexType(-1))
-        {
-          // bounary condition
-          IndexType dynamicContactType = system.GetBoundaryDynamicContactType(interactionType);
-
-          // external force/velocity 
-          BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
-          if (functor)
+          for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
           {
-            typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
-            FunctorWrapper wrapper(functor, time, this, cellIndex, faceNumber);
-
-            functionSpace->template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
-
-            timeDerivatives.noalias() += (Scalar(2.0) * faceDeformJacobian * invJacobian) *
-              (faceTransformMatrix * xExteriorMatrix * faceTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
+            currCellValues(valueIndex, functionIndex) =
+              useHalfStepSolution ?
+              halfStepCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] :
+              cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
           }
+        }
 
-          if (!allowDynamicCollisions || dynamicContactType == IndexType(-1))
+        GetCellVertices(cellIndex, cellVertices);
+        Scalar invJacobian = Scalar(1.0) / fabs(GetCellDeformJacobian(cellVertices));
+
+        system.BuildXMatrix(cellMediumParameters[cellIndex], xMatrix);
+        system.BuildYMatrix(cellMediumParameters[cellIndex], yMatrix);
+        system.BuildZMatrix(cellMediumParameters[cellIndex], zMatrix);
+
+        for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; faceNumber++)
+        {
+          Vector faceGlobalVertices[Space::NodesPerFace];
+          GetCellFaceVertices(cellIndex, faceNumber, faceGlobalVertices);
+
+          system.BuildFaceTransformMatrix(faceGlobalVertices, faceTransformMatrix);
+          system.BuildFaceTransformMatrixInv(faceGlobalVertices, faceTransformMatrixInv);
+
+          Scalar faceDeformJacobian = Scalar(2.0) * GetFaceSquare(faceGlobalVertices);
+          Vector faceNormal = GetFaceExternalNormal(cellIndex, faceNumber);
+
+          IndexType correspondingCellIndex = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingCellIndex;
+          IndexType correspondingFaceNumber = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingFaceNumber;
+          IndexType correspondingFaceOrientation = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].orientation;
+          IndexType interactionType = additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].interactionType;
+
+          if (interactionType == IndexType(-1)) continue;
+
+          // interior matrix
+          system.BuildXnInteriorMatrix(
+            cellMediumParameters[cellIndex],
+            //cellMediumParameters[cellIndex],
+            cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
+            faceNormal, xInteriorMatrix);
+
+          // exterior matrix
+          system.BuildXnExteriorMatrix(
+            cellMediumParameters[cellIndex],
+            //cellMediumParameters[cellIndex], 
+            cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
+            faceNormal, xExteriorMatrix);
+
+          bool outgoingFluxAdded = false;
+
+          if (correspondingCellIndex == IndexType(-1))
           {
-            system.BuildBoundaryMatrix(interactionType, boundaryMatrix);
+            // bounary condition
+            IndexType dynamicContactType = system.GetBoundaryDynamicContactType(interactionType);
 
-            // regular boundary          
-            timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * 
-              boundaryMatrix.asDiagonal() * faceTransformMatrixInv * currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
-          } else
-          {
-            // dynamic collision
-            Vector ghostCellVertices[Space::NodesPerCell];
-            GetGhostCellVertices(cellIndex, faceNumber, ghostCellVertices);
-            GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, faceNormal, ghostCellVertices, time,
-              GhostCellFunctionGetter<VolumeMeshT>::Solution);
-            functionSpace->template Decompose< GhostCellFunctionGetter<VolumeMeshT>, dimsCount >(functionGetter, ghostValues.data());
-
-            GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, faceNormal, ghostCellVertices, time,
-              GhostCellFunctionGetter<VolumeMeshT>::MediumParams);
-
-            flux.setZero();
-
-            // quadrature integration of numerical flux
-            for (IndexType pointIndex = 0; pointIndex < quadraturePointsForBorder.size(); ++pointIndex)
+            // external force/velocity 
+            BoundaryInfoFunctor<Space>* functor = system.GetBoundaryInfoFunctor(interactionType);
+            if (functor)
             {
-              Vector globalPoint = (faceGlobalVertices[1] - faceGlobalVertices[0]) * quadraturePointsForBorder[pointIndex].x +
-                                   (faceGlobalVertices[2] - faceGlobalVertices[0]) * quadraturePointsForBorder[pointIndex].y +
-                                                            faceGlobalVertices[0];
-              Vector refPoint = GlobalToRefVolumeCoords(globalPoint, cellVertices);
+              typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
+              FunctorWrapper wrapper(functor, time, this, cellIndex, faceNumber);
 
-              Vector ghostRefPoint = GlobalToRefVolumeCoords(globalPoint, ghostCellVertices);
+              functionSpace->template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
 
-              typename System::ValueType interiorSolution = GetRefCellSolution(cellIndex, refPoint);
-              typename System::ValueType exteriorSolution = GetRefCellSolution(ghostValues.data(), ghostRefPoint);
+              timeDerivatives.noalias() += (Scalar(2.0) * faceDeformJacobian * invJacobian) *
+                (faceTransformMatrix * xExteriorMatrix * faceTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
+            }
 
-              MediumParameters exteriorParams;
-              paramsGetter.operator()(ghostRefPoint, exteriorParams.params);
+            if (!allowDynamicCollisions || dynamicContactType == IndexType(-1))
+            {
+              system.BuildBoundaryMatrix(interactionType, boundaryMatrix);
 
-              Scalar tmp[dimsCount];
-              MatrixMulVector(faceTransformMatrixInv.data(), interiorSolution.values, tmp, dimsCount, dimsCount);
-              std::copy(tmp, tmp + dimsCount, interiorSolution.values);
+              // regular boundary          
+              timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix *
+                boundaryMatrix.asDiagonal() * faceTransformMatrixInv * currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
+            }
+            else
+            {
+              // dynamic collision
+              Vector ghostCellVertices[Space::NodesPerCell];
+              GetGhostCellVertices(cellIndex, faceNumber, ghostCellVertices);
+              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, faceNormal, ghostCellVertices, time,
+                GhostCellFunctionGetter<VolumeMeshT>::Solution);
+              functionSpace->template Decompose< GhostCellFunctionGetter<VolumeMeshT>, dimsCount >(functionGetter, ghostValues.data());
 
-              MatrixMulVector(faceTransformMatrixInv.data(), exteriorSolution.values, tmp, dimsCount, dimsCount);
-              std::copy(tmp, tmp + dimsCount, exteriorSolution.values);
+              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, faceNormal, ghostCellVertices, time,
+                GhostCellFunctionGetter<VolumeMeshT>::MediumParams);
 
-              typename System::ValueType riemannSolution =
-                system.GetRiemannSolution(interiorSolution, exteriorSolution,
-                cellMediumParameters[cellIndex], exteriorParams,
-                interactionType, // boundary type
-                dynamicContactType);
+              flux.setZero();
 
-              for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
+              // quadrature integration of numerical flux
+              for (IndexType pointIndex = 0; pointIndex < quadraturePointsForBorder.size(); ++pointIndex)
               {
-                for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+                Vector globalPoint = (faceGlobalVertices[1] - faceGlobalVertices[0]) * quadraturePointsForBorder[pointIndex].x +
+                  (faceGlobalVertices[2] - faceGlobalVertices[0]) * quadraturePointsForBorder[pointIndex].y +
+                  faceGlobalVertices[0];
+                Vector refPoint = GlobalToRefVolumeCoords(globalPoint, cellVertices);
+
+                Vector ghostRefPoint = GlobalToRefVolumeCoords(globalPoint, ghostCellVertices);
+
+                typename System::ValueType interiorSolution = GetRefCellSolution(cellIndex, refPoint);
+                typename System::ValueType exteriorSolution = GetRefCellSolution(ghostValues.data(), ghostRefPoint);
+
+                MediumParameters exteriorParams;
+                paramsGetter.operator()(ghostRefPoint, exteriorParams.params);
+
+                Scalar tmp[dimsCount];
+                MatrixMulVector(faceTransformMatrixInv.data(), interiorSolution.values, tmp, dimsCount, dimsCount);
+                std::copy(tmp, tmp + dimsCount, interiorSolution.values);
+
+                MatrixMulVector(faceTransformMatrixInv.data(), exteriorSolution.values, tmp, dimsCount, dimsCount);
+                std::copy(tmp, tmp + dimsCount, exteriorSolution.values);
+
+                typename System::ValueType riemannSolution =
+                  system.GetRiemannSolution(interiorSolution, exteriorSolution,
+                    cellMediumParameters[cellIndex], exteriorParams,
+                    interactionType, // boundary type
+                    dynamicContactType);
+
+                for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
                 {
-                  flux(valueIndex, functionIndex) +=
-                    quadratureWeightsForBorder[pointIndex] *
-                    riemannSolution.values[valueIndex] *
-                    functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
+                  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+                  {
+                    flux(valueIndex, functionIndex) +=
+                      quadratureWeightsForBorder[pointIndex] *
+                      riemannSolution.values[valueIndex] *
+                      functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
+                  }
                 }
+              }
+
+              timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) *
+                (faceTransformMatrix * xMatrix * flux * cellVolumeIntegralsInv);
+
+              outgoingFluxAdded = true;
+            }
+          }
+          else
+          {
+            // contact condition
+            bool useHalfStepSolutionForCorrespondingCell = timeHierarchyLevelsManager.UseHalfStepSolutionForNeighbour(
+              cellIndex, solverState, auxCell, correspondingCellIndex);
+
+            for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+            {
+              for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+              {
+                correspondingCellValues(valueIndex, functionIndex) =
+                  useHalfStepSolutionForCorrespondingCell ?
+                  halfStepCellSolutions[correspondingCellIndex].basisVectors[functionIndex].values[valueIndex] :
+                  cellSolutions[correspondingCellIndex].basisVectors[functionIndex].values[valueIndex];
               }
             }
 
-            timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) *
-              (faceTransformMatrix * xMatrix * flux * cellVolumeIntegralsInv);
-
-            outgoingFluxAdded = true;
-          }
-        } else
-        {
-          // contact condition
-          bool useHalfStepSolutionForCorrespondingCell = timeHierarchyLevelsManager.UseHalfStepSolutionForNeighbour(
-            cellIndex, solverState, auxCell, correspondingCellIndex);
-
-          for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
-          {
-            for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+            system.BuildContactMatrices(interactionType, leftContactMatrix, rightContactMatrix);
+            // for glue contact left matrix equals 0
+            if (!leftContactMatrix.isZero(std::numeric_limits<Scalar>::epsilon()))
             {
-              correspondingCellValues(valueIndex, functionIndex) =
-                useHalfStepSolutionForCorrespondingCell ?
-                halfStepCellSolutions[correspondingCellIndex].basisVectors[functionIndex].values[valueIndex] :
-                cellSolutions[correspondingCellIndex].basisVectors[functionIndex].values[valueIndex];
+              // interior side contribution
+              timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * leftContactMatrix.asDiagonal() *
+                faceTransformMatrixInv * currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
             }
+
+            // exterior side contribution
+            timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * rightContactMatrix.asDiagonal() *
+              faceTransformMatrixInv * correspondingCellValues *
+              incomingFlux.srcFaces[faceNumber].dstFaces[correspondingFaceNumber].orientations[correspondingFaceOrientation].surfaceIntegral);
           }
 
-          system.BuildContactMatrices(interactionType, leftContactMatrix, rightContactMatrix);
-          // for glue contact left matrix equals 0
-          if (!leftContactMatrix.isZero(std::numeric_limits<Scalar>::epsilon()))
+          if (!outgoingFluxAdded)
           {
-            // interior side contribution
-            timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * leftContactMatrix.asDiagonal() * 
-              faceTransformMatrixInv * currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
+            // outgoing flux
+            timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xInteriorMatrix * faceTransformMatrixInv *
+              currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
           }
-
-          // exterior side contribution
-          timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xExteriorMatrix * rightContactMatrix.asDiagonal() * 
-            faceTransformMatrixInv * correspondingCellValues * 
-            incomingFlux.srcFaces[faceNumber].dstFaces[correspondingFaceNumber].orientations[correspondingFaceOrientation].surfaceIntegral);
         }
 
-        if (!outgoingFluxAdded)
+        Vector refXDerivatives = GetRefXDerivatives(cellVertices) * invJacobian;
+        Vector refYDerivatives = GetRefYDerivatives(cellVertices) * invJacobian;
+        Vector refZDerivatives = GetRefZDerivatives(cellVertices) * invJacobian;
+
+        xMixedMatrix.noalias() = xMatrix * refXDerivatives.x + yMatrix * refXDerivatives.y + zMatrix * refXDerivatives.z;
+        yMixedMatrix.noalias() = xMatrix * refYDerivatives.x + yMatrix * refYDerivatives.y + zMatrix * refYDerivatives.z;
+        zMixedMatrix.noalias() = xMatrix * refZDerivatives.x + yMatrix * refZDerivatives.y + zMatrix * refZDerivatives.z;
+
+        timeDerivatives.noalias() -=
+          xMixedMatrix * currCellValues * xDerivativeVolumeIntegrals +
+          yMixedMatrix * currCellValues * yDerivativeVolumeIntegrals +
+          zMixedMatrix * currCellValues * zDerivativeVolumeIntegrals;
+
+        typename SystemT::SourceFunctorT* sourceFunctor = system.GetSourceFunctor();
+        if (sourceFunctor)
         {
-          // outgoing flux
-          timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * xInteriorMatrix * faceTransformMatrixInv *
-            currCellValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral);
+          typedef SourceFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > SourceFunctorWrapper;
+          SourceFunctorWrapper wrapper(sourceFunctor, time, this, cellIndex);
+          functionSpace->template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
+          timeDerivatives.noalias() -= sourceValues;
         }
-      }
 
-      Vector refXDerivatives = GetRefXDerivatives(cellVertices) * invJacobian;
-      Vector refYDerivatives = GetRefYDerivatives(cellVertices) * invJacobian;
-      Vector refZDerivatives = GetRefZDerivatives(cellVertices) * invJacobian;
-
-      xMixedMatrix.noalias() = xMatrix * refXDerivatives.x + yMatrix * refXDerivatives.y + zMatrix * refXDerivatives.z;
-      yMixedMatrix.noalias() = xMatrix * refYDerivatives.x + yMatrix * refYDerivatives.y + zMatrix * refYDerivatives.z;
-      zMixedMatrix.noalias() = xMatrix * refZDerivatives.x + yMatrix * refZDerivatives.y + zMatrix * refZDerivatives.z;
-
-      timeDerivatives.noalias() -=
-        xMixedMatrix * currCellValues * xDerivativeVolumeIntegrals +
-        yMixedMatrix * currCellValues * yDerivativeVolumeIntegrals + 
-        zMixedMatrix * currCellValues * zDerivativeVolumeIntegrals;
-
-      typename SystemT::SourceFunctorT* sourceFunctor = system.GetSourceFunctor();
-      if (sourceFunctor)
-      {
-        typedef SourceFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > SourceFunctorWrapper;
-        SourceFunctorWrapper wrapper(sourceFunctor, time, this, cellIndex);
-        functionSpace->template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
-        timeDerivatives.noalias() -= sourceValues;
-      }
-
-      // point sources
-      for (IndexType sourceIndex = 0; sourceIndex < system.pointSources.size(); ++sourceIndex)
-      {
-        Vector point = system.pointSources[sourceIndex]->GetPoint();
-        if (PointInCell<Scalar>(cellVertices, point))
+        // point sources
+        for (IndexType sourceIndex = 0; sourceIndex < system.pointSources.size(); ++sourceIndex)
         {
-          Vector refPoint = GlobalToRefVolumeCoords(point, cellVertices);
-          Scalar values[dimsCount];
-          (*system.pointSources[sourceIndex])(time, values);
-          for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+          Vector point = system.pointSources[sourceIndex]->GetPoint();
+          if (PointInCell<Scalar>(cellVertices, point))
           {
-            for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+            Vector refPoint = GlobalToRefVolumeCoords(point, cellVertices);
+            Scalar values[dimsCount];
+            (*system.pointSources[sourceIndex])(time, values);
+            for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
             {
-              sourcePointValues(valueIndex, functionIndex) = 
-                values[valueIndex] * functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
+              for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+              {
+                sourcePointValues(valueIndex, functionIndex) =
+                  values[valueIndex] * functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
+              }
             }
+            timeDerivatives.noalias() -= sourcePointValues * cellVolumeIntegralsInv;
           }
-          timeDerivatives.noalias() -= sourcePointValues * cellVolumeIntegralsInv;
-        } 
+        }
       }
 
       for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)

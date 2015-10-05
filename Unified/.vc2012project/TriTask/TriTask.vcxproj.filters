@@ -401,6 +401,12 @@
     <ClInclude Include="..\..\src\IO\Vtk\VtkReader.h">
       <Filter>IO\Vtk</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\ContactFinder.h">
+      <Filter>VolumeMethod\FunctionGetters</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Maths\Collisions.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl">

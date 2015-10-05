@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Util.h"
+#include "Spaces.h"
 #include <string>
 #include <sstream>
 
@@ -405,48 +406,6 @@ template<typename T>
 T TriHeight(Vector2<T> vectors[2])
 {
   return TriHeight(vectors[0], vectors[1]);
-}
-
-template<typename Space>
-bool CellsCollide(
-  const typename Space::Vector points0[3],
-  const typename Space::Vector points1[3],
-  typename Space::Scalar collisionWidth)
-{
-  typename Space::Vector axes[6];
-  for(int pointNumber = 0; pointNumber < 3; pointNumber++)
-  {
-    axes[pointNumber    ] = (points0[(pointNumber + 1) % 3] - points0[pointNumber]).GetPerpendicular().GetNorm();
-    axes[pointNumber + 3] = (points1[(pointNumber + 1) % 3] - points1[pointNumber]).GetPerpendicular().GetNorm();
-  }
-
-  for(int axisNumber = 0; axisNumber < 6; axisNumber++)
-  {
-    typename Space::Scalar mins[2], maxes[2];
-    mins[0]  = mins[1]  =  std::numeric_limits<typename Space::Scalar>::max() / 2;
-    maxes[0] = maxes[1] = -std::numeric_limits<typename Space::Scalar>::max() / 2;
-
-    for(int pointNumber = 0; pointNumber < 3; pointNumber++)
-    {
-      typename Space::Scalar proj[2];
-      proj[0] = axes[axisNumber] * points0[pointNumber];
-      proj[1] = axes[axisNumber] * points1[pointNumber];
-
-      mins[0] = Min(mins[0], proj[0]);
-      mins[1] = Min(mins[1], proj[1]);
-
-      maxes[0] = Max(maxes[0], proj[0]);
-      maxes[1] = Max(maxes[1], proj[1]);
-    }
-    if(mins [0] > mins[1] - collisionWidth && mins [0] < maxes[1] + collisionWidth ||
-       maxes[0] > mins[1] - collisionWidth && maxes[0] < maxes[1] + collisionWidth ||
-       mins [1] > mins[0] - collisionWidth && mins [1] < maxes[0] + collisionWidth ||
-       maxes[1] > mins[0] - collisionWidth && maxes[1] < maxes[0] + collisionWidth)
-    {
-      return true;
-    }
-  }
-  return false;
 }
 
 template<typename Vector2, typename Scalar>

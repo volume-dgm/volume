@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "2">
+
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome/Salome_icefield2020" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "meshes/Salome_icefield2020[<domain>]" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+
+  <Mesh fileName="meshes/Salome_icefield2020[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.00000"> 
+    <MediumParams>
+      <PerSubmesh fileName = "meshes/Salome_icefield2020[<domain>].params">
+        <!-- <Submesh index="1" pSpeed = "5700" sSpeed = "3100" rho = "7800" k = "7e+80" brittle="false" />  -->
+        <!-- <Submesh index="0" pSpeed = "5700" sSpeed = "3100" rho = "7800" k = "7e+80" brittle="false" />  -->
+
+        <Submesh index="0" E="1e+150" G="0.5e+150" rho= "1500" fixed="true" internalContactType= "1" /> 
+        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "910" k= "5e+3" alpha="0.1" brittle="false" internalContactType= "0"/> 
+
+        <!-- <Submesh index="1" E="1e+9" G="2e+8" rho= "910" k= "2.2e+6" alpha="0.01" brittle="false" internalContactType= "0"/>  -->
+
+        <!-- <Submesh index="0" pSpeed = "4000" sSpeed = "2200" rho = "950" k = "7e+70"/>  -->
+      </PerSubmesh> 
+      <!-- <Uniform pSpeed = "4000" sSpeed = "2150" rho = "917" k = "7e+5"/>  -->
+      <!-- <Uniform pSpeed = "2" sSpeed = "1" rho = "1" />  -->
+    </MediumParams>
+
+    <Boundaries>
+      <Free interactionType= "0" dynamicContactInteractionType= "2"/>
+      <Free interactionType= "1" dynamicContactInteractionType= "2"/>
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "0" maxLongitudinalStress="2e+6"/>
+      <Glue interactionType= "1"/>
+      <Glide interactionType= "2" dynamicBoundaryInteractionType= "0" />
+      <!-- <Friction interactionType= "2" frictionCoeff="0.5" dynamicBoundaryInteractionType= "0"/> -->
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <Period frames="100" />
+    <!-- <Period time="1e-5"/>     -->
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <!-- Either frame rect or box aabb should be set to define snapshot area -->
+      <Frame  center = "0 -10" size = "20 22" margin = "0.0" />
+      <!-- <Box    boxPoint1 = "-1.0 -1.0" boxPoint2 = "1.0 1.0" /> -->
+
+      <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
+      <Resolution resolution="400 400" />
+      <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
+    </Data>
+     <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" />
+     <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/>
+  </Snapshot>
+
+  <!--
+  <Snapshot>
+    <Period time="2e-3"/>    
+    <Data fileName = "out/crack[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <Frame  center = "0.0 -400.0" size = "200.0 200.0" margin = "0.0" />
+      <Resolution width="800" height="800" />
+    </Data>
+     <Mesh     fileName="out/mesh_crack[<domain>]<step>.vtk" /> 
+     <Contacts fileName="out/contacts_crack[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> 
+  </Snapshot> -->
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  </Schedule>
+
+  <Task destinationTime = "1e+1">
+    <IniState>
+      <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "5000 5000" velocity = "0 -0.1" /> -->
+      <!-- <BoxState boxPoint1 = "-0.5 -0.5" boxPoint2 = "0.5 0.5" velocity = "0 0.1" /> -->
+
+      <BoxState boxPoint1 = "-5000 0.00001" boxPoint2 = "5000 5000" velocity = "0.0 0.0" />
+      <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 0.00001" velocity = "0.0 10.0" />
+
+      <!-- <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 0" velocity = "0.1 0.1" /> -->
+      <!-- <ConstantPlaneWave velocity="-0.01 0.01" center="0.05 -0.05" waveLength="0.17" shear="false"/> -->
+	  <!-- <ConstantPlaneWave velocity="0.01 -0.01" center="-0.05 0.05" waveLength="0.17" shear="false"/> -->
+
+      <!-- <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 5000" velocity = "0 0" /> -->
+      <!-- <BerlageWave point= "0.25 0.04" waveVector= "1.0 0.0" waveLength= "0.1" shear="false"/>  -->
+     <!-- <RickerWave  point = "0.0 -1200.0" waveVector = "0.0 -1.0" waveLength = "150"/>  -->
+    </IniState>
+  </Task>
+
+  <!--for steel-->
+  <!-- tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-0"/> -->
+
+  <!-- 
+       integrator="Euler" 
+       integrator="DormandPrince"
+       integrator="RKF45" 
+   -->
+
+  <Solver polynomialsOrder= "1" precision="double" integrator="DormandPrince"
+        tolerance="1e-1" maxScale="1e-0" maxTimeStep="1e-5" hierarchyLevelsCount="1"
+        allowMovement="true" allowPlasticity="true" 
+        allowContinuousDestruction="false" allowDiscreteDestruction="true"
+        tensionErrorMult="1e-6" velocityErrorMult="1e-0" positionErrorMult="1e-5"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
+        <Erosion cellAspectRatio="5" minHeightRatio="0.0"/>
+  </Solver>
+
+</Settings>

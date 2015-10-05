@@ -5,6 +5,7 @@ ElasticVolumeMeshCommon<Space, FunctionSpace>::
 {
   this->solver = solver;
   this->tolerance = tolerance;
+  this->minHeightInMesh = 0;
 }
 
 template<typename Space, typename FunctionSpace>
@@ -207,7 +208,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
       nodeVelocities[nodeIndex] /= Scalar(volumeMesh.GetIncidentCellsCount(nodeIndex));
     }
     
-    if (allowDestruction)
+    if (allowDiscreteDestruction || allowContinuousDestruction)
     {
       std::fill(isNodeVelocityFound.begin(), isNodeVelocityFound.end(), false);
 
@@ -328,16 +329,18 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::Initialize(bool allowMovemen
   volumeMesh.collisionWidth = collisionWidth;
   volumeMesh.allowDynamicCollisions = allowMovement;
 
-  if (volumeMesh.allowDynamicCollisions)
+  if (allowContinuousDestruction || allowDiscreteDestruction)
   {
-    volumeMesh.BuildAABBTree();
-  }
-
-  if (allowDestruction)
-  {
-    initialAdditionalCellInfos = volumeMesh.additionalCellInfos;
     isNodeVelocityFound.resize(volumeMesh.nodes.size());
   }
+
+  if (allowPlasticity)
+  {
+    plasticForceWorks.resize(volumeMesh.cells.size());
+    cellsPotentialEnergy.resize(volumeMesh.cells.size());
+  }
+
+  minHeightInMesh = volumeMesh.GetMinHeight();
 
   this->allowMovement = allowMovement;
 
@@ -430,4 +433,144 @@ template<typename Space, typename FunctionSpace>
 typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDamping() const
 {
   return damping;
+}
+
+/*
+s:s < 2k^2 -- von Mises criterion;
+k = k0 - a * pressure, a > 0.
+*/
+template<typename MeshType>
+struct PlasticityCorrector
+{
+  typedef typename MeshType::Scalar    Scalar;
+  typedef typename MeshType::Vector    Vector;
+  typedef typename MeshType::Tensor    Tensor;
+  typedef typename MeshType::IndexType IndexType;
+  typedef typename MeshType::Elastic   Elastic;
+
+  PlasticityCorrector(MeshType* const mesh, IndexType cellIndex):
+    mesh(mesh), cellIndex(cellIndex)
+  {}
+
+  void operator()(const Vector& refPoint, Scalar* values) const
+  {
+    Elastic elastic = mesh->InterpolateElasticRef(cellIndex, refPoint);
+    const bool brittle = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
+    if (!brittle)
+    {
+      const Scalar k0 = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
+      const Scalar  a = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
+      const Scalar pressure = elastic.GetPressure();
+      const Scalar k = k0 + a * pressure;
+    
+      Tensor tension = elastic.GetTension();
+      tension += pressure;
+      Scalar ss = DoubleConvolution(tension, tension);
+
+      if (ss > 2 * Sqr(k))
+      {
+        tension *= sqrt(2 * Sqr(k) / ss);
+        tension += -pressure;
+        elastic.SetTension(tension);
+      }
+    }
+    std::copy(elastic.values, elastic.values + mesh->dimsCount, values);
+  }
+  MeshType* const mesh;
+  IndexType cellIndex;
+};
+
+template<typename Space, typename FunctionSpace>
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity()
+{
+  /*
+  #pragma omp parallel for
+  for (int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); ++cellIndex)
+  {
+    Scalar potentialEnergy;
+    Scalar kineticEnergy;
+    volumeMesh.GetCellEnergy(IndexType(cellIndex), kineticEnergy, potentialEnergy);
+    cellsPotentialEnergy[cellIndex] = potentialEnergy;
+  }
+  */
+  typedef PlasticityCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace> > PlasticityCorrectorType;
+  ApplyCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace>, PlasticityCorrectorType>(this);
+  /*
+  #pragma omp parallel for
+  for (int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); ++cellIndex)
+  {
+    Scalar potentialEnergy;
+    Scalar kineticEnergy;
+    volumeMesh.GetCellEnergy(IndexType(cellIndex), kineticEnergy, potentialEnergy);
+    plasticForceWorks[cellIndex] += cellsPotentialEnergy[cellIndex] - potentialEnergy;
+  }
+  
+  if (allowContinuousDestruction)
+  {
+    #pragma omp parallel for
+    for (int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); ++cellIndex)
+    {
+      if (plasticForceWorks[cellIndex] > volumeMesh.cellMediumParameters[cellIndex].maxPlasticWork)
+      {
+        DestroyCellMaterial(cellIndex, Scalar(0.1) ); //TODO
+      }
+    }
+  } */
+}
+
+template<typename Space, typename FunctionSpace>
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
+{
+  for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
+  {
+    if (volumeMesh.isCellAvailable[cellIndex] && (volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh))
+    {
+      volumeMesh.cellSolutions[cellIndex].SetToZero();
+
+      const IndexType MaxContactCellsCount = 64;
+      IndexType contactCells[MaxContactCellsCount];
+      IndexType contactCellsCount = 0;
+
+      Elastic elastic = GetAverageCellElastic(cellIndex);
+      if (elastic.GetPressure() < 0)
+      {
+        ContactFinder< VolumeMeshType > contactFinder(&volumeMesh, cellIndex);
+        contactFinder.Find(contactCells, &contactCellsCount);
+
+        for (IndexType contactCellNumber = 0; contactCellNumber < contactCellsCount; ++contactCellNumber)
+        {
+          IndexType contactCellIndex = contactCells[contactCellNumber];
+
+          if (!volumeMesh.cellMediumParameters[contactCellIndex].fixed)
+          {
+            volumeMesh.cellMediumParameters[contactCellIndex].invRho =
+              Scalar(1.0) / (1 / volumeMesh.cellMediumParameters[contactCellIndex].invRho +
+                1 / volumeMesh.cellMediumParameters[cellIndex].invRho / Scalar(contactCellsCount) *
+                volumeMesh.GetVolume(cellIndex) / volumeMesh.GetVolume(contactCellIndex));
+            // TODO: also splash potential energy of this cell between neighbours
+          }
+        }
+      }
+
+      volumeMesh.RemoveCellFromAABBTree(cellIndex);
+      volumeMesh.isCellAvailable[cellIndex] = false;
+
+      for (IndexType edgeNumber = 0; edgeNumber < Space::EdgesPerCell; ++edgeNumber)
+      {
+        IndexType contactTypeIndex = volumeMesh.GetInteractionType(cellIndex, edgeNumber);
+        IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, edgeNumber);
+
+        if (contactTypeIndex == IndexType(-1)) continue;
+        IndexType dynamicBoundaryType = volumeMesh.system.GetContactDynamicBoundaryType(contactTypeIndex);
+        if (dynamicBoundaryType != IndexType(-1))
+        {
+          if (volumeMesh.isCellAvailable[correspondingCellIndex])
+          {
+            //  volumeMesh.AddToAABBTree(correspondingCellIndex);
+          }
+          DestroyFace(cellIndex, edgeNumber, dynamicBoundaryType);
+        }
+      }
+    }
+  }
 }

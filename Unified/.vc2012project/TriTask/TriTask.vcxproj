@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -45,6 +45,7 @@
     <ClInclude Include="..\..\src\IO\Vtk\VtkReader.h" />
     <ClInclude Include="..\..\src\Maths\AABB2.h" />
     <ClInclude Include="..\..\src\Maths\AABB3.h" />
+    <ClInclude Include="..\..\src\Maths\Collisions.h" />
     <ClInclude Include="..\..\src\Maths\Coordinates2.h" />
     <ClInclude Include="..\..\src\Maths\Coordinates3.h" />
     <ClInclude Include="..\..\src\Maths\Matrix2x2.h" />
@@ -103,6 +104,7 @@
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\TaskSettingsParser.h" />
     <ClInclude Include="..\..\src\Task\Task\Task.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\BoundaryFunctionGetter.h" />
+    <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\ContactFinder.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\FunctionGetters.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\GhostFunctionGetter.h" />
     <ClInclude Include="..\..\src\Task\VolumeMethod\FunctionGetters\SourceFunctionGetter.h" />
@@ -151,6 +153,7 @@
     <RootNamespace>TriTask</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <ProjectName>Task</ProjectName>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -232,6 +235,7 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

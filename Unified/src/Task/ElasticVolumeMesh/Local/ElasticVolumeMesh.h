@@ -7,6 +7,7 @@
 #include "../../../IO/Vtk/BasicVtkWriter.h"
 #include "../../../Maths/Spaces.h"
 #include "../../VolumeMethod/VolumeMesh/VolumeMesh.h"
+#include "../../Task/SettingsParser/SolverSettingsParser.h"
 
 template<typename Space, typename FunctionSpace>
 struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar>
@@ -47,7 +48,8 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   bool allowMovement;
   bool allowPlasticity;
-  bool allowDestruction;
+  bool allowContinuousDestruction;
+  bool allowDiscreteDestruction;
 
   void Initialize(bool allowMovement,
     Scalar collisionWidth,
@@ -81,7 +83,6 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   Scalar GetErrorValue(Scalar time, const Scalar* coords0, const Scalar* coords1, const SolverState&, const Scalar* mults);
 
-  virtual void HandlePlasticity() = 0;
   virtual void UnfoldMesh(Scalar minHeight, IndexType iterationsCount) = 0;
 
   void HandleDamping();
@@ -92,19 +93,33 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   ElasticSystemType* GetSystem();
   void MoveSceneToSnapshotRegion();
 
-protected:
-  // before any destructions
-  std::vector< AdditionalCellInfo<Space> > initialAdditionalCellInfos;
+  // stress correction due to plasticity in compliance with  Prandtl-Ruess model
+  void HandlePlasticity();
 
+  typename SolverSettings<Space>::Erosion erosion;
+
+  void HandleMaterialErosion();
+
+  void DestroyFace(IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType)
+  {
+    DestroyFace(Overload<Space>(), cellIndex, faceNumber, dynamicBoundaryType);
+  }
+
+protected:
   void ComputeElasticMults()
   {
     ComputeElasticMults(Overload<Space>());
   }
+
   // for error computation
   Scalar elasticMults[dimsCount];
   Scalar damping;
+  Scalar minHeightInMesh;
 
   std::vector<bool> isNodeVelocityFound;
+
+  // total work of the plasticity for each cell
+  std::vector<Scalar> plasticForceWorks;
 
 private:
   void ComputeElasticMults(Overload<Space2>)
@@ -146,6 +161,46 @@ private:
       elasticMults[valueIndex] = mult;
     }
   }
+
+
+  void DestroyFace(Overload<Space2>, IndexType cellIndex, IndexType edgeNumber, IndexType dynamicBoundaryType)
+  {
+    IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, edgeNumber);
+    IndexType correspondingEdgeNumber = volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber;
+
+    volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex = IndexType(-1);
+    volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber = IndexType(-1);
+    volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].interactionType = dynamicBoundaryType;
+
+    if (correspondingCellIndex != IndexType(-1) && correspondingEdgeNumber != IndexType(-1))
+    {
+      volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringEdges[correspondingEdgeNumber].correspondingCellIndex = IndexType(-1);
+      volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringEdges[correspondingEdgeNumber].correspondingEdgeNumber = IndexType(-1);
+      volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringEdges[correspondingEdgeNumber].interactionType = dynamicBoundaryType;
+    }
+  }
+
+  void DestroyFace(Overload<Space3>, IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType)
+  {
+    IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber);
+    IndexType correspondingFaceNumber = volumeMesh.additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingFaceNumber;
+
+    volumeMesh.additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingCellIndex  = IndexType(-1);
+    volumeMesh.additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingFaceNumber = IndexType(-1);
+    volumeMesh.additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].orientation             = IndexType(-1);
+    volumeMesh.additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].interactionType         = dynamicBoundaryType;
+
+    if (correspondingCellIndex != IndexType(-1) && correspondingFaceNumber != IndexType(-1))
+    {
+      volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringFaces[correspondingFaceNumber].correspondingCellIndex = IndexType(-1);
+      volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringFaces[correspondingFaceNumber].correspondingFaceNumber = IndexType(-1);
+      volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringFaces[correspondingFaceNumber].orientation = IndexType(-1);
+      volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringFaces[correspondingFaceNumber].interactionType = dynamicBoundaryType;
+    }
+  }
+
+  std::vector<Scalar> cellsPotentialEnergy;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -174,9 +229,12 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetAverageCellElastic;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetSystem;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::DestroyCellMaterial;
-  using ElasticVolumeMeshCommon<Space, FunctionSpace>::initialAdditionalCellInfos;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::dimsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::functionsCount;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::erosion;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::minHeightInMesh;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::allowDiscreteDestruction;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion;
 
   ElasticVolumeMesh(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount);
 
@@ -196,15 +254,6 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
                         std::vector<bool>* isContactBroken, std::vector<bool>* isCellBroken);
 
   void HandleContinuousDestruction();
-
-  // stress correction due to plasticity in compliance with  Prandtl-Ruess model
-  void HandlePlasticity();
-
-  // replaces set of discrete separate cells to continuous destroyed material
-  void MergeSeparateCells();
-  void DisjoinMergedCells(EdgeLocationPair contactEdgesLocation, IndexType dynamicBoundaryType);
-  bool IsProperContact(EdgeLocationPair contactEdgesLocation);
-
 private:
   void UnfoldMesh(Scalar minHeight, IndexType iterationsCount);
 };
@@ -235,10 +284,10 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::initialAdditionalCellInfos;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::dimsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::functionsCount;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion;
 
   ElasticVolumeMesh(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount);
-
-  void HandlePlasticity();
 
   void UnfoldMesh(Scalar minHeight, IndexType iterationsCount);
 

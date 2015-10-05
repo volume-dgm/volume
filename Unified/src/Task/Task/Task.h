@@ -38,7 +38,7 @@
 #include "../../Maths/Spaces.h"
 
 // #define PROFILING
-// #define WRITE_ENERGY_AND_IMPULSE
+#define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
 class Task: public NotifyListener, public ReceiveListener
@@ -106,7 +106,7 @@ private:
       distributedElasticMeshes[domainNumber]->volumeMesh.system, 
       settings.snapshots[snapshotIndex].contacts.drawContacts, 
       settings.snapshots[snapshotIndex].contacts.drawRegularGlueContacts, 
-      settings.solver.allowDestruction);
+      settings.solver.allowDiscreteDestruction || settings.solver.allowContinuousDestruction);
   }
 
   void SaveContacts(Overload<Space3>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex)
@@ -403,9 +403,13 @@ void Task<Space, order>::Run()
       nodesSchedule[GetNodeId()].domainsIndices[domainNumber],
       GetDomainsCount(), settings.solver.hierarchyLevelsCount, 
       settings.solver.allowMovement,
-      settings.solver.allowDestruction);
+      settings.solver.allowDiscreteDestruction || settings.solver.allowContinuousDestruction);
     distributedElasticMeshes[domainNumber]->allowPlasticity  = settings.solver.allowPlasticity;
-    distributedElasticMeshes[domainNumber]->allowDestruction = settings.solver.allowDestruction;
+    distributedElasticMeshes[domainNumber]->allowContinuousDestruction = settings.solver.allowContinuousDestruction;
+    distributedElasticMeshes[domainNumber]->allowDiscreteDestruction   = settings.solver.allowDiscreteDestruction;
+
+    distributedElasticMeshes[domainNumber]->erosion.cellAspectRatio = settings.solver.erosion.cellAspectRatio;
+    distributedElasticMeshes[domainNumber]->erosion.minHeightRatio  = settings.solver.erosion.minHeightRatio;
   }
   detectorsData.resize(GetCurrentNodeDomainsCount());
 
@@ -562,7 +566,8 @@ void Task<Space, order>::Run()
         {
           for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
           {
-            if (settings.solver.allowDestruction) FindDestructions(domainNumber);
+            if (settings.solver.allowContinuousDestruction || settings.solver.allowDiscreteDestruction) 
+              FindDestructions(domainNumber);
             if (settings.mesh.moveMassCenter)     distributedElasticMeshes[domainNumber]->MoveSceneToSnapshotRegion();
             if (settings.solver.allowPlasticity)  distributedElasticMeshes[domainNumber]->HandlePlasticity();
             if (settings.solver.damping > 0)      distributedElasticMeshes[domainNumber]->HandleDamping();
@@ -616,7 +621,8 @@ void Task<Space, order>::Run()
 
         for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
         {
-          if (settings.solver.allowDestruction || settings.solver.allowMovement || settings.solver.allowPlasticity)
+          if (settings.solver.allowContinuousDestruction || settings.solver.allowDiscreteDestruction || 
+            settings.solver.allowMovement || settings.solver.allowPlasticity)
           {
             distributedElasticMeshes[domainNumber]->RebuildTimeHierarchyLevels(solverState.globalStepIndex, settings.solver.allowMovement);
           }
@@ -780,6 +786,9 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
   res.invRho  = Scalar(1.0) / params.rho;
   res.plasticity.k0 = params.k;
   res.plasticity.a = params.alpha;
+  res.plasticity.brittle = params.brittle;
+  res.fixed = params.fixed;
+  res.plasticity.maxPlasticWork = params.maxPlasticWork;
 
   // grad(flowVelocity) must be equiled 0. it`s standart divergence-free condition
   res.flowVelocity = params.flowVelocity;
@@ -853,7 +862,8 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
 
       meshWriter.Write(meshFilename.c_str(), 
         distributedElasticMeshes[domainNumber]->volumeMesh.nodes, 
-        distributedElasticMeshes[domainNumber]->volumeMesh.cells);
+        distributedElasticMeshes[domainNumber]->volumeMesh.cells, std::vector< typename AdditionalCellInfo<Space>:: template AuxInfo<char> >(),
+        &(distributedElasticMeshes[domainNumber]->volumeMesh.isCellAvailable));
     }
 
     if(settings.snapshots[snapshotIndex].contacts.used)
@@ -1106,7 +1116,7 @@ void Task<Space, order>::LoadMeshes()
     detectorsData[domainNumber].resize(meshes[domainNumber]->detectorsPositions.size());
     
     isContactBroken[domainNumber].resize(meshes[domainNumber]->GetContactsCount(), false);
-    isCellBroken[domainNumber].resize(meshes[domainNumber]->GetCellsCount());      
+    isCellBroken[domainNumber].resize(meshes[domainNumber]->GetCellsCount(), false);
   }
 
   // initialize sync data
@@ -1124,6 +1134,14 @@ void Task<Space, order>::LoadMeshes()
 
   BuildBoundaryDescriptions();
   BuildContactDescriptions();
+
+  for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
+  {
+    if (settings.solver.allowMovement)
+    {
+      distributedElasticMeshes[domainNumber]->volumeMesh.BuildAABBTree();
+    }
+  }
 }
 
 template<typename Space, unsigned int order>
@@ -1624,6 +1642,8 @@ void Task<Space, order>::WriteEnergyAndImpulseDeviation(const std::vector<Scalar
     {
       file << totalImpulse[dimIndex] << " ";
     }
+    
+    file << "Mass: " << distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalMass();
     file << std::endl;
   }
   file.close();

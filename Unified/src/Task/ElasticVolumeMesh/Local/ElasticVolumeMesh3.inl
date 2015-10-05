@@ -5,11 +5,6 @@ ElasticVolumeMesh<Space3, FunctionSpace>::ElasticVolumeMesh(DifferentialSolver<S
 }
 
 template<typename FunctionSpace>
-void ElasticVolumeMesh<Space3, FunctionSpace>::HandlePlasticity()
-{
-}
-
-template<typename FunctionSpace>
 void ElasticVolumeMesh<Space3, FunctionSpace>::UnfoldMesh(Scalar minHeight, IndexType iterationsCount)
 {
 }

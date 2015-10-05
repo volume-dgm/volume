@@ -153,7 +153,7 @@ private:
     {
       locationsFile = settings.detectors.locationsFileName;
     }
-    std::fstream detectorsLocationsFile(locationsFile, std::ios_base::in);
+    std::fstream detectorsLocationsFile(locationsFile.c_str(), std::ios_base::in);
     assert(detectorsLocationsFile.fail() == false);
 
     IndexType detectorsCount = 0;
@@ -193,13 +193,13 @@ private:
     if(settings.resultCombiner.velocityCsvName != "")
     {
       printf("Making velocity csv file\n");
-      outputVelocity.open(settings.resultCombiner.velocityCsvName, std::ios_base::out);
+      outputVelocity.open(settings.resultCombiner.velocityCsvName.c_str(), std::ios_base::out);
       assert(outputVelocity.fail() == false);
     }
     if(settings.resultCombiner.pressureCsvName != "")
     {
       printf("Making pressure csv file\n");
-      outputPressure.open(settings.resultCombiner.pressureCsvName, std::ios_base::out);
+      outputPressure.open(settings.resultCombiner.pressureCsvName.c_str(), std::ios_base::out);
       assert(outputPressure.fail() == false);
     }
 
@@ -258,7 +258,7 @@ private:
     if(outputPressure.is_open())
       outputPressure.close();
     // convert *.csv to *.segy
-    typedef CombinedSeismogramm<float, Space::Dimension>::Elastic SeismoElastic;
+    typedef typename CombinedSeismogramm<float, Space::Dimension>::Elastic SeismoElastic;
     CombinedSeismogramm < float, Space::Dimension > combinedSeismogram = CombinedSeismogramm < float, Space::Dimension >(1);
 
     bool saveSegY = settings.resultCombiner.velocityCoordSegyName != "";

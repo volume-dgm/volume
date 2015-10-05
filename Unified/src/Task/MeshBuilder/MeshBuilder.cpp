@@ -16,9 +16,11 @@
 #include "../Task/SettingsParser/SettingsParser.h"
 #include "../../DifferentialSolvers/SolversFactory.h"
 
-#define SPACE_FROM_SETTINGS //don't change. meshbuilder compilation is fast enough and it's extremely difficult to detect Space2/Space3 mismatch because nothing crashes
+/* don't change. meshbuilder compilation is fast enough and it's extremely 
+difficult to detect Space2/Space3 mismatch because nothing crashes */
 
-// typedef Space3                                        DefaultSpace;
+#define SPACE_FROM_SETTINGS 
+//typedef Space2 DefaultSpace;
 
 template<typename Space>
 struct MeshBuilderTask
@@ -88,7 +90,7 @@ private:
   {
     std::cout << "Building mesh...\n";
 
-    bool duplicateNodes = settings.solver.allowDestruction;
+    bool duplicateNodes = settings.solver.allowDiscreteDestruction || settings.solver.allowContinuousDestruction;
     builder = new SalomeMeshBuilder<Space>(settings.meshBuilder.salomeFileName, duplicateNodes, Scalar(0.0));
     builder->BuildMesh(mesh, geomMesh, nonDuplicatedVerticesMesh);
 
@@ -267,7 +269,7 @@ private:
     std::cout << "\n";
   
     // save detectors locations (global index -> domain index + detector number)
-    std::fstream detectorsLocations(settings.detectors.locationsFileName, std::ios_base::out);
+    std::fstream detectorsLocations(settings.detectors.locationsFileName.c_str(), std::ios_base::out);
 
     assert(detectorsLocations.fail() == false);
 

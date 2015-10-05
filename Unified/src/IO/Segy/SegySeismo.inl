@@ -236,7 +236,7 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
 
             // Interpolating results on eqidistant time grid
             // ///////////////////////////////////////
-            assert(path_index < compatibleSeismogram->interpolationIntervals->size());
+            assert(path_index < compatibleSeismogram->interpolationIntervals.size());
             interpolationIntervals.resize(path_index + 1);
             if(compatibleSeismogram)
               this->interpolationIntervals[path_index] = compatibleSeismogram->interpolationIntervals[path_index];

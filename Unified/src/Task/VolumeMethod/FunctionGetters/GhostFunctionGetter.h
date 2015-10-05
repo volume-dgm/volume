@@ -84,25 +84,12 @@ struct GhostCellFunctionGetter
       case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
     }
 
-    Vector globalPoint = mesh->RefToGlobalVolumeCoords(point, ghostCellVertices) + edgeNormal * mesh->collisionWidth;    
+    Vector globalPoint = mesh->RefToGlobalVolumeCoords(point, ghostCellVertices) + edgeNormal * mesh->collisionWidth;
+
     CollisionProcessorT collisionProcessor(this, globalPoint, values);
     mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(globalPoint, globalPoint), collisionProcessor);
 
     if (collisionProcessor.found) return;
-  }
-
-  bool GetValue(const Vector& globalPoint, Scalar* values)
-  {
-    switch (getterType)
-    {
-      case Solution: std::fill(values, values + dimsCount, 0); break;
-      case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
-    }
-
-    CollisionProcessorT collisionProcessor(this, globalPoint, values);
-    mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(globalPoint, globalPoint), collisionProcessor);
-
-    return collisionProcessor.found;
   }
 
   bool TryGhostCell(const Vector& testPoint, int neighbourCellIndex,

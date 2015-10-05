@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Spaces.h"
+#include "Util.h"
 #include <string>
 #include <sstream>
 #include <limits>
@@ -385,7 +387,7 @@ bool TwoLinesDist(const Vector3<T> &p1,const Vector3<T> &p2,const Vector3<T> &t1
     Vector3<T> test2 = (p - t1) ^ (t2 - t1);
 
     T scale1 = (crosspoint - p1) * v1 / v1.SquareLen();
-    T scale2 = (p			- t1) * v2 / v2.SquareLen();
+    T scale2 = (p - t1) * v2 / v2.SquareLen();
     return ((scale1 >= 0.0) && (scale1 <= 1.0) && (scale2 >= 0.0) && (scale2 <= 1.0));
   }else
   {
@@ -542,4 +544,3 @@ bool PointInCellEx(const Vector3<T> points[4], Vector3<T> testPoint, T eps = 0)
 
   return 1;*/
 }
-

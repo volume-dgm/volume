@@ -79,6 +79,7 @@ set(MathsSrc
   ${CMAKE_SOURCE_DIR}/src/Maths/Vector2.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Vector3.h
   ${CMAKE_SOURCE_DIR}/src/Maths/VectorMaths.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Collisions.h
 )
 
 set(TinyXmlSrc
