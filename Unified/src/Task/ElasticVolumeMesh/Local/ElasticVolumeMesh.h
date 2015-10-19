@@ -281,7 +281,6 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetAverageCellElastic;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetSystem;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::DestroyCellMaterial;
-  using ElasticVolumeMeshCommon<Space, FunctionSpace>::initialAdditionalCellInfos;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::dimsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::functionsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity;

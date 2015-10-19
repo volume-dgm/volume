@@ -67,6 +67,17 @@ public:
     return *this;
   }
 
+  Tensor3& operator *=(const T &v)
+  {
+    this->xx *= v;
+    this->xy *= v;
+    this->xz *= v;
+    this->yy *= v;
+    this->yz *= v;
+    this->zz *= v;
+    return *this;
+  }
+
   Tensor3 RotateAxes(const Vector3<T>& newX, const Vector3<T>& newY, const Vector3<T>& newZ)
   {
     Matrix3x3<T> res(0, 0, 0, 
