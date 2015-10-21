@@ -57,8 +57,8 @@
     <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" samplesPeriod="1"/>  -->
 
 
-  <Schedule domainsCount="1">
-    <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
+  <Schedule domainsCount="2">
+    <NodeSchedule node="0" domains="0 1" /> <!-- negative domains value means all domains are assigned to this node -->
   </Schedule>
 
   <Task destinationTime = "25e-0">

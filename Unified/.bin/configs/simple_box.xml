@@ -33,8 +33,9 @@
     </Data>
   </Snapshot>
 
-
-  <Schedule domainsCount="1"/>
+  <Schedule domainsCount="2">
+    <NodeSchedule node="0" domains="0 1"/> 
+  </Schedule>
 
   <Task destinationTime = "5.0">
     <IniState>
@@ -50,7 +51,9 @@
 
   <Solver polynomialsOrder="4" precision="double" integrator="DormandPrince"
         tolerance="1e-3" maxScale="1e-4" maxTimeStep="1e-2" hierarchyLevelsCount="1" 
-        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        allowMovement="false" allowPlasticity="false" 
+        allowDiscreteDestruction="false" 
+        allowContinuousDestruction="false" 
         tensionErrorMult="1e-6" velocityErrorMult="1.0" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
 
