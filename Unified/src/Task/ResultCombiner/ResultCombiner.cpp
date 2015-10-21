@@ -65,7 +65,7 @@ public:
         }
 
         char stepString[256];
-        sprintf(stepString, "%.6lu", stepIndex);
+        sprintf(stepString, "%.6d", stepIndex);
         bool isOk = true;
 
         for (IndexType domainIndex = 0; domainIndex < domainsCount; ++domainIndex)

@@ -260,7 +260,7 @@ void SnapshotVtkWriter<ElasticSpace>::WriteCompressedData(fstream& file, unsigne
   char* output = ::base64_encode((const unsigned char*)prefix, 4 * sizeof(uint32_t), &outputSize);
   if(output == NULL)
   {
-    printf("Fatal error: base64_encode returned NULL trying to encode %d bytes", 4 * sizeof(uint32_t));
+    printf("Fatal error: base64_encode returned NULL trying to encode %lu bytes", 4 * sizeof(uint32_t));
     return;
   }
   file.write(output, outputSize);
@@ -268,7 +268,7 @@ void SnapshotVtkWriter<ElasticSpace>::WriteCompressedData(fstream& file, unsigne
   output = ::base64_encode((const unsigned char*)(&compressedData[0]), compressedDataLen, &outputSize);
   if(output == NULL)
   {
-    printf("Fatal error: base64_encode returned NULL trying to encode %d bytes", compressedDataLen);
+    printf("Fatal error: base64_encode returned NULL trying to encode %lu bytes", compressedDataLen);
     return;
   }
   file.write(output, outputSize);

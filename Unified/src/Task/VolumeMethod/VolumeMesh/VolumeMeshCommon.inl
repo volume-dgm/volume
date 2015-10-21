@@ -1,3 +1,5 @@
+#include "../../VolumeMethod/FunctionGetters/ContactFinder.h"
+
 template <typename Space, typename FunctionSpace, typename System>
 typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepSolution) const

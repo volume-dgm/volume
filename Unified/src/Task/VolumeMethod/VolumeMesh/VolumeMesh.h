@@ -95,6 +95,7 @@ public:
   using GeomMesh<Space>::aabbTree;
   using GeomMesh<Space>::RemoveCellFromAABBTree;
   using GeomMesh<Space>::IsCellInAABBTree;
+  using GeomMesh<Space>::treeNodeCellIndices;
 
   using GeomMesh<Space>::additionalCellInfos;
   using GeomMesh<Space>::GetMassCenter;
@@ -106,6 +107,9 @@ public:
   using GeomMesh<Space>::GetCorrespondingFaceNumber;
   using GeomMesh<Space>::GetInteractionType;
   using GeomMesh<Space>::AddToAABBTree;
+  using GeomMesh<Space>::GetCellAABB;
+  using GeomMesh<Space>::GetVolume;
+  
 
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
   typename System::ValueType GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepCellSolution = false) const;

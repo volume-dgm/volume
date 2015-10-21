@@ -99,7 +99,7 @@ public:
         {
           Vector sNode = domains[sendingDomainIndex].vertices[sendingInfo.nodesIndices[nodeIndex]];
           Vector rNode = domains[receivingDomainIndex].vertices[transitionNodeMap[sendingInfo.nodesIndices[nodeIndex]]];
-          if ((sNode - rNode).Len() > 1e-5)
+          if ((sNode - rNode).Len() > Scalar(1e-1) * minEdgeLen)
           {
             isOk = false;
           }
@@ -158,7 +158,7 @@ bool MeshChecker<Space2>::CheckContacts(const MeshIO<Space2>& mesh)
           rightSidePoints[nodeNumber] = mesh.vertices[edgePairIndices.edges[1].nodeIndices[nodeNumber]];
         }
 
-        Scalar eps = minEdgeLen / 10.0;
+        Scalar eps = minEdgeLen * Scalar(1e-1);
 
         if ((leftSidePoints[0] - rightSidePoints[0]).Len() < eps && (leftSidePoints[1] - rightSidePoints[1]).Len() < eps) continue;
         if ((leftSidePoints[0] - rightSidePoints[1]).Len() < eps && (leftSidePoints[1] - rightSidePoints[0]).Len() < eps) continue;
