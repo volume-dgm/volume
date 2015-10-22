@@ -20,7 +20,7 @@ struct AdditionalCellInfoBase<Space2>
     IndexType correspondingEdgeNumber;
     IndexType interactionType;
   };
-  NeighbourEdge neighbouringEdges[3];
+  NeighbourEdge neighbouringEdges[Space2::EdgesPerCell];
 };
 
 template<>
@@ -40,7 +40,7 @@ struct AdditionalCellInfoBase<Space3>
     IndexType interactionType;
     IndexType orientation;
   };
-  NeighbourFace neighbouringFaces[4];
+  NeighbourFace neighbouringFaces[Space3::FacesPerCell];
 };
 
 template <typename Space>

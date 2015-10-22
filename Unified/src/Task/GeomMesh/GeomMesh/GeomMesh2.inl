@@ -216,7 +216,8 @@ void GeomMesh<Space2>::BuildCellAdditionalTopology(IndexType *internalContactTyp
           additionalCellInfos[srcCellIndex].neighbouringEdges[srcEdgeNumber].correspondingCellIndex = dstCellIndex;
           additionalCellInfos[srcCellIndex].neighbouringEdges[srcEdgeNumber].correspondingEdgeNumber = dstEdgeNumber;
           if(internalContactTypes)
-            additionalCellInfos[srcCellIndex].neighbouringEdges[srcEdgeNumber].interactionType = std::max(internalContactTypes[srcCellIndex], internalContactTypes[dstCellIndex]); //priority is given to a larger type
+            additionalCellInfos[srcCellIndex].neighbouringEdges[srcEdgeNumber].interactionType = 
+              std::max(internalContactTypes[srcCellIndex], internalContactTypes[dstCellIndex]); //priority is given to a larger type
           else
             additionalCellInfos[srcCellIndex].neighbouringEdges[srcEdgeNumber].interactionType = IndexType(0);
         } else
@@ -305,7 +306,7 @@ GeomMesh<Space2>::EdgeLocationPair GeomMesh<Space2>::BuildEdgeLocation(const Edg
 // to replace
 bool GeomMesh<Space2>::IsBoundaryCell(IndexType cellIndex) const
 {
-  for (IndexType edgeNumber = 0; edgeNumber < 3; ++edgeNumber)
+  for (IndexType edgeNumber = 0; edgeNumber < Space2::FacesPerCell; ++edgeNumber)
   {
     if (additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingCellIndex == IndexType(-1))
     {
