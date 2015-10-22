@@ -82,6 +82,9 @@
     <Filter Include="IO\Vtk">
       <UniqueIdentifier>{e296634b-928b-48c3-893b-1e445ded4d52}</UniqueIdentifier>
     </Filter>
+    <Filter Include="3rdparty\Segy">
+      <UniqueIdentifier>{32a61acc-5444-4f6e-8270-bc6a26aa8f9f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\3rdparty\tinyxml\tinystr.cpp">
@@ -407,6 +410,9 @@
     <ClInclude Include="..\..\src\Maths\Collisions.h">
       <Filter>Maths</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\IO\Segy\SegySeismo.h">
+      <Filter>3rdparty\Segy</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl">
@@ -471,6 +477,9 @@
     </None>
     <None Include="..\..\src\IO\Vtk\ContactVtkWriter3.inl">
       <Filter>IO\Vtk</Filter>
+    </None>
+    <None Include="..\..\src\IO\Segy\SegySeismo.inl">
+      <Filter>3rdparty\Segy</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -101,11 +101,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\3rdparty\tinyxml\tinystr.h" />
     <ClInclude Include="..\..\3rdparty\tinyxml\tinyxml.h" />
-    <ClInclude Include="..\..\src\IO\Segy\SegySeismo.h" />
     <ClInclude Include="..\..\src\Task\ResultCombiner\SampleIO.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\IO\Segy\SegySeismo.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

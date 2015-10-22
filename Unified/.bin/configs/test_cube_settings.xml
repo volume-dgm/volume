@@ -71,7 +71,7 @@
       <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 5000" velocity = "0.0 0.0" />
 
       <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
-      <BerlageWave point= "0.0 0.0" waveVector= "0.1 0" waveLength= "0.2"/>
+      <BerlageWave point= "-0.3 0.0" waveVector= "0.1 0" waveLength= "0.2"/>
       <!-- <AcousticPlaneWave point= "0.0 0.20" waveVector= "0 -0.01" waveLength= "0.2"/> -->
       <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
     </IniState>
@@ -91,8 +91,10 @@
    -->
 
   <Solver polynomialsOrder="1" precision="double" integrator="DormandPrince"
-        tolerance="1e+1" maxScale="1e-6" maxTimeStep="1e-3" hierarchyLevelsCount="1" 
-        allowMovement="true" allowPlasticity="false" allowDestruction="false" 
+        tolerance="1e+1" maxScale="1e-6" maxTimeStep="1e-1" hierarchyLevelsCount="1" 
+        allowMovement="false" allowPlasticity="false" 
+        allowDiscreteDestruction="false" 
+        allowContinuousDestruction="false" 
         tensionErrorMult="1e+0" velocityErrorMult="1e+0" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
 </Settings>

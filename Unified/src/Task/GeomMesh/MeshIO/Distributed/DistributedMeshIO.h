@@ -29,6 +29,9 @@ struct DistributedMeshIOCommon: public MeshIO<Space>
   virtual void Load(const std::string& fileName, IO::FileType fileType = IO::Binary);
 
   bool operator==(const DistributedMeshIOCommon& other) const;
+
+  void SaveTransitionInfos(const std::string& vtkFileName);
+
 private:
   void SaveTransitionInfo(std::fstream& file, IO::FileType fileType, const std::vector< TransitionInfo<Space> >&);
   void LoadTransitionInfo(std::fstream& file, IO::FileType fileType, std::vector< TransitionInfo<Space> >* const);
@@ -52,6 +55,7 @@ struct DistributedMeshIO<Space2>: public DistributedMeshIOCommon<Space2>
   using MeshIO<Space2>::boundaryTypesCount;
 
   using DistributedMeshIOCommon<Space2>::transitionInfos;
+  using DistributedMeshIOCommon<Space2>::SaveTransitionInfos;
 
   DistributedMeshIO(IndexType domainsCount): DistributedMeshIOCommon<Space2>(domainsCount)
   {}
@@ -72,6 +76,7 @@ struct DistributedMeshIO<Space3>: public DistributedMeshIOCommon<Space3>
   using MeshIO<Space3>::boundaryTypesCount;
 
   using DistributedMeshIOCommon<Space3>::transitionInfos;
+  using DistributedMeshIOCommon<Space3>::SaveTransitionInfos;
 
   DistributedMeshIO(IndexType domainsCount): DistributedMeshIOCommon<Space3>(domainsCount)
   {}

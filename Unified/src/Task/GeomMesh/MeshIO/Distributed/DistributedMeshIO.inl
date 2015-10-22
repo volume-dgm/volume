@@ -83,3 +83,32 @@ void DistributedMeshIOCommon<Space>::LoadTransitionInfo(std::fstream& file, IO::
     IO:: template Load<TransitionNode>(file, fileType, &((*infos)[domainIndex].transitionNodes));
   }
 }
+
+template <typename Space>
+void DistributedMeshIOCommon<Space>::SaveTransitionInfos(const std::string& vtkFileName)
+{
+  typedef typename AdditionalCellInfo<Space>::AuxInfo<IndexType> CellInfo;
+  std::vector<CellInfo>  cellInfos;
+  std::vector<IndexType> indices;
+
+  for (IndexType dstDomainIndex = 0; dstDomainIndex < domainsCount; ++dstDomainIndex)
+  {
+    for (IndexType cellNumber = 0; cellNumber < transitionInfos[dstDomainIndex].cells.size(); ++cellNumber)
+    {
+      for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
+      {
+        indices.push_back(transitionInfos[dstDomainIndex].cells[cellNumber].incidentNodes[nodeNumber]);
+      }
+    }
+  }
+
+  cellInfos.resize(indices.size() / Space::NodesPerCell);
+  std::vector<IndexType> cellTypes(indices.size() / Space::NodesPerCell, 0);
+  for (IndexType cellIndex = 0; cellIndex < cellInfos.size(); ++cellIndex)
+  {
+    cellInfos[cellIndex].count = 1;
+    cellInfos[cellIndex].data = &(cellTypes[cellIndex]);
+  }
+  MeshVtkWriter<Space, CellInfo> writer;
+  writer.Write(vtkFileName, vertices, indices, cellInfos);
+}

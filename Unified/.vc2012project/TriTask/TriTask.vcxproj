@@ -38,6 +38,7 @@
     <ClInclude Include="..\..\src\DifferentialSolvers\Solvers\RungeSolver12_14.h" />
     <ClInclude Include="..\..\src\DifferentialSolvers\Solvers\RungeSolver8_10.h" />
     <ClInclude Include="..\..\src\DifferentialSolvers\Solvers\TrapezoidSolver.h" />
+    <ClInclude Include="..\..\src\IO\Segy\SegySeismo.h" />
     <ClInclude Include="..\..\src\IO\Vtk\BasicVtkWriter.h" />
     <ClInclude Include="..\..\src\IO\Vtk\ContactVtkWriter.h" />
     <ClInclude Include="..\..\src\IO\Vtk\MeshVtkWriter.h" />
@@ -122,6 +123,7 @@
     <ClInclude Include="..\..\src\Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\src\IO\Segy\SegySeismo.inl" />
     <None Include="..\..\src\IO\Vtk\ContactVtkWriter2.inl" />
     <None Include="..\..\src\IO\Vtk\ContactVtkWriter3.inl" />
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl" />

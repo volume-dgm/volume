@@ -170,14 +170,13 @@ void VolumeMesh<Space2, FunctionSpace, System>::
         There are regular cells, where we compute solution,
         and domain boundary cells which are taken from neighbouring domains and should not be computed here.
       */
-      if (!IsCellRegular(cellIndex)) continue;
 
       bool auxCell;
       if (!timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState, &auxCell)) continue;
 
       timeDerivatives.setZero();
 
-      if (isCellAvailable[cellIndex] && !cellMediumParameters[cellIndex].fixed)
+      if (IsCellRegular(cellIndex) && isCellAvailable[cellIndex] && !cellMediumParameters[cellIndex].fixed)
       {
         bool useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, true);
         for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)

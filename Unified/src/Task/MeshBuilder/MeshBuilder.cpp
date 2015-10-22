@@ -227,6 +227,7 @@ private:
       domains[domainIndex].SaveContacts(domainMeshName + "_contacts.vtk");
       domains[domainIndex].SaveBoundaries(domainMeshName + "_boundaries.vtk");
       domains[domainIndex].SaveDetectors(domainMeshName + "_detectors.vtk");
+      domains[domainIndex].SaveTransitionInfos(domainMeshName + "_transitionInfos.vtk");
 
       std::vector<char> mediumParams(domains[domainIndex].GetCellsCount() * paramsPerCellSize, 0);
     
@@ -249,7 +250,7 @@ private:
         ReplaceSubstring(paramsFileName, "<domain>", std::string(domainString));
         FILE *paramsFile = fopen(paramsFileName.c_str(), "wb");
         assert(paramsFile != NULL);
-        fwrite(&(mediumParams[0]), 1, mediumParams.size(), paramsFile);
+        fwrite(mediumParams.data(), 1, mediumParams.size(), paramsFile);
         fclose(paramsFile);
       }
 
