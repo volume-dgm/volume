@@ -87,7 +87,7 @@ void DistributedMeshIOCommon<Space>::LoadTransitionInfo(std::fstream& file, IO::
 template <typename Space>
 void DistributedMeshIOCommon<Space>::SaveTransitionInfos(const std::string& vtkFileName)
 {
-  typedef typename AdditionalCellInfo<Space>::AuxInfo<IndexType> CellInfo;
+  typedef typename AdditionalCellInfo<Space>:: template AuxInfo<IndexType> CellInfo;
   std::vector<CellInfo>  cellInfos;
   std::vector<IndexType> indices;
 
