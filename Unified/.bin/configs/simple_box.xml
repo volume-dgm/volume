@@ -44,7 +44,7 @@
       <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
     </IniState>
     <PointSources>
-      <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+      <!-- <ForceSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
     </PointSources>  
   </Task>
 

@@ -118,7 +118,8 @@
       <!-- <RickerWave  point = "0.0 -3000.0" waveVector = "0.0 10.0" waveLength = "1260"/> -->
     </IniState>
     <PointSources>
-      <!-- <RiekerSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+      <!-- <ForceSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
+      <!-- <MonopoleSource point="0 0" peakFrequency= "10" pressure="30" latency="0"/> -->
     </PointSources>  
   </Task>
 
@@ -134,7 +135,9 @@
 
   <Solver polynomialsOrder="4" precision="double" integrator="DormandPrince"
         tolerance="1e-3" maxScale="1e-2" maxTimeStep="1e-1" hierarchyLevelsCount="1" 
-        allowMovement="false" allowPlasticity="false" allowDestruction="false" 
+        allowMovement="false" allowPlasticity="false" 
+        allowDiscreteDestruction="false" 
+        allowContinuousDestruction="false" 
         tensionErrorMult="1e+2" velocityErrorMult="1e+2" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
 

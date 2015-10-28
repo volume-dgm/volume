@@ -106,12 +106,12 @@ void SolverSettings<Space>::Parse(TiXmlElement *solverElement)
       
   if (ParseBool(solverElement, "allowContinuousDestruction", &allowContinuousDestruction) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no allowContinuousDestructions attribute";
+    std::cerr << "There is no allowContinuousDestruction attribute";
   }
 
   if (ParseBool(solverElement, "allowDiscreteDestruction", &allowDiscreteDestruction) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no allowDiscreteDestructions attribute";
+    std::cerr << "There is no allowDiscreteDestruction attribute";
   }
 
   if (ParseScalar(solverElement, "tensionErrorMult", &tensionErrorMult) != TIXML_SUCCESS)
