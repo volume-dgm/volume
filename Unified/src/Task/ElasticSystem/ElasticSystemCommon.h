@@ -200,6 +200,11 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
 
     void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values);
 
+    void SetCurrentVelocity(const Vector& velocity)
+    {
+      forceFunctor->SetCurrentVelocity(velocity);
+    }
+
   private:
     VectorFunctor<Space>* forceFunctor;
     Scalar tensionDimensionlessMult; 

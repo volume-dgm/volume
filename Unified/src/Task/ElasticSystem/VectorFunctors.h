@@ -11,6 +11,8 @@ struct VectorFunctor
 
   virtual ~VectorFunctor() {}
   virtual Vector operator ()(const Vector& point, const Vector& norm, Scalar time) const = 0;
+
+  virtual void SetCurrentVelocity(const Vector& velocity) {}
 };
 
 template <typename Space>
@@ -297,11 +299,14 @@ struct HydrodynamicResistanceFunctor: public VectorFunctor<Space>
   HydrodynamicResistanceFunctor(AABB aabb, Scalar mediumRho, Vector flowVelocity, Scalar alpha, Scalar beta):
     aabb(aabb), mediumRho(mediumRho), flowVelocity(flowVelocity), alpha(alpha), beta(beta)
   {}
-
-  Vector operator()(const Vector& point, const Vector& n, Scalar) const
+  
+  virtual void SetCurrentVelocity(const Vector& velocity)
   {
-    /*
-    Vector v = valueType.GetVelocity();
+    this->v = velocity;
+  }
+
+  Vector operator()(const Vector& point, const Vector& n, Scalar /* time */) const
+  { 
     Scalar vn = (v - flowVelocity) * n;
     if (aabb.Includes(point) && vn >= 0)
     {
@@ -313,7 +318,6 @@ struct HydrodynamicResistanceFunctor: public VectorFunctor<Space>
     {
       return Vector::zero();
     }
-    */
     return Vector::zero();
   }
 
@@ -322,4 +326,5 @@ struct HydrodynamicResistanceFunctor: public VectorFunctor<Space>
   Vector  flowVelocity;
   Scalar  alpha;
   Scalar  beta;
+  Vector  v;
 };

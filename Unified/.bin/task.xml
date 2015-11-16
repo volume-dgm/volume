@@ -7,4 +7,5 @@
 <!-- <Settings fileName="configs/cracks2d_settings.xml"/> -->
 <!-- <Settings fileName="configs/test_cube3d_settings.xml"/> -->
 <!-- <Settings fileName="configs/2bars_strike_settings.xml"/> -->
-<Settings fileName="configs/test_cube_settings.xml"/>
+<!-- <Settings fileName="configs/test_cube_settings.xml"/> -->
+<Settings fileName="configs/icefield_settings.xml"/>

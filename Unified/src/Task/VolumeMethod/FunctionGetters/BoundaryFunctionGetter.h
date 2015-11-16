@@ -31,7 +31,8 @@ public:
     if (functor)
     {
       ValueType valueType = volumeMesh->GetRefCellSolution(cellIndex, refPoint);
-      functor->operator()(globalPoint, externalNormal, /* valueType */time, values);
+      functor->SetCurrentVelocity(valueType.GetVelocity());
+      functor->operator()(globalPoint, externalNormal, time, values);
     } else
     {
       std::fill_n(values, MeshType::dimsCount, Scalar(0.0));

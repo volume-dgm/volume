@@ -34,9 +34,10 @@ void VolumeMesh<Space2, FunctionSpace, System>::
 template<typename FunctionSpace, typename System>
 void VolumeMesh<Space2, FunctionSpace, System>::BuildMatrices()
 {
-  #pragma omp parallel for
+  #pragma omp parallel
   for(int functionIndex0 = 0; functionIndex0 < functionsCount; functionIndex0++)
   {
+    #pragma omp for
     for(int functionIndex1 = 0; functionIndex1 < functionsCount; functionIndex1++)
     {
       printf(".");

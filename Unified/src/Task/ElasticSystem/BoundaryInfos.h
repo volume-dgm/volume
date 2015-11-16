@@ -29,6 +29,8 @@ struct BoundaryInfoFunctor
                           const Vector& externalNormal,
                           const Scalar currTime,
                           Scalar* values) = 0;
+
+  virtual void SetCurrentVelocity(const Vector& velocity) {}
 };
 
 template <typename Space>
