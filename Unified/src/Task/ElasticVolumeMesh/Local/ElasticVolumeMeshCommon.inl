@@ -6,6 +6,20 @@ ElasticVolumeMeshCommon<Space, FunctionSpace>::
   this->solver = solver;
   this->tolerance = tolerance;
   this->minHeightInMesh = 0;
+
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+  {
+    precomputedBasisFunctions.basisFunctions[functionIndex] = 
+      volumeMesh.functionSpace->GetBasisPolynomial(functionIndex);
+    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+    {
+      IndexVector derivatives = IndexVector::zeroVector();
+      derivatives[dimIndex] = 1;
+
+      precomputedBasisFunctions.basisDerivativeFunctions[functionIndex][dimIndex] = 
+        volumeMesh.functionSpace->GetBasisFunctionDerivative(derivatives, functionIndex);
+    }
+  }
 }
 
 template<typename Space, typename FunctionSpace>
@@ -334,10 +348,9 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::Initialize(bool allowMovemen
     isNodeVelocityFound.resize(volumeMesh.nodes.size());
   }
 
-  if (allowPlasticity)
+  if (allowPlasticity && allowContinuousDestruction)
   {
-    plasticForceWorks.resize(volumeMesh.cells.size());
-    cellsPotentialEnergy.resize(volumeMesh.cells.size());
+    plasticDeforms.resize(volumeMesh.cells.size());
   }
 
   minHeightInMesh = volumeMesh.GetMinHeight();
@@ -481,41 +494,53 @@ struct PlasticityCorrector
 };
 
 template<typename Space, typename FunctionSpace>
-void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity()
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
 {
-  /*
-  #pragma omp parallel for
-  for (int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); ++cellIndex)
-  {
-    Scalar potentialEnergy;
-    Scalar kineticEnergy;
-    volumeMesh.GetCellEnergy(IndexType(cellIndex), kineticEnergy, potentialEnergy);
-    cellsPotentialEnergy[cellIndex] = potentialEnergy;
-  }
-  */
-  typedef PlasticityCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace> > PlasticityCorrectorType;
-  ApplyCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace>, PlasticityCorrectorType>(this);
-  /*
-  #pragma omp parallel for
-  for (int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); ++cellIndex)
-  {
-    Scalar potentialEnergy;
-    Scalar kineticEnergy;
-    volumeMesh.GetCellEnergy(IndexType(cellIndex), kineticEnergy, potentialEnergy);
-    plasticForceWorks[cellIndex] += cellsPotentialEnergy[cellIndex] - potentialEnergy;
-  }
-  
   if (allowContinuousDestruction)
   {
     #pragma omp parallel for
     for (int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); ++cellIndex)
     {
-      if (plasticForceWorks[cellIndex] > volumeMesh.cellMediumParameters[cellIndex].maxPlasticWork)
+      Scalar plasticDeformRate = 0;
+
+      Vector cellVertices[Space::NodesPerCell];
+      volumeMesh.GetCellVertices(cellIndex, cellVertices);
+      Scalar jacobian = volumeMesh.GetCellDeformJacobian(cellVertices);
+
+      for (IndexType pointIndex = 0; pointIndex < volumeMesh.quadraturePoints.size(); ++pointIndex)
       {
-        DestroyCellMaterial(cellIndex, Scalar(0.1) ); //TODO
+        const bool brittle = volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
+        if (!brittle)
+        {
+          Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, volumeMesh.quadraturePoints[pointIndex]);
+          const Scalar k0 = volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
+          const Scalar  a = volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
+          const Scalar pressure = elastic.GetPressure();
+          const Scalar k = k0 + a * pressure;
+
+          Tensor tension = elastic.GetTension();
+          tension += pressure;
+          Scalar ss = DoubleConvolution(tension, tension);
+
+          if (ss > 2 * Sqr(k))
+          {
+            plasticDeformRate += GetDeformRate(cellIndex, volumeMesh.quadraturePoints[pointIndex]) *
+                volumeMesh.quadratureWeights[pointIndex] *
+                jacobian;
+          }
+        }
+      }
+      plasticDeforms[cellIndex] += plasticDeformRate * dt / volumeMesh.GetVolume(cellIndex);
+
+      if (plasticDeforms[cellIndex] > volumeMesh.cellMediumParameters[cellIndex].plasticity.maxPlasticDeform)
+      {
+        DestroyCellMaterial(cellIndex, Scalar(0.1)); //TODO
       }
     }
-  } */
+  }
+
+  typedef PlasticityCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace> > PlasticityCorrectorType;
+  ApplyCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace>, PlasticityCorrectorType>(this);
 }
 
 template<typename Space, typename FunctionSpace>
@@ -573,4 +598,45 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
       }
     }
   }
+}
+
+template<typename Space, typename FunctionSpace>
+typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformRate(IndexType cellIndex, Vector refCoords) const
+{
+  Scalar strainRate[Space::Dimension * Space::Dimension] = { 0 };
+  
+  Vector cellVertices[Space::NodesPerCell];
+  volumeMesh.GetCellVertices(cellIndex, cellVertices);
+
+  Vector refDerivatives[Space::Dimension];
+  volumeMesh.GetRefDerivatives(cellVertices, refDerivatives);
+
+  for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+  {
+    for (IndexType functionIndex = 0; functionIndex < FunctionSpace::functionsCount; ++functionIndex)
+    {
+      Scalar basisFunctionDerivativeValue = precomputedBasisFunctions.basisDerivativeFunctions[functionIndex][dimIndex].GetValue(&(refCoords.x));
+      for (IndexType i = 0; i < Space::Dimension; ++i)
+      {
+        for (IndexType j = 0; j < Space::Dimension; ++j)
+        {
+          strainRate[i * Space::Dimension + j] += Scalar(0.5) * basisFunctionDerivativeValue * (
+            volumeMesh.cellSolutions[cellIndex].basisVectors[functionIndex].values[dimsCount - Space::Dimension + i] * refDerivatives[dimIndex][j] +
+            volumeMesh.cellSolutions[cellIndex].basisVectors[functionIndex].values[dimsCount - Space::Dimension + j] * refDerivatives[dimIndex][i] );
+        }
+      }
+    }
+  }
+
+  Scalar effectiveStrain = 0;
+
+  for (int i = 0; i < Space::Dimension; ++i)
+  {
+    for (int j = i; j < Space::Dimension; ++j)
+    {
+      effectiveStrain += Sqr(strainRate[i * Space::Dimension + j]);
+    }
+  }
+
+  return pow(Scalar(2.0 / 3) * effectiveStrain, Scalar(0.5));
 }

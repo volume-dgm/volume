@@ -11,14 +11,15 @@
     <Snapshots count="300000" />
   </ResultCombiner>
 
-  <Mesh fileName="meshes/Salome_icefield[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth = "0.00000"> 
+  <Mesh fileName="meshes/Salome_icefield[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.00000"> 
     <MediumParams>
       <PerSubmesh fileName = "meshes/Salome_icefield[<domain>].params">
         <!-- <Submesh index="1" pSpeed = "5700" sSpeed = "3100" rho = "7800" k = "7e+80" brittle="false" />  -->
         <!-- <Submesh index="0" pSpeed = "5700" sSpeed = "3100" rho = "7800" k = "7e+80" brittle="false" />  -->
 
-        <Submesh index="0" E="1.5e+10" G="5e+9" rho= "1500" fixed="true" internalContactType= "1" /> 
-        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "910" k= "2.5e+6" alpha="0" brittle="true" internalContactType= "0"/> 
+        <Submesh index="0" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> 
+        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "920" k= "2.2e+5" alpha="0" brittle="false" internalContactType= "0"
+          maxPlasticDeform="0.006"/> 
 
         <!-- <Submesh index="0" pSpeed = "4000" sSpeed = "2200" rho = "950" k = "7e+70"/>  -->
       </PerSubmesh> 
@@ -31,7 +32,7 @@
       <Free interactionType= "1">
         <ExternalForce>
           <HydrodynamicResistanceFunctor boxPoint1= "-5000 -5000" boxPoint2= "5000 5000" 
-            alpha="1.0" beta="0.0" flowVelocity="0 2" mediumRho="1000"/>
+            alpha="1.0" beta="0.002" flowVelocity="0 1" mediumRho="1000"/>
         </ExternalForce>
       </Free>
     </Boundaries>
@@ -43,6 +44,10 @@
       <!-- <Friction interactionType= "2" frictionCoeff="0.5" dynamicBoundaryInteractionType= "0"/> -->
     </Contacts>
   </Mesh>
+
+  <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    locationsFileName="meshes/iceFieldDetectorPositions.loc" />
 
   <Snapshot>
     <Period frames="100" />
@@ -81,7 +86,7 @@
       <!-- <BoxState boxPoint1 = "-0.5 -0.5" boxPoint2 = "0.5 0.5" velocity = "0 0.1" /> -->
 
       <BoxState boxPoint1 = "-5000 0.00001" boxPoint2 = "5000 5000" velocity = "0.0 0.0" />
-      <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 0.00001" velocity = "0.0 0.0" /> <!-- 1.5 -->
+      <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 0.00001" velocity = "0.0 1" /> <!-- 1.5 -->
 
       <!-- <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "5000 0" velocity = "0.1 0.1" /> -->
       <!-- <ConstantPlaneWave velocity="-0.01 0.01" center="0.05 -0.05" waveLength="0.17" shear="false"/> -->
@@ -102,13 +107,13 @@
        integrator="RKF45" 
    -->
 
-  <Solver polynomialsOrder= "1" precision="double" integrator="RK4"
+  <Solver polynomialsOrder= "1" precision="double" integrator="RK4" 
         tolerance="1e-1" maxScale="1e-0" maxTimeStep="1e-5" hierarchyLevelsCount="1"
-        allowMovement="true" allowPlasticity="false" 
-        allowContinuousDestruction="true" allowDiscreteDestruction="true"
+        allowMovement="true" allowPlasticity="true" 
+        allowContinuousDestruction="true" allowDiscreteDestruction="false"
         tensionErrorMult="1e-6" velocityErrorMult="1e-0" positionErrorMult="1e-5"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
-        <Erosion cellAspectRatio="5" minHeightRatio="0.0"/>
+        <Erosion cellAspectRatio="6" minHeightRatio="0.0"/>
   </Solver>
 
 </Settings>

@@ -21,18 +21,15 @@ struct PolynomialPrecomputer<Space2, Decomposer>: public Decomposer
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)
   {
+    Scalar coords[2] = {point.x, point.y};
+    return GetBasisFunctionDerivative(derivatives, functionIndex).GetValue(coords);
+  }
+
+  Polynomial<Scalar, IndexType, 2> GetBasisFunctionDerivative(IndexVector derivatives, IndexType functionIndex)
+  {
+    IndexType derivativeDegrees[2] = {derivatives.x, derivatives.y};
     Polynomial<Scalar, IndexType, 2> function = this->GetBasisPolynomial(functionIndex);
-
-    Scalar coords[2];
-    coords[0] = point.x;
-    coords[1] = point.y;
-
-    IndexType derivativeDegrees[2];
-    derivativeDegrees[0] = derivatives.x;
-    derivativeDegrees[1] = derivatives.y;
-    function.Differentiate(derivativeDegrees);
-
-    return function.GetValue(coords);
+    return function.Differentiate(derivativeDegrees);
   }
 
   Scalar ComputeCellVolumeIntegral(IndexType functionIndex) 
@@ -272,20 +269,15 @@ struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
 
   Scalar GetBasisFunctionDerivative(Vector point, IndexVector derivatives, IndexType functionIndex)
   {
+    Scalar coords[3] = {point.x , point.y , point.z};
+    return GetBasisFunctionDerivative(derivatives, functionIndex).GetValue(coords);
+  }
+
+  Polynomial<Scalar, IndexType, 3> GetBasisFunctionDerivative(IndexVector derivatives, IndexType functionIndex)
+  {
     Polynomial<Scalar, IndexType, 3> function = this->GetBasisPolynomial(functionIndex);
-
-    Scalar coords[3];
-    coords[0] = point.x;
-    coords[1] = point.y;
-    coords[2] = point.z;
-
-    IndexType derivativeDegrees[3];
-    derivativeDegrees[0] = derivatives.x;
-    derivativeDegrees[1] = derivatives.y;
-    derivativeDegrees[2] = derivatives.z;
-    function.Differentiate(derivativeDegrees);
-
-    return function.GetValue(coords);
+    IndexType derivativeDegrees[3] = {derivatives.x , derivatives.y , derivatives.z};
+    return function.Differentiate(derivativeDegrees);
   }
 
   Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // <Ô1, Ô2>

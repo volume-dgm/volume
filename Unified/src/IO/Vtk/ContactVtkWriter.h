@@ -26,6 +26,7 @@ public:
 
   void Write(const std::string& fileName,
               const std::vector<Node>& nodes, const std::vector<Cell>& cells, const std::vector<bool>& isCellBroken,
+              const std::vector<Scalar>& plasticWork,
               Scalar velocityDimensionlessMult,
               const std::vector<EdgePairIndices>&  contactEdges, 
               const std::vector<IndexType>&  contactEdgesCount, IndexType contactTypesCount, 
@@ -44,11 +45,24 @@ public:
     std::vector<Node> nodes;
     std::vector<Cell> cells;
     std::vector<IndexType> nodeData;
-    std::vector<IndexType> cellData;
+    struct CellData
+    {
+      CellData(IndexType isCellBroken, Scalar plasticWork = 0):
+        isCellBroken(isCellBroken), plasticWork(plasticWork)
+      {}
+
+      CellData()
+      {}
+
+      IndexType isCellBroken;
+      Scalar plasticWork;
+    };
+    std::vector<CellData> cellData;
   };
 
   OutputData ConstructOutputData(const std::vector<Node>& nodes, 
   const std::vector<Cell>& cells, const std::vector<bool>& isCellBroken,
+  const std::vector<Scalar>& plasticWork,
   Scalar velocityDimensionlessMult,
   const std::vector<EdgePairIndices>&  contactEdges, 
   const std::vector<IndexType>&  contactEdgesCount, IndexType contactTypesCount, 

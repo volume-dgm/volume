@@ -93,14 +93,22 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   ElasticSystemType* GetSystem();
   void MoveSceneToSnapshotRegion();
 
+  /* 
+    sqrt(2/3 * strain_{ij} : strain_{ij})
+  */
+  Scalar GetDeformRate(IndexType cellIndex, Vector refCoords) const;
+
   // stress correction due to plasticity in compliance with  Prandtl-Ruess model
-  void HandlePlasticity();
+  void HandlePlasticity(Scalar dt);
 
   typename SolverSettings<Space>::Erosion erosion;
 
   void HandleMaterialErosion();
 
   virtual void DestroyFace(IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType) = 0;
+
+  // total work of the plasticity for each cell
+  std::vector<Scalar> plasticDeforms;
 
 protected:
   void ComputeElasticMults()
@@ -115,8 +123,11 @@ protected:
 
   std::vector<bool> isNodeVelocityFound;
 
-  // total work of the plasticity for each cell
-  std::vector<Scalar> plasticForceWorks;
+  struct PrecomputedBasisFunctions
+  {
+    Polynomial<Scalar, IndexType, Space::Dimension> basisFunctions[functionsCount];
+    Polynomial<Scalar, IndexType, Space::Dimension> basisDerivativeFunctions[functionsCount][Space::Dimension];
+  } precomputedBasisFunctions;
 
 private:
   void ComputeElasticMults(Overload<Space2>)
@@ -158,8 +169,6 @@ private:
       elasticMults[valueIndex] = mult;
     }
   }
-
-  std::vector<Scalar> cellsPotentialEnergy;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

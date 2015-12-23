@@ -102,12 +102,12 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
       // s:s < 2 * k^2 
       // k = k0 + a * pressure
       Plasticity(): k0(std::numeric_limits<Scalar>::infinity()), a(0) /* without plasticity */, brittle(false),
-        maxPlasticWork(std::numeric_limits<Scalar>::infinity())
+        maxPlasticDeform(std::numeric_limits<Scalar>::infinity())
       {}
       Scalar k0;
       Scalar a;
       bool brittle;
-      Scalar maxPlasticWork;
+      Scalar maxPlasticDeform;
     };
     Plasticity plasticity;
     bool fixed;

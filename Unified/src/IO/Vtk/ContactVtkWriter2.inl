@@ -2,6 +2,7 @@ template <typename FunctionSpace>
 typename ContactVtkWriter<Space2, FunctionSpace>::OutputData 
   ContactVtkWriter<Space2, FunctionSpace>::ConstructOutputData(const std::vector<Node>& nodes, 
   const std::vector<Cell>& cells, const std::vector<bool>& isCellBroken,
+  const std::vector<Scalar>& plasticWork,
   Scalar velocityDimensionlessMult,
   const std::vector<EdgePairIndices>&  contactEdges, 
   const std::vector<IndexType>&  contactEdgesCount, IndexType contactTypesCount, 
@@ -89,7 +90,7 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
               cell.incidentNodes[0] = nodeIndex0;
               cell.incidentNodes[1] = cell.incidentNodes[2] = nodeIndex1;
               outputData.cells.push_back(cell);
-              outputData.cellData.push_back(1);
+              outputData.cellData.push_back(typename OutputData::CellData(1));
             }
           }
           if (drawContactBindings)
@@ -98,7 +99,7 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
             cell.incidentNodes[0] = nodes.size() + 2 * contactEdgeIndex;
             cell.incidentNodes[1] = cell.incidentNodes[2] = nodes.size() + 2 * contactEdgeIndex + 1;
             outputData.cells.push_back(cell);
-            outputData.cellData.push_back(0);
+            outputData.cellData.push_back(typename OutputData::CellData(0));
           }
         }
       }
@@ -122,7 +123,7 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
         cell.incidentNodes[0] = nodeIndex0;
         cell.incidentNodes[1] = cell.incidentNodes[2] = nodeIndex1;
         outputData.cells.push_back(cell);
-        outputData.cellData.push_back(0);
+        outputData.cellData.push_back(typename OutputData::CellData(0));
       }
     }
     offset += boundaryEdgesCount[boundaryTypeIndex];
@@ -132,11 +133,11 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
   {
     for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
     {
-      if (isCellBroken[cellIndex])
-      {
-        outputData.cells.push_back(cells[cellIndex]);
-        outputData.cellData.push_back(1);
-      }
+      typename OutputData::CellData data;
+      data.isCellBroken = isCellBroken[cellIndex] ? 1 : 0;
+      data.plasticWork = plasticWork[cellIndex];
+      outputData.cells.push_back(cells[cellIndex]);
+      outputData.cellData.push_back(data);
     }
   }
 
@@ -147,6 +148,7 @@ template<typename FunctionSpace>
 void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
                                                   const std::vector<Node>& nodes, const std::vector<Cell>& cells,
                                                   const std::vector<bool>& isCellBroken,
+                                                  const std::vector<Scalar>& plasticWork,
                                                   Scalar velocityDimensionlessMult,
                                                   const std::vector<EdgePairIndices>& contactEdges, 
                                                   const std::vector<IndexType>& contactEdgesCount, 
@@ -159,7 +161,7 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
                                                   bool drawContacts, bool drawRegularGlueContacts,
                                                   bool drawBrokenContacts, bool drawContactBindings)
 {
-  OutputData outputData = ConstructOutputData(nodes, cells, isCellBroken, velocityDimensionlessMult,
+  OutputData outputData = ConstructOutputData(nodes, cells, isCellBroken, plasticWork, velocityDimensionlessMult,
     contactEdges, contactEdgesCount, contactTypesCount, isContactBroken,
     boundaryEdges, boundaryEdgesCount, boundaryTypesCount,
     system, drawContacts, drawRegularGlueContacts, drawBrokenContacts, drawContactBindings);
@@ -216,6 +218,12 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
   file << "LOOKUP_TABLE default\n";
   for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
   {
-    file << outputData.cellData[cellIndex] << std::endl;
+    file << outputData.cellData[cellIndex].isCellBroken << std::endl;
+  }
+  file << "SCALARS PLASTIC_DEFORMS float 1\n";
+  file << "LOOKUP_TABLE default\n";
+  for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
+  {
+    file << outputData.cellData[cellIndex].plasticWork << std::endl;
   }
 }

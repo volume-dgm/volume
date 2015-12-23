@@ -32,6 +32,10 @@ public:
   {
     return currTime;
   }
+  Scalar GetCurrStep() const
+  {
+    return timeStep;
+  }
 
 protected:
   Scalar currTime;

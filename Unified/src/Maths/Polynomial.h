@@ -91,10 +91,10 @@ struct Polynomial
     return *this;
   }
 
-  Polynomial operator *(const Polynomial &other)
+  Polynomial operator *(const Polynomial &other) const
   {
     PolynomialType res;
-    for(typename TermsMap::iterator it0 = terms.begin(); it0 != terms.end(); it0++)
+    for(typename TermsMap::const_iterator it0 = terms.begin(); it0 != terms.end(); it0++)
     {
       Pows pows0 = it0->first;
       for(typename TermsMap::const_iterator it1 = other.terms.begin(); it1 != other.terms.end(); it1++)
@@ -122,10 +122,10 @@ struct Polynomial
   }
 
   template<typename OtherPolynomial>
-  OtherPolynomial Substitute   (const OtherPolynomial *coords)
+  OtherPolynomial Substitute   (const OtherPolynomial *coords) const
   {
     OtherPolynomial res(0);
-    for(typename TermsMap::iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
     {
       if(it->second == 0) continue;
 
@@ -143,11 +143,11 @@ struct Polynomial
 
     return res;
   }
-  PolynomialType Differentiate(IndexType *derivativeDegrees)
+  PolynomialType Differentiate(IndexType *derivativeDegrees) const
   {
     PolynomialType res;
 
-    for(typename TermsMap::iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
     {
       bool ok = 1;
       Pows termPows;
@@ -175,10 +175,10 @@ struct Polynomial
     }
     return res;
   }
-  Scalar GetValue(Scalar *coords)
+  Scalar GetValue(Scalar *coords) const
   {
     Scalar res = 0;
-    for(typename TermsMap::iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
     {
       Scalar term(it->second);
       for(IndexType coordIndex = 0; coordIndex < DimsCount; coordIndex++)
@@ -196,11 +196,11 @@ struct Polynomial
   }
 
   //computes volume of a unit tetrahedra with dimsCount dimentions
-  Scalar ComputeSubspaceIntegral(IndexType dimsCount)
+  Scalar ComputeSubspaceIntegral(IndexType dimsCount) const
   {
     assert(dimsCount <= DimsCount);
     Scalar res = 0;
-    for(typename TermsMap::iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
     {
       Scalar nom(1.0);
       IndexType denom = dimsCount;
@@ -216,14 +216,14 @@ struct Polynomial
   }
 private:
 
-  Scalar Pow(Scalar a, Scalar b)
+  Scalar Pow(Scalar a, Scalar b) const
   {
     if(fabs(b) < Scalar(1e-5)) return Scalar(1.0);
     if(fabs(a) < Scalar(1e-5)) return 0;
     return exp(b * log(a));
   }
 
-  Scalar Factorial(IndexType num)
+  Scalar Factorial(IndexType num) const
   {
     Scalar res(1.0);
     for(IndexType i = 1; i <= num; i++)

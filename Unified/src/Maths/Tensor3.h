@@ -182,5 +182,5 @@ inline T DoubleConvolution(const Tensor3<T> &v0, const Tensor3<T> &v1)
     T(2.0) * v0.yz * v1.yz;
 }
 
-typedef Tensor3<float>	Tensor3f;
+typedef Tensor3<float>  Tensor3f;
 typedef Tensor3<double> Tensor3d;

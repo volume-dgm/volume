@@ -447,6 +447,16 @@ inline typename Space2::Vector VolumeMesh<Space2, FunctionSpace, System>::
 }
 
 template<typename FunctionSpace, typename System>
+void VolumeMesh<Space2, FunctionSpace, System>::GetRefDerivatives(
+  Vector cellVertices[Space::NodesPerCell],
+  Vector* refDerivatives) const
+{
+  refDerivatives[0] = GetRefXDerivatives(cellVertices);
+  refDerivatives[1] = GetRefYDerivatives(cellVertices);
+}
+
+
+template<typename FunctionSpace, typename System>
 typename Space2::Vector VolumeMesh<Space2, FunctionSpace, System>::
   GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const //x -> ?
 {

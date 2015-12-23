@@ -46,13 +46,13 @@ struct MeshSettings
         flowVelocity(Vector::zero()),
         brittle(false),
         fixed(false),
-        maxPlasticWork(std::numeric_limits<Scalar>::max() * 0.5)
+        maxPlasticDeform(std::numeric_limits<Scalar>::max() * 0.5)
       {}
       Scalar lambda, mju, rho, k, alpha;
       Vector flowVelocity;
       bool brittle;
       bool fixed;
-      Scalar maxPlasticWork;
+      Scalar maxPlasticDeform;
     };
 
     struct PerSubmeshInfo
@@ -98,7 +98,7 @@ struct MeshSettings
       ParseScalar(element, "alpha", &(params->alpha));
       ParseBool(element, "brittle", &(params->brittle));
       ParseBool(element, "fixed", &(params->fixed));
-      ParseScalar(element, "maxPlasticWork", &(params->maxPlasticWork));
+      ParseScalar(element, "maxPlasticDeform", &(params->maxPlasticDeform));
 
       Scalar pSpeed(-1.0);
       Scalar sSpeed(-1.0);

@@ -513,6 +513,15 @@ typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
       cellVertices[2].x * (cellVertices[0].y - cellVertices[1].y));
 }
 
+template<typename FunctionSpace, typename System>
+void  VolumeMesh<Space3, FunctionSpace, System>::GetRefDerivatives(
+  Vector cellVertices[Space::NodesPerCell],
+  Vector* refDerivatives) const
+{
+  refDerivatives[0] = GetRefXDerivatives(cellVertices);
+  refDerivatives[1] = GetRefYDerivatives(cellVertices);
+  refDerivatives[2] = GetRefZDerivatives(cellVertices);
+}
 
 template<typename FunctionSpace, typename System>
 bool VolumeMesh<Space3, FunctionSpace, System>::IsCellRegular(IndexType cellIndex) const

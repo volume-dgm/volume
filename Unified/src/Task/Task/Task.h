@@ -97,6 +97,7 @@ private:
       distributedElasticMeshes[domainNumber]->volumeMesh.nodes, 
       distributedElasticMeshes[domainNumber]->volumeMesh.cells,
       isCellBroken[domainNumber],
+      distributedElasticMeshes[domainNumber]->plasticDeforms,
       settings.solver.velocityDimensionlessMult,
       meshes[domainNumber]->contactEdges,  meshes[domainNumber]->contactEdgesCount,  
       meshes[domainNumber]->contactTypesCount, 
@@ -197,6 +198,13 @@ private:
       void Add(VectorFunctor<Space> *newbie)
       {
         functors.push_back(newbie);
+      }
+      void SetCurrentVelocity(const Vector& v)
+      {
+        for (IndexType functorIndex = 0; functorIndex < functors.size(); ++functorIndex)
+        {
+          functors[functorIndex]->SetCurrentVelocity(v);
+        }
       }
       std::vector<VectorFunctor<Space> *> functors;
     };
@@ -569,7 +577,8 @@ void Task<Space, order>::Run()
             if (settings.solver.allowContinuousDestruction || settings.solver.allowDiscreteDestruction) 
               FindDestructions(domainNumber);
             if (settings.mesh.moveMassCenter)     distributedElasticMeshes[domainNumber]->MoveSceneToSnapshotRegion();
-            if (settings.solver.allowPlasticity)  distributedElasticMeshes[domainNumber]->HandlePlasticity();
+            if (settings.solver.allowPlasticity)  distributedElasticMeshes[domainNumber]->HandlePlasticity(
+              distributedElasticMeshes[domainNumber]->solver->GetCurrStep());
             if (settings.solver.damping > 0)      distributedElasticMeshes[domainNumber]->HandleDamping();
           }
         }
@@ -788,7 +797,7 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
   res.plasticity.a = params.alpha;
   res.plasticity.brittle = params.brittle;
   res.fixed = params.fixed;
-  res.plasticity.maxPlasticWork = params.maxPlasticWork;
+  res.plasticity.maxPlasticDeform = params.maxPlasticDeform;
 
   // grad(flowVelocity) must be equiled 0. it`s standart divergence-free condition
   res.flowVelocity = params.flowVelocity;

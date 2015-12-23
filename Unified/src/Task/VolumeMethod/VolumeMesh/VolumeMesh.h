@@ -162,6 +162,13 @@ public:
 
   void BuildAABBTree();
 
+  // for quadtature integration
+  std::vector<Scalar> quadratureWeightsForBorder;
+  std::vector<typename BorderSpace::Vector> quadraturePointsForBorder;
+
+  std::vector<Scalar> quadratureWeights;
+  std::vector<Vector> quadraturePoints;
+
 protected:
   std::vector<Scalar> cellMaxWaveSpeeds;
 
@@ -195,13 +202,6 @@ protected:
   virtual bool IsCellRegular(IndexType cellIndex) const = 0;
 
   bool debugMode;
-
-  // for quadtature integration
-  std::vector<Scalar> quadratureWeightsForBorder;
-  std::vector<typename BorderSpace::Vector> quadraturePointsForBorder;
-
-  std::vector<Scalar> quadratureWeights;
-  std::vector<Vector> quadraturePoints;
 
   // only this cells may collide with each other.
   bool IsReadyForCollisionCell(IndexType cellIndex) const;
@@ -306,13 +306,14 @@ public:
   Vector GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const; // x -> ξ
   Vector RefToGlobalVolumeCoords(Vector refCoords, Vector cellVertices[Space::NodesPerCell]) const; // ξ -> x
 
-private:
-  void BuildMatrices();
-
-  Scalar    GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
+  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
   Vector    GetRefXDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy) * J
   Vector    GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy) * J
 
+  void GetRefDerivatives(Vector cellVertices[Space::NodesPerCell], Vector* refDerivatives) const;
+
+private:
+  void BuildMatrices();
   bool IsCellRegular(IndexType cellIndex) const;
 
   struct OutgoingFlux
@@ -436,14 +437,15 @@ public:
   Vector RefToGlobalVolumeCoords(Vector refCoords, Vector cellVertices[Space::NodesPerCell]) const; // ξ -> x
   typename System::ValueType GetFaceAverageSolution(IndexType cellIndex, IndexType faceNumber) const;
 
-private:
-  void BuildMatrices();
-  bool IsCellRegular(IndexType cellIndex) const;
-
-  Scalar    GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
+  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
   Vector    GetRefXDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy, dξ/dz) * J
   Vector    GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy, dη/dz) * J
   Vector    GetRefZDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dζ/dx, dζ/dy, dζ/dz) * J
+  void      GetRefDerivatives(Vector cellVertices[Space::NodesPerCell], Vector* refDerivatives) const;
+
+private:
+  void BuildMatrices();
+  bool IsCellRegular(IndexType cellIndex) const;
 
   Eigen::Matrix<Scalar, functionsCount, functionsCount> zDerivativeVolumeIntegrals;
 
