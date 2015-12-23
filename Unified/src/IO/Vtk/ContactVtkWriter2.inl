@@ -82,9 +82,7 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
               outputData.nodeData[nodeIndex0] = outputData.nodeData[nodeIndex1] = 1;
             }
 
-            if (drawBrokenContacts && !isEdgeBroken)
-            {
-            } else
+            if (drawBrokenContacts && isEdgeBroken)
             {
               Cell cell;
               cell.incidentNodes[0] = nodeIndex0;
@@ -133,11 +131,14 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
   {
     for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
     {
-      typename OutputData::CellData data;
-      data.isCellBroken = isCellBroken[cellIndex] ? 1 : 0;
-      data.plasticWork = plasticWork[cellIndex];
-      outputData.cells.push_back(cells[cellIndex]);
-      outputData.cellData.push_back(data);
+      if (isCellBroken[cellIndex])
+      {
+        typename OutputData::CellData data;
+        data.isCellBroken = 1;
+        data.plasticWork = plasticWork[cellIndex];
+        outputData.cells.push_back(cells[cellIndex]);
+        outputData.cellData.push_back(data);
+      }
     }
   }
 
@@ -185,7 +186,7 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
   {
     file << outputData.nodes[nodeIndex].pos.x << " "
          << outputData.nodes[nodeIndex].pos.y << " "
-         << 0                                   << " ";
+         << 0                                 << " ";
   }
   file << "\n";
 
@@ -203,16 +204,6 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
   }
   file << "\n";
 
-/*
-  file << "POINT_DATA " << nodes.size() + additionalNodesCount << "\n";
-  file << "SCALARS ISBROKEN INT 1\n";
-  file << "LOOKUP_TABLE default\n";
-  for (IndexType vertexIndex = 0; vertexIndex < nodes.size() + additionalNodesCount; ++vertexIndex)
-  {
-    file << isVertexBroken[vertexIndex] << std::endl;
-  }
-  */
-  
   file << "CELL_DATA " << outputData.cellData.size() << "\n";
   file << "SCALARS ISBROKEN INT 1\n";
   file << "LOOKUP_TABLE default\n";
@@ -220,10 +211,10 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
   {
     file << outputData.cellData[cellIndex].isCellBroken << std::endl;
   }
-  file << "SCALARS PLASTIC_DEFORMS float 1\n";
+/*  file << "SCALARS PLASTIC_DEFORMS float 1\n";
   file << "LOOKUP_TABLE default\n";
   for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
   {
     file << outputData.cellData[cellIndex].plasticWork << std::endl;
-  }
+  }*/
 }
