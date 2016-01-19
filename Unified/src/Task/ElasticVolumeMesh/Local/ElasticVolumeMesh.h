@@ -110,6 +110,8 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   // total work of the plasticity for each cell
   std::vector<Scalar> plasticDeforms;
 
+  std::vector<bool> isCellBroken;
+
 protected:
   void ComputeElasticMults()
   {

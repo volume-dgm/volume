@@ -86,17 +86,24 @@ private:
   void SaveProfilingData(const std::string& info, double begin, double end); 
   void ComputePacketsToReceiveCount();
 
-  void SaveContacts(const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex)
+  void SaveContacts(const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex, bool dynamicBoundaryDetection)
   {
-    SaveContacts(Overload<Space>(), fileName, domainNumber, snapshotIndex);
+    SaveContacts(Overload<Space>(), fileName, domainNumber, snapshotIndex, dynamicBoundaryDetection);
   }
 
-  void SaveContacts(Overload<Space2>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex)
+  void SaveContacts(Overload<Space2>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex, bool dynamicBoundaryDetection)
   {
+    if (dynamicBoundaryDetection)
+    {
+      contactsWriter.Write(fileName,
+        distributedElasticMeshes[domainNumber],
+        distributedElasticMeshes[domainNumber]->volumeMesh.system);
+    }
+    else
     contactsWriter.Write(fileName, 
       distributedElasticMeshes[domainNumber]->volumeMesh.nodes, 
       distributedElasticMeshes[domainNumber]->volumeMesh.cells,
-      isCellBroken[domainNumber],
+      distributedElasticMeshes[domainNumber]->isCellBroken,
       distributedElasticMeshes[domainNumber]->plasticDeforms,
       settings.solver.velocityDimensionlessMult,
       meshes[domainNumber]->contactEdges,  meshes[domainNumber]->contactEdgesCount,  
@@ -110,7 +117,8 @@ private:
       settings.solver.allowDiscreteDestruction || settings.solver.allowContinuousDestruction);
   }
 
-  void SaveContacts(Overload<Space3>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex)
+  void SaveContacts(Overload<Space3>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex,
+    bool dynamicBoundaryDetection)
   {
     // TODO
   }
@@ -171,7 +179,7 @@ private:
       meshes[domainNumber]->contactEdgesCount.data(), 
       meshes[domainNumber]->contactTypesCount, 
       &isContactBroken[domainNumber],
-      &isCellBroken[domainNumber]);
+      &distributedElasticMeshes[domainNumber]->isCellBroken);
   }
   void FindDestructions(Overload<Space3>, IndexType domainNumber)
   {
@@ -179,7 +187,7 @@ private:
       meshes[domainNumber]->contactFacesCount.data(), 
       meshes[domainNumber]->contactTypesCount, 
       &isContactBroken[domainNumber],
-      &isCellBroken[domainNumber]);
+      &distributedElasticMeshes[domainNumber]->isCellBroken);
   }
 
   VectorFunctor<Space>* CreateBoundaryFunctor(std::vector<typename MeshSettings<Space>::BoundarySection::VectorFunctor> &functors)
@@ -305,7 +313,6 @@ protected:
   // data for each edge
   std::vector< std::vector<bool> > isContactBroken;
   // data for each cell
-  std::vector< std::vector<bool> > isCellBroken;
   std::vector< IniStateMaker<ElasticSpace>* > stateMakers;
 
   struct Sample
@@ -881,7 +888,8 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
       ReplaceSubstring(contactsFilename, "<step>",    std::string(stepString));
       ReplaceSubstring(contactsFilename, "<domain>",  std::string(domainString));
       ReplaceSubstring(contactsFilename, "<time>",    std::string(timeString));
-      SaveContacts(contactsFilename, domainNumber, snapshotIndex);
+      bool dynamicBoundaryDetection = settings.snapshots[snapshotIndex].contacts.dynamicBoundaryDetection;
+      SaveContacts(contactsFilename, domainNumber, snapshotIndex, dynamicBoundaryDetection);
     }
   }
 }
@@ -991,7 +999,6 @@ void Task<Space, order>::LoadMeshes()
   meshes.resize(GetCurrentNodeDomainsCount());
   syncData.resize(GetCurrentNodeDomainsCount());
   isContactBroken.resize(GetCurrentNodeDomainsCount());
-  isCellBroken.resize(GetCurrentNodeDomainsCount());
 
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
@@ -1125,7 +1132,6 @@ void Task<Space, order>::LoadMeshes()
     detectorsData[domainNumber].resize(meshes[domainNumber]->detectorsPositions.size());
     
     isContactBroken[domainNumber].resize(meshes[domainNumber]->GetContactsCount(), false);
-    isCellBroken[domainNumber].resize(meshes[domainNumber]->GetCellsCount(), false);
   }
 
   // initialize sync data

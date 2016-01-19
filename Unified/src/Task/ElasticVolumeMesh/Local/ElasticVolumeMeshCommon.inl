@@ -346,6 +346,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::Initialize(bool allowMovemen
   if (allowContinuousDestruction || allowDiscreteDestruction)
   {
     isNodeVelocityFound.resize(volumeMesh.nodes.size());
+    isCellBroken.resize(volumeMesh.cells.size());
   }
 
   if (allowPlasticity && allowContinuousDestruction)
@@ -548,7 +549,10 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
 {
   for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
   {
-    if (volumeMesh.isCellAvailable[cellIndex] && (volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh))
+    if (volumeMesh.isCellAvailable[cellIndex] && (
+      volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || 
+      volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
+      plasticDeforms[cellIndex] > erosion.maxPlasticDeformation))
     {
       volumeMesh.cellSolutions[cellIndex].SetToZero();
 
@@ -593,6 +597,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
           {
             //  volumeMesh.AddToAABBTree(correspondingCellIndex);
           }
+
           DestroyFace(cellIndex, edgeNumber, dynamicBoundaryType);
         }
       }

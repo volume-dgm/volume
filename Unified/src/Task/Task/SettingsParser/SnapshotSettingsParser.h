@@ -72,12 +72,14 @@ struct SnapshotSettings
       filename("out/<domain>_contacts<step>.vtk"),
       used(true),
       drawContacts(true),
-      drawRegularGlueContacts(true)
+      drawRegularGlueContacts(true),
+      dynamicBoundaryDetection(false)
     {}
     std::string filename;
     bool used;
     bool drawContacts;
     bool drawRegularGlueContacts;
+    bool dynamicBoundaryDetection;
   } contacts;
 
   Scalar timePeriod;
@@ -190,6 +192,7 @@ void SnapshotSettings<Space>::Parse(TiXmlElement *snapshotElement)
     ParseString(contactsElement, "fileName", &contacts.filename);
     ParseBool(contactsElement, "drawContacts", &contacts.drawContacts);
     ParseBool(contactsElement, "drawRegularGlueContacts", &contacts.drawRegularGlueContacts);
+    ParseBool(contactsElement, "dynamicBoundaryDetection", &contacts.dynamicBoundaryDetection);
   }
 }
 

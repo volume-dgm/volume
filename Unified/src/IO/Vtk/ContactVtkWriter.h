@@ -26,7 +26,7 @@ public:
 
   void Write(const std::string& fileName,
               const std::vector<Node>& nodes, const std::vector<Cell>& cells, const std::vector<bool>& isCellBroken,
-              const std::vector<Scalar>& plasticWork,
+              const std::vector<Scalar>& plasticDeforms,
               Scalar velocityDimensionlessMult,
               const std::vector<EdgePairIndices>&  contactEdges, 
               const std::vector<IndexType>&  contactEdgesCount, IndexType contactTypesCount, 
@@ -40,6 +40,10 @@ public:
               // for debuging
               bool drawContactBindings = false);
 
+  void Write(const std::string& fileName,
+    ElasticVolumeMesh<Space2, FunctionSpace>* mesh,
+    const ElasticSystem<Space2>& system);
+
   struct OutputData
   {
     std::vector<Node> nodes;
@@ -47,22 +51,22 @@ public:
     std::vector<IndexType> nodeData;
     struct CellData
     {
-      CellData(IndexType isCellBroken, Scalar plasticWork = 0):
-        isCellBroken(isCellBroken), plasticWork(plasticWork)
+      CellData(IndexType isCellBroken, Scalar plasticDeforms = 0):
+        isCellBroken(isCellBroken), plasticDeforms(plasticDeforms)
       {}
 
       CellData()
       {}
 
       IndexType isCellBroken;
-      Scalar plasticWork;
+      Scalar plasticDeforms;
     };
     std::vector<CellData> cellData;
   };
 
   OutputData ConstructOutputData(const std::vector<Node>& nodes, 
   const std::vector<Cell>& cells, const std::vector<bool>& isCellBroken,
-  const std::vector<Scalar>& plasticWork,
+  const std::vector<Scalar>& plasticDeforms,
   Scalar velocityDimensionlessMult,
   const std::vector<EdgePairIndices>&  contactEdges, 
   const std::vector<IndexType>&  contactEdgesCount, IndexType contactTypesCount, 
@@ -75,6 +79,12 @@ public:
   bool drawBrokenContacts,
   // for debuging
   bool drawContactBindings = false);
+
+  OutputData ConstructOutputData(ElasticVolumeMesh<Space2, FunctionSpace>* mesh,
+    const ElasticSystem<Space2>& system);
+
+private:
+  void SaveToFile(const std::string& fileName, const OutputData& outputData) const;
 };
 
 #include "ContactVtkWriter2.inl"

@@ -58,15 +58,6 @@
     <Filter Include="GeomMesh\GeomMesh">
       <UniqueIdentifier>{de99e4e5-b75d-4882-9800-aa8ae3342e8f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GeomMesh\MeshIO">
-      <UniqueIdentifier>{d91c64cf-2aeb-496b-8865-5c56033e475b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GeomMesh\MeshIO\Local">
-      <UniqueIdentifier>{4cc9371d-42fd-4f28-8f89-95ef146e5776}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GeomMesh\MeshIO\Distributed">
-      <UniqueIdentifier>{41376e82-9cae-4bad-9858-fd48dbc69a7b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{afb1874a-ab58-4b94-9589-26287037093e}</UniqueIdentifier>
     </Filter>
@@ -84,6 +75,15 @@
     </Filter>
     <Filter Include="3rdparty\Segy">
       <UniqueIdentifier>{32a61acc-5444-4f6e-8270-bc6a26aa8f9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GeomMesh\MeshIO">
+      <UniqueIdentifier>{d91c64cf-2aeb-496b-8865-5c56033e475b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GeomMesh\MeshIO\Local">
+      <UniqueIdentifier>{4cc9371d-42fd-4f28-8f89-95ef146e5776}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GeomMesh\MeshIO\Distributed">
+      <UniqueIdentifier>{41376e82-9cae-4bad-9858-fd48dbc69a7b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

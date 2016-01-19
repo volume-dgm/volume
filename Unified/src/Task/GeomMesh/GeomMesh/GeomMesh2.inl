@@ -231,7 +231,7 @@ void GeomMesh<Space2>::BuildCellAdditionalTopology(IndexType *internalContactTyp
 
 void GeomMesh<Space2>::GetCellEdgeVertices(const IndexType cellIndex, IndexType edgeNumber, Vector* edgeVertices) const
 {
-  Vector cellVertices[3];
+  Vector cellVertices[Space2::NodesPerCell];
   GetCellVertices(cellIndex, cellVertices);
   edgeVertices[0] = cellVertices[edgeNumber];
   edgeVertices[1] = cellVertices[(edgeNumber + 1) % 3];

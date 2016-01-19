@@ -109,7 +109,6 @@ public:
   using GeomMesh<Space>::AddToAABBTree;
   using GeomMesh<Space>::GetCellAABB;
   using GeomMesh<Space>::GetVolume;
-  
 
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
   typename System::ValueType GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepCellSolution = false) const;

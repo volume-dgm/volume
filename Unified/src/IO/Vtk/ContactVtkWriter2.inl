@@ -2,7 +2,7 @@ template <typename FunctionSpace>
 typename ContactVtkWriter<Space2, FunctionSpace>::OutputData 
   ContactVtkWriter<Space2, FunctionSpace>::ConstructOutputData(const std::vector<Node>& nodes, 
   const std::vector<Cell>& cells, const std::vector<bool>& isCellBroken,
-  const std::vector<Scalar>& plasticWork,
+  const std::vector<Scalar>& plasticDeforms,
   Scalar velocityDimensionlessMult,
   const std::vector<EdgePairIndices>&  contactEdges, 
   const std::vector<IndexType>&  contactEdgesCount, IndexType contactTypesCount, 
@@ -135,7 +135,7 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
       {
         typename OutputData::CellData data;
         data.isCellBroken = 1;
-        data.plasticWork = plasticWork[cellIndex];
+        data.plasticDeforms = plasticDeforms[cellIndex];
         outputData.cells.push_back(cells[cellIndex]);
         outputData.cellData.push_back(data);
       }
@@ -149,7 +149,7 @@ template<typename FunctionSpace>
 void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
                                                   const std::vector<Node>& nodes, const std::vector<Cell>& cells,
                                                   const std::vector<bool>& isCellBroken,
-                                                  const std::vector<Scalar>& plasticWork,
+                                                  const std::vector<Scalar>& plasticDeforms,
                                                   Scalar velocityDimensionlessMult,
                                                   const std::vector<EdgePairIndices>& contactEdges, 
                                                   const std::vector<IndexType>& contactEdgesCount, 
@@ -162,13 +162,87 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
                                                   bool drawContacts, bool drawRegularGlueContacts,
                                                   bool drawBrokenContacts, bool drawContactBindings)
 {
-  OutputData outputData = ConstructOutputData(nodes, cells, isCellBroken, plasticWork, velocityDimensionlessMult,
+  OutputData outputData = ConstructOutputData(nodes, cells, isCellBroken, plasticDeforms, velocityDimensionlessMult,
     contactEdges, contactEdgesCount, contactTypesCount, isContactBroken,
     boundaryEdges, boundaryEdgesCount, boundaryTypesCount,
     system, drawContacts, drawRegularGlueContacts, drawBrokenContacts, drawContactBindings);
 
+  SaveToFile(fileName, outputData);
+}
+
+template<typename FunctionSpace>
+typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
+  ContactVtkWriter<Space2, FunctionSpace>::ConstructOutputData(
+  ElasticVolumeMesh<Space2, FunctionSpace>* mesh,
+  const ElasticSystem<Space2>& system)
+{
+  OutputData outputData;
+
+  for (IndexType nodeIndex = 0; nodeIndex < mesh->volumeMesh.nodes.size(); ++nodeIndex)
+  {
+    Node node(mesh->volumeMesh.nodes[nodeIndex].pos * mesh->velocityDimensionlessMult);
+    outputData.nodes.push_back(node);
+  }
+
+  // boundaries
+  for (IndexType cellIndex = 0; cellIndex < mesh->volumeMesh.cells.size(); ++cellIndex)
+  {
+    if (mesh->volumeMesh.isCellAvailable[cellIndex])
+    {
+      for (IndexType faceNumber = 0; faceNumber < Space2::FacesPerCell; ++faceNumber)
+      {
+        IndexType correspondingCellIndex = mesh->volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[faceNumber].correspondingCellIndex;
+        IndexType correspondingEdgeNumber = mesh->volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[faceNumber].correspondingEdgeNumber;
+        IndexType interactionType = mesh->volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[faceNumber].interactionType;
+
+        if (correspondingCellIndex == IndexType(-1) && correspondingEdgeNumber == IndexType(-1) &&
+          system.GetBoundaryType(interactionType) != BoundaryConditions::Absorb)
+        {
+          IndexType edgeNodeNumbers[Space2::NodesPerFace];
+          mesh->volumeMesh.GetCellEdgeNodes(cellIndex, faceNumber, edgeNodeNumbers);
+
+          Cell cell;
+          cell.incidentNodes[0] = edgeNodeNumbers[0];
+          cell.incidentNodes[1] = cell.incidentNodes[2] = edgeNodeNumbers[1];
+          outputData.cells.push_back(cell);
+          outputData.cellData.push_back(typename OutputData::CellData(0));
+        }
+      }
+    }
+  }
+
+  if (mesh->isCellBroken.size() == mesh->volumeMesh.cells.size())
+  {
+    for (IndexType cellIndex = 0; cellIndex < mesh->volumeMesh.cells.size(); ++cellIndex)
+    {
+      if (mesh->isCellBroken[cellIndex] && mesh->volumeMesh.isCellAvailable[cellIndex])
+      {
+        typename OutputData::CellData data;
+        data.isCellBroken = 1;
+        data.plasticDeforms = mesh->plasticDeforms[cellIndex];
+        outputData.cells.push_back(mesh->volumeMesh.cells[cellIndex]);
+        outputData.cellData.push_back(data);
+      }
+    }
+  }
+
+  return outputData;
+}
+
+template <typename FunctionSpace>
+void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
+  ElasticVolumeMesh<Space2, FunctionSpace>* mesh,
+  const ElasticSystem<Space2>& system)
+{
+  OutputData outputData = ConstructOutputData(mesh, system);
+  SaveToFile(fileName, outputData);
+}
+
+template <typename FunctionSpace>
+void ContactVtkWriter<Space2, FunctionSpace>::SaveToFile(const std::string& fileName, const OutputData& outputData) const
+{
   fstream file(fileName.c_str(), fstream::out | fstream::binary);
-  
+
   if (file.fail()) {
     return;
   }
@@ -181,18 +255,18 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
   file << "DATASET POLYDATA\n";
 
   file << "POINTS " << outputData.nodes.size()
-                    << " " << TypeName() << "\n"; 
+    << " " << TypeName() << "\n";
   for (IndexType nodeIndex = 0; nodeIndex < outputData.nodes.size(); ++nodeIndex)
   {
     file << outputData.nodes[nodeIndex].pos.x << " "
-         << outputData.nodes[nodeIndex].pos.y << " "
-         << 0                                 << " ";
+      << outputData.nodes[nodeIndex].pos.y << " "
+      << 0 << " ";
   }
   file << "\n";
 
   file << "POLYGONS " << outputData.cells.size() << " "
-                      << outputData.cells.size() * (3 /*vertex count in a cell*/
-                          + 1 /*count of connectivity indicies*/) << "\n";
+    << outputData.cells.size() * (3 /*vertex count in a cell*/
+      + 1 /*count of connectivity indicies*/) << "\n";
 
   for (IndexType cellIndex = 0; cellIndex < outputData.cells.size(); ++cellIndex)
   {
@@ -211,10 +285,11 @@ void ContactVtkWriter<Space2, FunctionSpace>::Write(const std::string& fileName,
   {
     file << outputData.cellData[cellIndex].isCellBroken << std::endl;
   }
-/*  file << "SCALARS PLASTIC_DEFORMS float 1\n";
+
+  file << "SCALARS PLASTIC_DEFORMS float 1\n";
   file << "LOOKUP_TABLE default\n";
   for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
   {
-    file << outputData.cellData[cellIndex].plasticWork << std::endl;
-  }*/
+    file << outputData.cellData[cellIndex].plasticDeforms << std::endl;
+  }
 }
