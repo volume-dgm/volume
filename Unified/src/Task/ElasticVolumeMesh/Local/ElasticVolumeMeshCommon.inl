@@ -349,7 +349,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::Initialize(bool allowMovemen
     isCellBroken.resize(volumeMesh.cells.size());
   }
 
-  if (allowPlasticity && allowContinuousDestruction)
+  if (allowPlasticity || allowContinuousDestruction)
   {
     plasticDeforms.resize(volumeMesh.cells.size());
   }
@@ -552,7 +552,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
     if (volumeMesh.isCellAvailable[cellIndex] && (
       volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || 
       volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
-      plasticDeforms[cellIndex] > erosion.maxPlasticDeformation))
+      (allowPlasticity && plasticDeforms[cellIndex] > erosion.maxPlasticDeformation)))
     {
       volumeMesh.cellSolutions[cellIndex].SetToZero();
 

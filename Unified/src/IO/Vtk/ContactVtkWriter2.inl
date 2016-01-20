@@ -215,11 +215,11 @@ typename ContactVtkWriter<Space2, FunctionSpace>::OutputData
   {
     for (IndexType cellIndex = 0; cellIndex < mesh->volumeMesh.cells.size(); ++cellIndex)
     {
-      if (mesh->isCellBroken[cellIndex] && mesh->volumeMesh.isCellAvailable[cellIndex])
+      if (mesh->volumeMesh.isCellAvailable[cellIndex])
       {
         typename OutputData::CellData data;
-        data.isCellBroken = 1;
-        data.plasticDeforms = mesh->plasticDeforms[cellIndex];
+        data.isCellBroken = mesh->isCellBroken[cellIndex] ? 1 : 0;
+        data.plasticDeforms = mesh->plasticDeforms.size() ? mesh->plasticDeforms[cellIndex] : 0;
         outputData.cells.push_back(mesh->volumeMesh.cells[cellIndex]);
         outputData.cellData.push_back(data);
       }
