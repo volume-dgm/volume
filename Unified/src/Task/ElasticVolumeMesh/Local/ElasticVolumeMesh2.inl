@@ -276,6 +276,8 @@ void ElasticVolumeMesh<Space2, FunctionSpace>::FindDestructions(EdgePairIndices*
         EdgeLocationPair contactEdgesLocation = volumeMesh.BuildEdgeLocation(contactEdges[offset + contactEdgeIndex]);
         bool isCurrentContactBroken = false;
 
+        if ((*isContactBroken)[offset + contactEdgeIndex]) continue;
+
         for (IndexType edgeIndex = 0; edgeIndex < 2; ++edgeIndex)
         {
           IndexType cellIndex = contactEdgesLocation.edges[edgeIndex].cellIndex;
@@ -320,8 +322,7 @@ void ElasticVolumeMesh<Space2, FunctionSpace>::FindDestructions(EdgePairIndices*
             mainStresses[1] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) - maxTangentStress;
 
             Vector2 mainNormals[2];
-            bool    normalsUsed[2];
-            std::fill_n(normalsUsed, 2, false);
+            bool    normalsUsed[2] = { false };
 
             for (IndexType stressIndex = 0; stressIndex < 2; ++stressIndex)
             {

@@ -96,6 +96,18 @@ void VolumeMesh<Space3, FunctionSpace, System>::BuildMatrices()
     }
   }
   printf("\nPrecomputations complete, volume integral matrix error is : %f\n", err);
+
+
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+  {
+    cellVolumeAverageIntegrals[functionIndex] = functionSpace->ComputeCellVolumeIntegral(functionIndex);
+    /* TODO
+    for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; faceNumber++)
+    {
+      faceAverages[faceNumber].surfaceIntegral[functionIndex] =
+        functionSpace->ComputeFaceFlux(faceNumber, functionIndex);
+    }*/
+  }
 }
 
 template<typename FunctionSpace, typename System>

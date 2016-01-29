@@ -126,6 +126,7 @@
     <None Include="..\..\src\IO\Segy\SegySeismo.inl" />
     <None Include="..\..\src\IO\Vtk\ContactVtkWriter2.inl" />
     <None Include="..\..\src\IO\Vtk\ContactVtkWriter3.inl" />
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriterBase.inl" />
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl" />
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystemCommon.inl" />
     <None Include="..\..\src\Task\ElasticVolumeMesh\Distributed\DistributedElasticVolumeMesh2.inl" />

@@ -593,7 +593,11 @@ protected:
             }
           }
         }
-        if (mesh->contactTypesCount == 0) mesh->contactTypesCount++;
+        if (mesh->contactTypesCount == 0)
+        {
+          mesh->contactTypesCount++;
+          mesh->contactFacesCount.resize(1);
+        }
         mesh->contactFacesCount[0] = glueContacts.size();
         mesh->contactFaces.insert(mesh->contactFaces.begin(), glueContacts.begin(), glueContacts.end());
       }

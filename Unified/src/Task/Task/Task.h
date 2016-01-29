@@ -37,8 +37,8 @@
 #include "../GeomMesh/MeshIO/Distributed/DistributedMeshIO.h"
 #include "../../Maths/Spaces.h"
 
-// #define PROFILING
-#define WRITE_ENERGY_AND_IMPULSE
+#define PROFILING
+// #define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
 class Task: public NotifyListener, public ReceiveListener
@@ -120,7 +120,16 @@ private:
   void SaveContacts(Overload<Space3>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex,
     bool dynamicBoundaryDetection)
   {
-    // TODO
+    if (dynamicBoundaryDetection)
+    {
+      contactsWriter.Write(fileName,
+        distributedElasticMeshes[domainNumber],
+        distributedElasticMeshes[domainNumber]->volumeMesh.system);
+    } else
+    {
+      // TODO
+      assert(0);
+    }
   }
 
   void SetTransitionInfo(IndexType domainNumber, DistributedMeshIO<Space>* mesh)

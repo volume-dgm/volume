@@ -11,8 +11,164 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::UnfoldMesh(Scalar minHeight, Inde
 
 template<typename FunctionSpace>
 void ElasticVolumeMesh<Space3, FunctionSpace>::
-  FindDestructions(FacePairIndices* contactEdges, IndexType* contactFacesCount, IndexType contactTypesCount,
+  FindDestructions(FacePairIndices* contactFaces, IndexType* contactFacesCount, IndexType contactTypesCount,
   std::vector<bool>* isContactBroken, std::vector<bool>* isCellBroken)
+{
+  if (allowContinuousDestruction)
+  {
+    HandleContinuousDestruction();
+    for (IndexType cellIndex = 0; cellIndex < volumeMesh.cellMediumParameters.size(); ++cellIndex)
+    {
+      (*isCellBroken)[cellIndex] = volumeMesh.cellMediumParameters[cellIndex].destroyed;
+    }
+  }
+
+  if (allowDiscreteDestruction)
+  {
+    IndexType offset = 0;
+    for (IndexType contactTypeIndex = 0; contactTypeIndex < contactTypesCount; ++contactTypeIndex)
+    {
+      Scalar maxLongitudinalStress;
+      Scalar maxShearStress;
+
+      IndexType dynamicBoundaryType = volumeMesh.system.GetContactDynamicBoundaryType(contactTypeIndex);
+      if (dynamicBoundaryType != IndexType(-1))
+      {
+        volumeMesh.system.GetContactCriticalInfo(contactTypeIndex, maxShearStress, maxLongitudinalStress);
+      }
+      else
+      {
+        continue;
+      }
+
+      struct DetectionApproaches
+      {
+        enum Types
+        {
+          Volumetric = 0x01, Surface = 0x02, Combined = 0x01 | 0x02
+        };
+      };
+
+      const IndexType detectionApproach =
+        DetectionApproaches::Volumetric;
+      // DetectionApproaches::Surface;
+      // DetectionApproaches::Combined;
+
+      for (IndexType contactFaceIndex = 0; contactFaceIndex < contactFacesCount[contactTypeIndex]; ++contactFaceIndex)
+      {
+        bool isCurrentContactBroken = false;
+        FaceLocationPair contactFacesLocation = volumeMesh.GetFaceLocation(contactFaces[offset + contactFaceIndex]);
+
+        for (IndexType faceIndex = 0; faceIndex < 2; ++faceIndex)
+        {
+          IndexType cellIndex = contactFacesLocation.faces[faceIndex].cellIndex;
+          IndexType faceNumber = contactFacesLocation.faces[faceIndex].faceNumber;
+
+          // average value in the cell was used, because of presence of spurious oscillations
+          Elastic elastic = GetAverageCellElastic(cellIndex);
+
+          Scalar principalStresses[Space3::Dimension];
+          Vector principalNormals[Space3::Dimension];
+          elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
+
+          IndexType maxStressIndex = IndexType(-1);
+
+          for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
+          {
+            /* only extension */
+            if (principalStresses[stressIndex] > fabs(maxLongitudinalStress))
+            {
+              if (maxStressIndex == IndexType(-1) || principalStresses[stressIndex] > principalStresses[stressIndex])
+              {
+                maxStressIndex = stressIndex;
+              }
+            }
+          }
+
+          if (maxStressIndex == IndexType(-1)) continue;
+          const Vector& mainNormal = principalNormals[maxStressIndex];
+
+          // minimun cos of angle between normal to crack and edge tangent
+          Scalar maxSinOfAngle = 0;
+          IndexType bestFaceNumber = IndexType(-1);
+
+          for (IndexType face = 0; face < Space3::FacesPerCell; face++)
+          {
+            Vector faceNormal = volumeMesh.GetFaceExternalNormal(cellIndex, face).GetNorm();
+
+            if (maxSinOfAngle < fabs(mainNormal * faceNormal))
+            {
+              maxSinOfAngle = fabs(mainNormal * faceNormal);
+              bestFaceNumber = face;
+            }
+          }
+
+          if (bestFaceNumber == faceNumber)
+          {
+            isCurrentContactBroken = true;
+            break;
+          }
+        }
+
+        if (isCurrentContactBroken && !(*isContactBroken)[offset + contactFaceIndex])
+        {
+          (*isContactBroken)[offset + contactFaceIndex] = true;
+          for (IndexType faceIndex = 0; faceIndex < 2; ++faceIndex)
+          {
+            IndexType cellIndex = contactFacesLocation.faces[faceIndex].cellIndex;
+            IndexType faceNumber = contactFacesLocation.faces[faceIndex].faceNumber;
+            if (volumeMesh.cellMediumParameters[cellIndex].destroyed) continue;
+
+            // if this cell is deleted due to erosion
+            if (!volumeMesh.isCellAvailable[cellIndex]) continue;
+
+            IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber);
+            IndexType correspondingEdgeNumber = volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber);
+            if (correspondingCellIndex == IndexType(-1) ||
+              correspondingEdgeNumber == IndexType(-1) ||
+              volumeMesh.cellMediumParameters[correspondingCellIndex].destroyed) continue;
+
+            // check if it is last non-destructed edge for this cell
+            IndexType incidentCellsCount = 0;
+            for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+            {
+              if (volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber) != IndexType(-1) &&
+                volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber) != IndexType(-1))
+              {
+                incidentCellsCount++;
+              }
+            }
+
+            if (incidentCellsCount == 1)
+            {
+              DestroyCellMaterial(cellIndex, Scalar(0.01)); // TODO
+              (*isCellBroken)[cellIndex] = true;
+              continue;
+            }
+
+            if (volumeMesh.isCellAvailable[cellIndex])
+            {
+              //  volumeMesh.AddToAABBTree(cellIndex);
+            }
+
+            if (volumeMesh.isCellAvailable[correspondingCellIndex])
+            {
+              //  volumeMesh.AddToAABBTree(correspondingCellIndex);
+            }
+
+            DestroyFace(cellIndex, faceNumber, dynamicBoundaryType);
+          }
+        }
+      }
+      offset += contactFacesCount[contactTypeIndex];
+    }
+  }
+
+  HandleMaterialErosion();
+}
+
+template<typename FunctionSpace>
+void ElasticVolumeMesh<Space3, FunctionSpace>::HandleContinuousDestruction()
 {
 }
 

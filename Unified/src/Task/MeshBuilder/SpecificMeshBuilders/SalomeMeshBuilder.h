@@ -39,7 +39,7 @@ public:
   {
   }
 
-  virtual void BuildAdditionalContacts(MeshIO<Space>* const)
+  virtual void BuildAdditionalContacts(MeshIO<Space>* const mesh)
   {
   }
 

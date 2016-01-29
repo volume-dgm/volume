@@ -42,6 +42,20 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
       return *this;
     }
 
+    ValueTypeCommon& operator+=(const ValueTypeCommon& other)
+    {
+      for (IndexType i = 0; i < ElasticSystemBase<Space>::dimsCount; ++i)
+        values[i] += other[i];
+      return *this;
+    }
+
+    ValueTypeCommon& operator/=(Scalar value)
+    {
+      for (IndexType i = 0; i < ElasticSystemBase<Space>::dimsCount; ++i)
+        values[i] /= value;
+      return *this;
+    }
+
     void SetZeroValues();
     Vector GetVelocity() const;
     void SetVelocity(const Vector& velocity);

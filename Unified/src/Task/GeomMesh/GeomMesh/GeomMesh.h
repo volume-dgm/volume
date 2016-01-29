@@ -38,6 +38,8 @@ struct GeomMesh<Space2>: public GeomMeshCommon<Space2>
   void GetGhostCellVertices(IndexType cellIndex, IndexType boundaryEdgeNumber, Vector* ghostCellVertices) const;
   Vector GetEdgeExternalNormal(IndexType cellIndex, IndexType edgeNumber) const;
 
+  void GetCellFaceNodes(IndexType cellIndex, IndexType faceNumber, IndexType* faceNodes) const; // it`s for convenience
+
   bool             FindCommonEdge(IndexType srcCellIndex, IndexType dstCellIndex, IndexType& srcEdgeNumber, IndexType& dstEdgeNumber);
   IndexType        GetEdgeNumber(IndexType cellIndex, IndexType nodeIndex0, IndexType nodeIndex1) const;
   EdgeLocationPair BuildEdgeLocation(IndexType nodeIndex1, IndexType nodeIndex2);
@@ -100,7 +102,7 @@ public:
   IndexType GetCellIndex(IndexType node0, IndexType node1, IndexType node2, IndexType node3) const;
 
   IndexType GetFaceIndex(IndexType node0, IndexType node1, IndexType node2) const;
-  IndexType GetFaceIndex(IndexType nodeIndices[Space::NodesPerFace]) const;
+  IndexType GetFaceIndex(const IndexType nodeIndices[Space::NodesPerFace]) const;
 
   Face*       GetFace(IndexType index);
   const Face* GetFace(IndexType index) const;
@@ -147,10 +149,11 @@ public:
   void BuildContactsInfo(FacePairIndices* contactFaces, IndexType* contactFacesCount, IndexType contactTypesCount);
 
   FaceLocationPair GetFaceLocation(IndexType nodeIndex0, IndexType nodeIndex1, IndexType nodeIndex2) const;
-  FaceLocationPair GetFaceLocation(IndexType nodeIndices[Space::NodesPerFace]) const;
+  FaceLocationPair GetFaceLocation(const IndexType nodeIndices[Space::NodesPerFace]) const;
+  FaceLocationPair GetFaceLocation(const FacePairIndices& contactFacePairIndices) const;
 
   IndexType GetFaceNumber(IndexType cellIndex, IndexType nodeIndex0, IndexType nodeIndex1, IndexType nodeIndex2) const;
-  IndexType GetFaceNumber(IndexType cellIndex, IndexType faceNodeIndices[Space::NodesPerFace]) const;
+  IndexType GetFaceNumber(IndexType cellIndex, const IndexType faceNodeIndices[Space::NodesPerFace]) const;
 
   Vector GetFaceExternalNormal(IndexType cellIndex, IndexType faceNumber) const;
   Vector GetFaceExternalNormal(Vector* faceGlobalVertices) const;

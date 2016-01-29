@@ -280,6 +280,13 @@ struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
     return function.Differentiate(derivativeDegrees);
   }
 
+
+  Scalar ComputeCellVolumeIntegral(IndexType functionIndex)
+  {
+    Polynomial<Scalar, IndexType, 3> function = this->GetBasisPolynomial(functionIndex);
+    return function.ComputeSubspaceIntegral(3);
+  }
+
   Scalar ComputeCellVolumeIntegral(IndexType functionIndex0, IndexType functionIndex1) // <Ô1, Ô2>
   {
     Polynomial<Scalar, IndexType, 3> function0 = this->GetBasisPolynomial(functionIndex0);

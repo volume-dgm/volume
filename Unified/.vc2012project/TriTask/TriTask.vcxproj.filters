@@ -481,5 +481,8 @@
     <None Include="..\..\src\IO\Segy\SegySeismo.inl">
       <Filter>3rdparty\Segy</Filter>
     </None>
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriterBase.inl">
+      <Filter>IO\Vtk</Filter>
+    </None>
   </ItemGroup>
 </Project>

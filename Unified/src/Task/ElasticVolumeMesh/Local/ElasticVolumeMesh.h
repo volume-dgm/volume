@@ -264,6 +264,8 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   typedef typename VolumeMeshType::Cell                                    Cell;
   typedef typename VolumeMeshType::CellSolution                            CellSolution;
   typedef typename ElasticSpaceType::Elastic                               Elastic;
+  typedef typename VolumeMeshType::FaceLocation                            FaceLocation;
+  typedef typename VolumeMeshType::FaceLocationPair                        FaceLocationPair;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::volumeMesh;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::InterpolateElastic;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::tensionDimensionlessMult;
@@ -290,6 +292,7 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   void FindDestructions(FacePairIndices* contactEdges, IndexType* contactFacesCount, IndexType contactTypesCount,
     std::vector<bool>* isContactBroken, std::vector<bool>* isCellBroken);
 
+  void HandleContinuousDestruction();
 
   void DestroyFace(IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType)
   {

@@ -2361,7 +2361,7 @@ Space3::IndexType GeomMesh<Space3>::
 }
 
 Space3::IndexType GeomMesh<Space3>::
-  GetFaceIndex(IndexType nodeIndices[Space::NodesPerFace]) const
+  GetFaceIndex(const IndexType nodeIndices[Space::NodesPerFace]) const
 {
   // node indices have to be ordered
   IndexType orderedIndices[Space::NodesPerFace];
@@ -2773,7 +2773,7 @@ bool GeomMesh<Space3>::FindCommonFace(IndexType srcCellIndex, IndexType dstCellI
 }
 
 Space3::IndexType
-GeomMesh<Space3>::GetFaceNumber(IndexType cellIndex, IndexType faceNodeIndices[Space::NodesPerFace]) const
+GeomMesh<Space3>::GetFaceNumber(IndexType cellIndex, const IndexType faceNodeIndices[Space::NodesPerFace]) const
 {
   IndexType orderedIndices[Space::NodesPerFace];
   std::copy(faceNodeIndices, faceNodeIndices + Space::NodesPerFace, orderedIndices);
@@ -2815,7 +2815,7 @@ GeomMesh<Space3>::FaceLocationPair GeomMesh<Space3>::GetFaceLocation(IndexType n
   return GetFaceLocation(nodeIndices);
 }
 
-GeomMesh<Space3>::FaceLocationPair GeomMesh<Space3>::GetFaceLocation(IndexType nodeIndices[Space::NodesPerFace]) const
+GeomMesh<Space3>::FaceLocationPair GeomMesh<Space3>::GetFaceLocation(const IndexType nodeIndices[Space::NodesPerFace]) const
 {
   FaceLocationPair faceLocationPair;
 
@@ -3128,4 +3128,30 @@ void GeomMesh<Space3>::GetGhostCellVertices(IndexType cellIndex, IndexType bound
     faceNormal * (faceNormal * (points[mirroringNodeNumber] - points[boundaryFaceNumber])) * Scalar(2.0);
 
   std::swap(ghostCellVertices[0], ghostCellVertices[1]);
+}
+
+GeomMesh<Space3>::FaceLocationPair GeomMesh<Space3>::GetFaceLocation(const FacePairIndices& facePairIndices) const
+{  
+  FaceLocationPair faceLocationPair;
+  IndexType facesFoundCount = 0;
+
+  for (IndexType facePairIndex = 0; facePairIndex < 2; ++facePairIndex)
+  {
+    FaceLocationPair facesLocation = GetFaceLocation(facePairIndices.faces[facePairIndex].nodeIndices);
+
+    for (IndexType faceIndex = 0; faceIndex < 2; ++faceIndex)
+    {
+      if (!facesLocation.faces[faceIndex].IsNull())
+      {
+        bool found = false;
+        for (IndexType facesFoundIndex = 0; facesFoundIndex < facesFoundCount; ++facesFoundIndex)
+        {
+          if (faceLocationPair.faces[facesFoundIndex] == facesLocation.faces[faceIndex]) found = true;
+        }
+        if (!found) faceLocationPair.faces[facesFoundCount++] = facesLocation.faces[faceIndex];
+      }
+    }
+  }
+  assert(facesFoundCount == 2);
+  return faceLocationPair;
 }

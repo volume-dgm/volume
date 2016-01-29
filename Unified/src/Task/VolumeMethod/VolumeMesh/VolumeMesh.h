@@ -106,6 +106,7 @@ public:
   using GeomMesh<Space>::GetCorrespondingCellIndex;
   using GeomMesh<Space>::GetCorrespondingFaceNumber;
   using GeomMesh<Space>::GetInteractionType;
+  using GeomMesh<Space>::GetCellFaceNodes;
   using GeomMesh<Space>::AddToAABBTree;
   using GeomMesh<Space>::GetCellAABB;
   using GeomMesh<Space>::GetVolume;
