@@ -413,6 +413,9 @@
     <ClInclude Include="..\..\src\IO\Segy\SegySeismo.h">
       <Filter>3rdparty\Segy</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\IO\Vtk\CellInfoVtkWriter.h">
+      <Filter>IO\Vtk</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl">
@@ -472,16 +475,13 @@
     <None Include="..\..\src\Task\GeomMesh\GeomMesh\GeomMeshBase.inl">
       <Filter>GeomMesh\GeomMesh</Filter>
     </None>
-    <None Include="..\..\src\IO\Vtk\ContactVtkWriter2.inl">
-      <Filter>IO\Vtk</Filter>
-    </None>
-    <None Include="..\..\src\IO\Vtk\ContactVtkWriter3.inl">
-      <Filter>IO\Vtk</Filter>
-    </None>
     <None Include="..\..\src\IO\Segy\SegySeismo.inl">
       <Filter>3rdparty\Segy</Filter>
     </None>
-    <None Include="..\..\src\IO\Vtk\ContactVtkWriterBase.inl">
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriter.inl">
+      <Filter>IO\Vtk</Filter>
+    </None>
+    <None Include="..\..\src\IO\Vtk\CellInfoVtkWriter.inl">
       <Filter>IO\Vtk</Filter>
     </None>
   </ItemGroup>

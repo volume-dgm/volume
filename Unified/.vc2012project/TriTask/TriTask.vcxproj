@@ -40,6 +40,7 @@
     <ClInclude Include="..\..\src\DifferentialSolvers\Solvers\TrapezoidSolver.h" />
     <ClInclude Include="..\..\src\IO\Segy\SegySeismo.h" />
     <ClInclude Include="..\..\src\IO\Vtk\BasicVtkWriter.h" />
+    <ClInclude Include="..\..\src\IO\Vtk\CellInfoVtkWriter.h" />
     <ClInclude Include="..\..\src\IO\Vtk\ContactVtkWriter.h" />
     <ClInclude Include="..\..\src\IO\Vtk\MeshVtkWriter.h" />
     <ClInclude Include="..\..\src\IO\Vtk\SnapshotVtkWriter.h" />
@@ -124,9 +125,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\IO\Segy\SegySeismo.inl" />
-    <None Include="..\..\src\IO\Vtk\ContactVtkWriter2.inl" />
-    <None Include="..\..\src\IO\Vtk\ContactVtkWriter3.inl" />
-    <None Include="..\..\src\IO\Vtk\ContactVtkWriterBase.inl" />
+    <None Include="..\..\src\IO\Vtk\CellInfoVtkWriter.inl" />
+    <None Include="..\..\src\IO\Vtk\ContactVtkWriter.inl" />
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl" />
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystemCommon.inl" />
     <None Include="..\..\src\Task\ElasticVolumeMesh\Distributed\DistributedElasticVolumeMesh2.inl" />

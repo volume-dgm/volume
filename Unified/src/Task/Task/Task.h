@@ -28,6 +28,7 @@
 #include "../../IO/Vtk/SnapshotVtkWriter.h"
 #include "../../IO/Vtk/MeshVtkWriter.h"
 #include "../../IO/Vtk/ContactVtkWriter.h"
+#include "../../IO/Vtk/CellInfoVtkWriter.h"
 
 #include "../../DifferentialSolvers/SolversFactory.h"
 
@@ -36,6 +37,7 @@
 #include "SettingsParser/SettingsParser.h"
 #include "../GeomMesh/MeshIO/Distributed/DistributedMeshIO.h"
 #include "../../Maths/Spaces.h"
+
 
 #define PROFILING
 // #define WRITE_ENERGY_AND_IMPULSE
@@ -85,53 +87,7 @@ protected:
 private:
   void SaveProfilingData(const std::string& info, double begin, double end); 
   void ComputePacketsToReceiveCount();
-
-  void SaveContacts(const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex, bool dynamicBoundaryDetection)
-  {
-    SaveContacts(Overload<Space>(), fileName, domainNumber, snapshotIndex, dynamicBoundaryDetection);
-  }
-
-  void SaveContacts(Overload<Space2>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex, bool dynamicBoundaryDetection)
-  {
-    if (dynamicBoundaryDetection)
-    {
-      contactsWriter.Write(fileName,
-        distributedElasticMeshes[domainNumber],
-        distributedElasticMeshes[domainNumber]->volumeMesh.system);
-    }
-    else
-    contactsWriter.Write(fileName, 
-      distributedElasticMeshes[domainNumber]->volumeMesh.nodes, 
-      distributedElasticMeshes[domainNumber]->volumeMesh.cells,
-      distributedElasticMeshes[domainNumber]->isCellBroken,
-      distributedElasticMeshes[domainNumber]->plasticDeforms,
-      settings.solver.velocityDimensionlessMult,
-      meshes[domainNumber]->contactEdges,  meshes[domainNumber]->contactEdgesCount,  
-      meshes[domainNumber]->contactTypesCount, 
-      isContactBroken[domainNumber],
-      meshes[domainNumber]->boundaryEdges, meshes[domainNumber]->boundaryEdgesCount, 
-      meshes[domainNumber]->boundaryTypesCount,
-      distributedElasticMeshes[domainNumber]->volumeMesh.system, 
-      settings.snapshots[snapshotIndex].contacts.drawContacts, 
-      settings.snapshots[snapshotIndex].contacts.drawRegularGlueContacts, 
-      settings.solver.allowDiscreteDestruction || settings.solver.allowContinuousDestruction);
-  }
-
-  void SaveContacts(Overload<Space3>, const std::string& fileName, IndexType domainNumber, IndexType snapshotIndex,
-    bool dynamicBoundaryDetection)
-  {
-    if (dynamicBoundaryDetection)
-    {
-      contactsWriter.Write(fileName,
-        distributedElasticMeshes[domainNumber],
-        distributedElasticMeshes[domainNumber]->volumeMesh.system);
-    } else
-    {
-      // TODO
-      assert(0);
-    }
-  }
-
+ 
   void SetTransitionInfo(IndexType domainNumber, DistributedMeshIO<Space>* mesh)
   {
     distributedElasticMeshes[domainNumber]->SetTransitionInfo(mesh->transitionInfos);
@@ -393,6 +349,7 @@ protected:
   MeshVtkWriter< Space, CharCellInfo >      meshWriter;
 
   ContactVtkWriter<Space, FunctionSpace> contactsWriter;
+  CellInfoVtkWriter<Space, FunctionSpace> cellInfosWriter;
 };
 
 template<typename Space, unsigned int order>
@@ -897,8 +854,33 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
       ReplaceSubstring(contactsFilename, "<step>",    std::string(stepString));
       ReplaceSubstring(contactsFilename, "<domain>",  std::string(domainString));
       ReplaceSubstring(contactsFilename, "<time>",    std::string(timeString));
-      bool dynamicBoundaryDetection = settings.snapshots[snapshotIndex].contacts.dynamicBoundaryDetection;
-      SaveContacts(contactsFilename, domainNumber, snapshotIndex, dynamicBoundaryDetection);
+      contactsWriter.Write(contactsFilename,
+        distributedElasticMeshes[domainNumber], 
+        settings.snapshots[snapshotIndex].contacts.faceTypesToDraw, 
+        ContactVtkWriter<Space, FunctionSpace>::Contact);
+    }
+
+    if (settings.snapshots[snapshotIndex].boundaries.used)
+    {
+      std::string boundariesFilename = settings.snapshots[snapshotIndex].boundaries.fileName;
+      ReplaceSubstring(boundariesFilename, "<step>", std::string(stepString));
+      ReplaceSubstring(boundariesFilename, "<domain>", std::string(domainString));
+      ReplaceSubstring(boundariesFilename, "<time>", std::string(timeString));
+
+      contactsWriter.Write(boundariesFilename,
+        distributedElasticMeshes[domainNumber], 
+        settings.snapshots[snapshotIndex].boundaries.faceTypesToDraw,
+        ContactVtkWriter<Space, FunctionSpace>::Boundary);
+    }
+
+    if (settings.snapshots[snapshotIndex].cellInfos.used)
+    {
+      std::string cellInfosFilename = settings.snapshots[snapshotIndex].cellInfos.fileName;
+      ReplaceSubstring(cellInfosFilename, "<step>", std::string(stepString));
+      ReplaceSubstring(cellInfosFilename, "<domain>", std::string(domainString));
+      ReplaceSubstring(cellInfosFilename, "<time>", std::string(timeString));
+
+      cellInfosWriter.Write(cellInfosFilename, distributedElasticMeshes[domainNumber]);
     }
   }
 }
@@ -912,7 +894,7 @@ void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshot
 template<typename Space, unsigned int order>
 void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space2>)
 {
-  printf("This is debug processing code. Don't forget to turn it off for regular tasks.\n");
+  printf("This is debug processing code. Don't forget to turn it off for regular tasks.\n");con
 
   IniStateMaker<ElasticSpace> *dstStateMaker = stateMakers[0]; //state to match to
 

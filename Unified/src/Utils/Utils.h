@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include <string>
 #include <fstream>
 #include <limits>
@@ -43,6 +44,21 @@ std::vector<std::string> Split(const std::string &s, char delim)
   std::vector<std::string> elems;
   Split(s, delim, elems);
   return elems;
+}
+
+template<typename T>
+std::set<T> StringToSetOfInt(const std::string& s, char delim = ' ')
+{
+  std::set<T> res;
+
+  std::vector<std::string> v = Split(s, delim);
+  for (size_t i = 0; i < v.size(); ++i)
+  {
+    T x = (T)std::stoi(v[i]);
+    res.insert(x);
+  }
+
+  return res;
 }
 
 bool EndWith(const std::string& fullString, const std::string& ending)

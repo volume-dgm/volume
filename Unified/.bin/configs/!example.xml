@@ -93,8 +93,10 @@
       <Box    boxPoint1 = "-0.51 -0.51 -0.51" boxPoint2 = "0.51 0.51 0.51" />
       <Resolution resolution="128 128 128"/>
     </Data>
-    <!-- <Mesh     fileName="out/mesh[<domain>]<step>.vtk" /> -->
-    <!-- <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/> -->
+    <Mesh     fileName="out/mesh[<domain>]<step>.vtk" />
+    <Contacts fileName="out/contacts[<domain>]<step>.vtk" faceTypesToDraw="0 1 2 3" />
+    <Boundaries fileName="out/boundaries[<domain>]<step>.vtk" faceTypesToDraw="0"/>
+    <CellInfos fileName="out/cellinfo[<domain>]<step>.vtk" />
   </Snapshot>
 
   <!-- <Detectors 

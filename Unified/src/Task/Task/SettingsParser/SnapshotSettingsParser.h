@@ -69,18 +69,50 @@ struct SnapshotSettings
   struct Contacts
   {
     Contacts():
-      filename("out/<domain>_contacts<step>.vtk"),
-      used(true),
-      drawContacts(true),
-      drawRegularGlueContacts(true),
-      dynamicBoundaryDetection(false)
-    {}
+      filename("out/contacts[<domain>]<step>.vtk"),
+      used(true)
+    {
+      const int MaxContactCount = 100;
+      std::vector<IndexType> v(MaxContactCount);
+      for (int i = 0; i < MaxContactCount; ++i)
+      {
+        v[i] = i;
+      }
+      faceTypesToDraw.insert(v.begin(), v.end());
+    }
     std::string filename;
     bool used;
-    bool drawContacts;
-    bool drawRegularGlueContacts;
-    bool dynamicBoundaryDetection;
+    std::set<IndexType> faceTypesToDraw;
   } contacts;
+
+  struct Boundaries
+  {
+    Boundaries():
+      fileName("out/boundaries[<domain>]<step>.vtk"),
+      used(true)
+    {
+      const int MaxContactCount = 100;
+      std::vector<IndexType> v(MaxContactCount);
+      for (int i = 0; i < MaxContactCount; ++i)
+      {
+        v[i] = i;
+      }
+      faceTypesToDraw.insert(v.begin(), v.end());
+    }
+    std::string fileName;
+    bool used;
+    std::set<IndexType> faceTypesToDraw;
+  } boundaries;
+
+  struct CellInfos
+  {
+    CellInfos() :
+      fileName("out/cellinfo[<domain>]<step>.vtk"),
+      used(true)
+    {}
+    std::string fileName;
+    bool used;
+  } cellInfos;
 
   Scalar timePeriod;
   IndexType framePeriod;
@@ -190,9 +222,36 @@ void SnapshotSettings<Space>::Parse(TiXmlElement *snapshotElement)
   } else
   {
     ParseString(contactsElement, "fileName", &contacts.filename);
-    ParseBool(contactsElement, "drawContacts", &contacts.drawContacts);
-    ParseBool(contactsElement, "drawRegularGlueContacts", &contacts.drawRegularGlueContacts);
-    ParseBool(contactsElement, "dynamicBoundaryDetection", &contacts.dynamicBoundaryDetection);
+
+    std::string s;
+    if (ParseString(contactsElement, "faceTypesToDraw", &s) == TIXML_SUCCESS)
+    {
+      contacts.faceTypesToDraw = StringToSetOfInt<IndexType>(s);
+    }
+  }
+
+  TiXmlElement* boundariesElement = snapshotElement->FirstChildElement("Boundaries");
+  if (!boundariesElement)
+  {
+    boundaries.used = false;
+  } else
+  {
+    ParseString(boundariesElement, "fileName", &boundaries.fileName);
+
+    std::string s;
+    if (ParseString(boundariesElement, "faceTypesToDraw", &s) == TIXML_SUCCESS)
+    {
+      boundaries.faceTypesToDraw = StringToSetOfInt<IndexType>(s);
+    }
+  }
+
+  TiXmlElement* cellInfoElement = snapshotElement->FirstChildElement("CellInfos");
+  if (!cellInfoElement)
+  {
+    cellInfos.used = false;
+  } else
+  {
+    ParseString(cellInfoElement, "fileName", &cellInfos.fileName);
   }
 }
 

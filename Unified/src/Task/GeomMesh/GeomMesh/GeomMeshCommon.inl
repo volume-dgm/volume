@@ -265,12 +265,14 @@ void GeomMeshCommon<Space2>::GetCellEdgeNodes(const IndexType cellIndex, IndexTy
 template <>
 void GeomMeshCommon<Space3>::GetCellEdgeNodes(const IndexType* cellIncidentNodes, IndexType edgeNumber, IndexType* edgeNodes) const
 {
+  assert(0);
   // TODO
 }
 
 template <>
 void GeomMeshCommon<Space3>::GetCellEdgeNodes(const IndexType cellIndex, IndexType edgeNumber, IndexType* edgeNodes) const
 {
+  assert(0);
   // TODO
 }
 

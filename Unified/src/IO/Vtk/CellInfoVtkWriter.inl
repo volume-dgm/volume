@@ -1,17 +1,15 @@
 template <typename Space, typename FunctionSpace>
-void ContactVtkWriterBase<Space, FunctionSpace>::Write(const std::string& fileName,
-  ElasticVolumeMesh<Space, FunctionSpace>* mesh,
-  const ElasticSystem<Space>& system)
+void CellInfoVtkWriter<Space, FunctionSpace>::Write(const std::string& fileName,
+  ElasticVolumeMesh<Space, FunctionSpace>* mesh) const
 {
-  OutputData outputData = ConstructOutputData(mesh, system);
+  OutputData outputData = ConstructOutputData(mesh);
   SaveToFile(fileName, outputData);
 }
 
 template<typename Space, typename FunctionSpace>
-typename ContactVtkWriterBase<Space, FunctionSpace>::OutputData
-ContactVtkWriterBase<Space, FunctionSpace>::ConstructOutputData(
-  ElasticVolumeMesh<Space, FunctionSpace>* mesh,
-  const ElasticSystem<Space>& system)
+typename CellInfoVtkWriter<Space, FunctionSpace>::OutputData
+CellInfoVtkWriter<Space, FunctionSpace>::ConstructOutputData(
+  ElasticVolumeMesh<Space, FunctionSpace>* mesh) const
 {
   OutputData outputData;
 
@@ -19,36 +17,6 @@ ContactVtkWriterBase<Space, FunctionSpace>::ConstructOutputData(
   {
     Node node(mesh->volumeMesh.nodes[nodeIndex].pos * mesh->velocityDimensionlessMult);
     outputData.nodes.push_back(node);
-  }
-
-  // boundaries
-  for (IndexType cellIndex = 0; cellIndex < mesh->volumeMesh.cells.size(); ++cellIndex)
-  {
-    if (mesh->volumeMesh.isCellAvailable[cellIndex])
-    {
-      for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
-      {
-        IndexType correspondingCellIndex = mesh->volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber);
-        IndexType correspondingFaceNumber = mesh->volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber);
-        IndexType interactionType = mesh->volumeMesh.GetInteractionType(cellIndex, faceNumber);
-
-        if (correspondingCellIndex == IndexType(-1) && correspondingFaceNumber == IndexType(-1) &&
-          system.GetBoundaryType(interactionType) != BoundaryConditions::Absorb)
-        {
-          IndexType faceNodeNumbers[Space::NodesPerFace];
-          mesh->volumeMesh.GetCellFaceNodes(cellIndex, faceNumber, faceNodeNumbers);
-
-          Cell cell;
-          for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
-          {
-            cell.incidentNodes[nodeNumber] = faceNodeNumbers[nodeNumber % Space::NodesPerFace];
-          }
-
-          outputData.cells.push_back(cell);
-          outputData.cellData.push_back(typename OutputData::CellData(0));
-        }
-      }
-    }
   }
 
   if (mesh->isCellBroken.size() == mesh->volumeMesh.cells.size())
@@ -70,7 +38,7 @@ ContactVtkWriterBase<Space, FunctionSpace>::ConstructOutputData(
 }
 
 template <typename Space, typename FunctionSpace>
-void ContactVtkWriterBase<Space, FunctionSpace>::SaveToFile(const std::string& fileName, const OutputData& outputData) const
+void CellInfoVtkWriter<Space, FunctionSpace>::SaveToFile(const std::string& fileName, const OutputData& outputData) const
 {
   std::fstream file(fileName.c_str(), std::fstream::out | std::fstream::binary);
 
@@ -118,7 +86,8 @@ void ContactVtkWriterBase<Space, FunctionSpace>::SaveToFile(const std::string& f
     if (Space::NodesPerCell == 4)
     {
       file << 10; // tetrahedron
-    } else
+    }
+    else
     if (Space::NodesPerCell == 3)
     {
       file << 5; // triangle
@@ -126,20 +95,20 @@ void ContactVtkWriterBase<Space, FunctionSpace>::SaveToFile(const std::string& f
     file << std::endl;
   }
 
-  file << "CELL_DATA " << outputData.cellData.size() << "\n";
-  file << "SCALARS ISBROKEN INT 1\n";
-  file << "LOOKUP_TABLE default\n";
-
-  for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
-  {
-    file << outputData.cellData[cellIndex].isCellBroken << std::endl;
-  }
+  file << "CELL_DATA " << outputData.cells.size() << "\n";
 
   file << "SCALARS PLASTIC_DEFORMS float 1\n";
   file << "LOOKUP_TABLE default\n";
   for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
   {
     file << outputData.cellData[cellIndex].plasticDeforms << std::endl;
+  }
+
+  file << "SCALARS IS_BROKEN int 1\n";
+  file << "LOOKUP_TABLE default\n";
+  for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
+  {
+    file << outputData.cellData[cellIndex].isCellBroken << std::endl;
   }
 
   file.close();
