@@ -19,12 +19,14 @@
       <PerSubmesh> <!-- every cell has an index assigned(index is called submesh index), params are assigned for every submesh -->
         <!-- fileName - name of params file. [optional, defValue = Mesh/filename + ".params"] -->
 
-        <Submesh index="0" pSpeed = "2.0" sSpeed = "1.0" rho = "1.0" internalContactType = "0"/> <!-- Description of one submesh params. Must contain one such section for every submesh used. [optional] -->
+        <Submesh index="0" pSpeed = "2.0" sSpeed = "1.0" rho = "1.0" internalContactType = "0"
+          k= "2.2e+5" alpha="0" brittle="false" maxPlasticDeform="0.006"/> <!-- Description of one submesh params. Must contain one such section for every submesh used. [optional] -->
         <!-- index - number of submesh index properties are assigned to. [required]
         pSpeed, sSpeed, rho - p-wave speeds, s-wave speeds [optional, defValue = values calculated from lambda/mju/rho]
         lambda, mju, rho - Lame params [optional, defValue = values calculated from pSpeed, sSpeed]
         internalContactType - index of internal contacts interactionType. [optional, defValue = "0"]
         -->        
+        <Submesh index="1" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> 
       </PerSubmesh>  
 
       <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> --> <!-- lame params are assigned for every cell and stored in .params file. [optional]-->
@@ -67,6 +69,7 @@
             maxTime -
             -->
           <!-- <RotatingFunctor pos= "-1 -1 -1" angularVelocity= "1.0" linearVelocity= "3.14" linearTime="1.0"/> -->
+          <!-- <HydraulicPressureFunctor fluidRho="1024" g="0 -9.81" fluidSurfacePoint="200 1150"/> -->
         </ExternalForce>
       </Free>
       <Absorb interactionType= "1" /> <!-- Absorb condition -->
@@ -83,6 +86,7 @@
           interactionType - index of contactType that will be set to "Glue". [required]
           dynamicBoundaryInteractionType - index of boundary type that will be assigned if this contact breaks [optional, defValue = "-1"]
           maxShearStress, maxLongitudinalStress - is shear/longitudinal stress excess these values contact will break [optional, devValue = "max() * 0.5"] -->
+      <!-- <Friction interactionType= "2" frictionCoeff="0.5" dynamicBoundaryInteractionType= "0"/> -->
     </Contacts>
   </Mesh>
 
@@ -122,7 +126,11 @@
     <PointSources>
       <!-- <ForceSource point="-50 0" peakFrequency= "0.2" acceleration="-1 0" latency="0.0"/> -->
       <!-- <MonopoleSource point="0 0" peakFrequency= "10" pressure="30" latency="0"/> -->
-    </PointSources>  
+    </PointSources>
+
+    <SourceTerms>
+      <!-- <ConstantAcceleration acceleration="0 -9.81"/> -->
+    </SourceTerms>  
   </Task>
 
 
@@ -141,7 +149,9 @@
         allowDiscreteDestruction="false" 
         allowContinuousDestruction="false" 
         tensionErrorMult="1e+2" velocityErrorMult="1e+2" positionErrorMult="1e-0"
-        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
+    <Erosion cellAspectRatio="6" minHeightRatio="0.0" maxPlasticDeformation="0.1"/>
+  </Solver>
 
 
   <ResultCombiner> <!-- required by result combiner, optional otherwise -->
