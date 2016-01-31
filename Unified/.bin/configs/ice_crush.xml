@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Settings dimsCount = "3">
   <MeshBuilder>
-    <SalomeFile fileName= "salome/Salome_3dDoubleBox" />
+    <SalomeFile fileName= "salome/Salome_IceCrushMesh" />
     <Partition algorithm="METIS_PartMeshNodal" /> 
     <!-- <OutFile fileName= "temp_meshes/3d_double_box[<domain>]" /> -->
   </MeshBuilder>
@@ -10,44 +10,53 @@
     <Snapshots count="300000" />
   </ResultCombiner>
 
-  <Mesh fileName="meshes/3d_double_box[<domain>]" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.01">
+  <Mesh fileName="meshes/IceCrush[<domain>]" unfoldIterationsCount="0" minGridHeight="2e-5" moveMassCenter="false" collisionWidth= "0.001">
     <MediumParams>
       <PerSubmesh>
-        <Submesh index="0" pSpeed = "2.0" sSpeed = "1.0" rho = "1.0" k="0.5" maxPlasticDeform="0.0" internalContactType = "0"/> 
+        <Submesh index="0" E="5e+9" G="1.87e+9" rho= "920" k= "2.2e+5" alpha="0" brittle="false" internalContactType= "0" maxPlasticDeform="0.006"/> 
+        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "920" /> 
       </PerSubmesh>  
         <!-- <PerCell fileName = "meshes/strike[<domain>].params" /> -->
     </MediumParams>
 
     <Boundaries>
-      <Free interactionType= "0" /> <!-- x-faces -->
-      <Free interactionType= "1" /> <!-- y-faces -->
-      <Free interactionType= "2" /> <!-- z-faces -->
+      <Free interactionType= "0"  dynamicContactInteractionType= "1" /> <!-- x-faces -->
+
+      <Fixed interactionType= "1"> <!-- Fixed velocity -->
+        <ExternalVelocity> <!-- specifies external velocity on fixed boundary. [optional]-->
+          <ConstFunctor value= "0 0.0 1.0"/> <!-- constant vector functor -->
+        </ExternalVelocity>
+      </Fixed>
+
+      <Fixed interactionType= "2"> <!-- Fixed velocity -->
+        <ExternalVelocity> <!-- specifies external velocity on fixed boundary. [optional]-->
+          <ConstFunctor value= "0 0.0 -1.0"/> <!-- constant vector functor -->
+        </ExternalVelocity>
+      </Fixed>    
     </Boundaries>
 
     <Contacts>
-      <!-- <Glue interactionType= "0" dynamicBoundaryInteractionType= "1" maxShearStress="1.75e-2" maxLongitudinalStress="1e+30"/> -->
-      <Glue interactionType= "0" /> <!-- internal edges -->
-      <Glue interactionType= "1" /> <!-- middle contact -->
+      <Glue interactionType= "0" maxLongitudinalStress="1e+30" dynamicBoundaryInteractionType="0"/>
+      <Glide interactionType= "1" />
     </Contacts>
   </Mesh>
 
   <Snapshot>
-    <Period frames="10" />
-    <!-- <Period time="0.25e-1"/> -->
+    <Period time="1e-4" />
     <Data fileName = "out/velocitySnapshot[<domain>]<step>.vti"  writeVelocity="true">
-      <Box    boxPoint1 = "-0.51 -0.51 -0.51" boxPoint2 = "0.51 0.51 0.51" />
+      <Box    boxPoint1 = "-0.15 -0.15 -0.05" boxPoint2 = "0.15 0.15 0.35" />
       <Resolution resolution="128 128 128"/>
     </Data>
+    <Mesh     fileName="out/mesh[<domain>]<step>.vtk" />
     <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"
               dynamicBoundaryDetection="true"/>
-    <Mesh     fileName="out/mesh[<domain>]<step>.vtk" />
-    <Contacts fileName="out/contacts[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"/>
+
     <!-- <Detectors fileName="out/detectors[<domain>]<detector>.csv" /> -->
   </Snapshot>
   <Snapshot>
-    <Period frames="10" />
-    <Data fileName = "out/stressSnapshot[<domain>]<step>.vti"  writeTension="true">
-      <Box    boxPoint1 = "-0.51 -0.51 -0.51" boxPoint2 = "0.51 0.51 0.51" />
+    <Period time="1e-4" />
+    <Data fileName = "out/tensionSnapshot[<domain>]<step>.vti"  writeTension="true">
+      <Box    boxPoint1 = "-0.15 -0.15 -0.05" boxPoint2 = "0.15 0.15 0.35" />
       <Resolution resolution="128 128 128"/>
     </Data>
   </Snapshot>
@@ -56,12 +65,12 @@
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
   </Schedule>
 
-  <Task destinationTime = "0.5">
+  <Task destinationTime = "-1">
     <IniState>
       <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "5000 5000" velocity = "0.0 -1.0" /> -->
       <!-- <BoxState boxPoint1 = "-5000 0" boxPoint2 = "0 5000" velocity = "1.0 0.0" /> -->
-      <BoxState boxPoint1 = "-0.51 -0.51 -0.51" boxPoint2 = "0.51 0.51 0.0" velocity = " 0.0 1.0 0.0" />
-      <BoxState boxPoint1 = "-0.51 -0.51 0.0" boxPoint2 = "0.51 0.51 0.51" velocity = "0.0 -1.0 0.0" />
+      <BoxState boxPoint1 = "-0.151 -0.151 -0.5" boxPoint2 = "0.151 0.151 0.00607" velocity = "0.0 0.0 1.0" />
+      <BoxState boxPoint1 = "-0.151 -0.151 0.284" boxPoint2 = "0.151 0.151 0.35" velocity = "0.0 0.0 -1.0" />
 
       <!-- <BoxState boxPoint1= "-10.0 0.15" boxPoint2= "10.0 0.25" velocity="0.0 -0.1" /> -->
       <!-- <BerlageWave point= "-0.25 0.0" waveVector= "1 0" waveLength= "0.05" shear="false"/> -->
@@ -82,9 +91,9 @@
        integrator="Trapezoid"
    -->
 
-  <Solver polynomialsOrder="2" precision="double" integrator="DormandPrince"
-        tolerance="1e-3" maxScale="1e-2" maxTimeStep="1.5e-1" hierarchyLevelsCount="1" 
-        allowMovement="false" allowPlasticity="true" allowDiscreteDestruction="false" allowContinuousDestruction="true" 
+  <Solver polynomialsOrder="1" precision="double" integrator="DormandPrince"
+        tolerance="1e-3" maxScale="1e0" maxTimeStep="1e-7" hierarchyLevelsCount="1" 
+        allowMovement="true" allowPlasticity="false" allowDiscreteDestruction="false" allowContinuousDestruction="true" 
         tensionErrorMult="1e+2" velocityErrorMult="1e+2" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
 </Settings>

@@ -409,7 +409,7 @@ struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
     pows.pows[0] = 0;
     pows.pows[1] = 1;
     intToFace[1].AddTerm(pows, 1);
-
+    
     Polynomial<Scalar, IndexType, 2> intToRef[3];
 
     for (IndexType coordIndex = 0; coordIndex < 3; coordIndex++)
@@ -522,6 +522,30 @@ struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
     //if(fabs(res - integrationResult) > 1e-3) printf("flux poo");
     return integrationResult;
   }
+  Scalar ComputeFaceFlux(IndexType refFaceNumber, IndexType basisFunction)
+  {
+    Polynomial<Scalar, IndexType, 3> function = this->GetBasisPolynomial(basisFunction);
 
+    Polynomial<Scalar, IndexType, 2> faceToRef[3];
+    Cell<Space3>::GetFaceRefTransitionPolynomials(refFaceNumber, faceToRef);
+
+    Polynomial<Scalar, IndexType, 2> intToFace[2];
+    intToFace[0] = Polynomial<Scalar, IndexType, 2>("x");
+    intToFace[1] = Polynomial<Scalar, IndexType, 2>("y");
+
+    Polynomial<Scalar, IndexType, 2> intToRef[3];
+
+    for (IndexType coordIndex = 0; coordIndex < 3; coordIndex++)
+    {
+      intToRef[coordIndex] = faceToRef[coordIndex].Substitute(intToFace);
+    }
+
+    Polynomial<Scalar, IndexType, 2> intToFunc;
+
+    intToFunc = function.Substitute(intToRef);
+
+    Scalar integrationResult = (intToFunc).ComputeSubspaceIntegral(2);
+    return integrationResult;
+  }
 };
 
