@@ -364,4 +364,3 @@ struct Cell<Space3>
     assert(0);
   }
 };
-

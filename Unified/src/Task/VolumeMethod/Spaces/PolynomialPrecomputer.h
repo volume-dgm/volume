@@ -522,5 +522,6 @@ struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
     //if(fabs(res - integrationResult) > 1e-3) printf("flux poo");
     return integrationResult;
   }
+
 };
 
