@@ -61,7 +61,7 @@
       <Resolution resolution="400 400" />
       <!-- <RegularGrid origin = "0.0 0.0" spacing = "0.1 1.0" /> -->
     </Data>
-     <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" />
+     <!-- <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" /> -->
      <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" drawContacts="true" drawRegularGlueContacts="true"
         dynamicBoundaryDetection="true"/>
   </Snapshot>
@@ -111,7 +111,7 @@
   <Solver polynomialsOrder= "1" precision="double" integrator="RK4" 
         tolerance="1e-1" maxScale="1e-0" maxTimeStep="1e-5" hierarchyLevelsCount="1"
         allowMovement="true" allowPlasticity="true" 
-        allowContinuousDestruction="true" allowDiscreteDestruction="true"
+        allowContinuousDestruction="true" allowDiscreteDestruction="false"
         tensionErrorMult="1e-6" velocityErrorMult="1e-0" positionErrorMult="1e-5"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
         <Erosion cellAspectRatio="6" minHeightRatio="0.0" maxPlasticDeformation="0.1"/>
