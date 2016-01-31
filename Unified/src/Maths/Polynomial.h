@@ -1,6 +1,8 @@
 #pragma once
 #include <map>
 #include <assert.h>
+#include <string>
+#include <stdio.h>
 //#include <hash_map>
 //#include <unordered_map>
 
@@ -10,6 +12,13 @@ struct Polynomial
   typedef Polynomial<Scalar, IndexType, DimsCount> PolynomialType;
   struct Pows
   {
+    Pows()
+    {
+      for(IndexType powIndex = 0; powIndex < DimsCount; powIndex++)
+      {
+        pows[powIndex] = 0;
+      }
+    }
     bool operator <(const Pows& other) const
     {
       int diffIndex = 0;
@@ -63,6 +72,15 @@ struct Polynomial
     }
     AddTerm(zeroPows, value);
   }
+  //String parser. 
+  //Supports: "((x + y) * 10) - (z * 30.0)", "(x * y * z * 10) + 5", etc.
+  //Does not support: "x + y * 10", "-x", "x ^ 2"
+  //Basically just add braces to operators with different priorities
+  Polynomial(std::string polynomialString)
+  {
+    size_t currPos = 0;
+    *this = this->Parse(polynomialString, currPos);
+  }
 
   Polynomial &operator *=(Scalar mult)
   {
@@ -89,6 +107,13 @@ struct Polynomial
       terms[it->first] -= it->second;
     }
     return *this;
+  }
+
+  Polynomial operator +(const Polynomial &other) const
+  {
+    Polynomial res = *this;
+    res += other;
+    return res;
   }
 
   Polynomial operator *(const Polynomial &other) const
@@ -216,7 +241,7 @@ struct Polynomial
   }
 private:
 
-  Scalar Pow(Scalar a, Scalar b) const
+  Scalar Pow(const Scalar a, const Scalar b) const
   {
     if(fabs(b) < Scalar(1e-5)) return Scalar(1.0);
     if(fabs(a) < Scalar(1e-5)) return 0;
@@ -237,4 +262,155 @@ private:
 //  typedef stdext::hash_map<Pows, Scalar, PowsHasher> TermsMap;
 //  typedef std::unordered_map<Pows, Scalar, PowsHasher> TermsMap;
   TermsMap terms;
+private:
+  static Polynomial<Scalar, IndexType, DimsCount> Parse(std::string polynomialString, size_t &currPos)
+  {
+    struct State
+    {
+      enum Types
+      {
+        WaitingOperator,
+        WaitingOperand,
+      };
+    };
+    struct Operator
+    {
+      enum Types
+      {
+        Add,
+        Substract,
+        Mul,
+        None
+      };
+    };
+
+    /*struct ValueStack
+    {
+      struct Element
+      {
+        enum Type
+        {
+          Operand,
+          Operator
+        };
+        Type type;
+        union
+        {
+          Operator::Types operatorType;
+          Polynomial<Scalar, IndexType, DimsCount> operand;
+        };
+      };
+      std::vector<Element> elements;
+    };*/
+    char numericString[1024];
+
+    State::Types currState = State::WaitingOperand;
+    Operator::Types currOperator = Operator::None;
+
+    Polynomial<Scalar, IndexType, DimsCount> prevOperand;
+    Polynomial<Scalar, IndexType, DimsCount> currOperand;
+
+    std::map<char, Polynomial<Scalar, IndexType, DimsCount>::Pows > charTerms;
+    if(DimsCount > 0)
+      charTerms['x'].pows[0] = 1;
+    if(DimsCount > 1)
+      charTerms['y'].pows[1] = 1;
+    if(DimsCount > 2)
+      charTerms['z'].pows[2] = 1;
+
+    std::map<char, Operator::Types > charOperators;
+    charOperators['+'] = Operator::Add;
+    charOperators['*'] = Operator::Mul;
+    charOperators['-'] = Operator::Substract;
+
+    for(;currPos < polynomialString.length(); currPos++)
+    {
+      bool operandFound = 0;
+      bool operatorFound = 0;
+      int numberLen;
+      for(numberLen = 0; 
+        currPos + numberLen < polynomialString.length() && 
+        (
+          (polynomialString[currPos + numberLen] >= '0' && polynomialString[currPos + numberLen] <= '9') ||
+          polynomialString[currPos + numberLen] == ',' || polynomialString[currPos + numberLen] == '.'
+        );
+        numberLen++)
+      {
+        numericString[numberLen] = polynomialString[currPos + numberLen];
+      }
+
+      if(numberLen > 0)
+      {
+        numericString[numberLen] = 0;
+        float value;
+        sscanf_s(numericString, "%f", &value);
+        currOperand = Polynomial<Scalar, IndexType, DimsCount>(value);
+        currPos += numberLen;
+        operandFound = true;
+      }else
+      switch(polynomialString[currPos])
+      {
+        case ' ':
+        {
+          continue;
+        } break;
+        case ')':
+        {
+          currPos++;
+          return prevOperand;
+        }break;
+        case '(':
+        {
+          currPos++;
+          operandFound = true;
+          currOperand = Parse(polynomialString, currPos);
+        }break;
+        case '+':
+        case '-':
+        case '*':
+        {
+          currOperator = charOperators[polynomialString[currPos]];
+          operatorFound = true;
+        }break;
+        case 'x':
+        case 'y':
+        case 'z':
+        {
+          assert(currState == State::WaitingOperand);
+          currOperand = Polynomial(0);
+          currOperand.AddTerm(charTerms[polynomialString[currPos]], 1.0);
+          operandFound = true;
+        } break;
+      }
+      if(operandFound)
+      {
+        if(currOperator == Operator::None)
+        {
+          prevOperand = currOperand;
+        }else
+        {
+          switch(currOperator)
+          {
+            case Operator::Add:
+            {
+              prevOperand += currOperand;
+            }break;
+            case Operator::Substract:
+            {
+              prevOperand -= currOperand;
+            }break;
+            case Operator::Mul:
+            {
+              prevOperand = prevOperand * currOperand;
+            }break;
+          };
+        }
+      }else
+      if(!operatorFound)
+      {
+        assert(operatorFound);
+      }
+    }
+    return prevOperand;
+  }
 };

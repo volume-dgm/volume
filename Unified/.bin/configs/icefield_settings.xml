@@ -38,7 +38,7 @@
     </Boundaries>
 
     <Contacts>
-      <Glue interactionType= "0" dynamicBoundaryInteractionType= "0" maxLongitudinalStress="1.2e+6"/>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "0" maxLongitudinalStress="1.2e+6" />
       <Glue interactionType= "1"/>
       <Glide interactionType= "2" dynamicBoundaryInteractionType= "0" />
       <!-- <Friction interactionType= "2" frictionCoeff="0.5" dynamicBoundaryInteractionType= "0"/> -->
