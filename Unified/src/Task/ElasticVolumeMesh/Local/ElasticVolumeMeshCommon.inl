@@ -449,6 +449,26 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDamping
   return damping;
 }
 
+template<typename Space, typename FunctionSpace>
+bool ElasticVolumeMeshCommon<Space, FunctionSpace>::ProcessPlasticity(const Scalar k, Elastic& elastic, bool updateElastic = false)
+{
+  const Scalar pressure = elastic.GetPressure();
+
+  Tensor tension = elastic.GetTension();
+  tension += pressure;
+  Scalar ss = DoubleConvolution(tension, tension);
+
+  bool plasticMode = ss > 2 * Sqr(k);
+
+  if (plasticMode && updateElastic)
+  {
+    tension *= sqrt(2 * Sqr(k) / ss);
+    tension += -pressure;
+    elastic.SetTension(tension);
+  }
+  return plasticMode;
+}
+
 /*
 s:s < 2k^2 -- von Mises criterion;
 k = k0 - a * pressure, a > 0.
@@ -477,16 +497,7 @@ struct PlasticityCorrector
       const Scalar pressure = elastic.GetPressure();
       const Scalar k = k0 + a * pressure;
     
-      Tensor tension = elastic.GetTension();
-      tension += pressure;
-      Scalar ss = DoubleConvolution(tension, tension);
-
-      if (ss > 2 * Sqr(k))
-      {
-        tension *= sqrt(2 * Sqr(k) / ss);
-        tension += -pressure;
-        elastic.SetTension(tension);
-      }
+      mesh->ProcessPlasticity(k, elastic, true);
     }
     std::copy(elastic.values, elastic.values + mesh->dimsCount, values);
   }
@@ -519,11 +530,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
           const Scalar pressure = elastic.GetPressure();
           const Scalar k = k0 + a * pressure;
 
-          Tensor tension = elastic.GetTension();
-          tension += pressure;
-          Scalar ss = DoubleConvolution(tension, tension);
-
-          if (ss > 2 * Sqr(k))
+          if (ProcessPlasticity(k, elastic, false))
           {
             plasticDeformRate += GetDeformRate(cellIndex, volumeMesh.quadraturePoints[pointIndex]) *
                 volumeMesh.quadratureWeights[pointIndex] *

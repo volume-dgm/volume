@@ -112,6 +112,8 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   std::vector<bool> isCellBroken;
 
+  bool ProcessPlasticity(const Scalar k, Elastic& elastic, bool updateElastic = false);
+
 protected:
   void ComputeElasticMults()
   {
@@ -291,6 +293,9 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
 
   void FindDestructions(FacePairIndices* contactEdges, IndexType* contactFacesCount, IndexType contactTypesCount,
     std::vector<bool>* isContactBroken, std::vector<bool>* isCellBroken);
+
+
+  void FindDestructions(std::vector<bool>* isCellBroken);
 
   void HandleContinuousDestruction();
 

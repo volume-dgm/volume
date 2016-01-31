@@ -182,13 +182,9 @@ struct ContinuousDestructionCorrector
       const Scalar pressure = elastic.GetPressure();
       const Scalar k = k0 + a * pressure;
 
-      Tensor tension = elastic.GetTension();
-      tension += pressure; //pressure 
-      Scalar ss = DoubleConvolution(tension, tension);
-
-      if (ss > 2 * Sqr(k))
+      if (mesh->ProcessPlasticity(k, elastic, false))
       {
-        mesh->DestroyCellMaterial(cellIndex, Scalar(0.01));
+        mesh->DestroyCellMaterial(cellIndex, Scalar(0.1));
       }
 
       if (mesh->volumeMesh.cellMediumParameters[cellIndex].destroyed)
