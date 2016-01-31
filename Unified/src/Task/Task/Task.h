@@ -148,11 +148,13 @@ private:
   }
   void FindDestructions(Overload<Space3>, IndexType domainNumber)
   {
-    distributedElasticMeshes[domainNumber]->FindDestructions(meshes[domainNumber]->contactFaces.data(), 
+   /* distributedElasticMeshes[domainNumber]->FindDestructions(meshes[domainNumber]->contactFaces.data(), 
       meshes[domainNumber]->contactFacesCount.data(), 
       meshes[domainNumber]->contactTypesCount, 
       &isContactBroken[domainNumber],
-      &distributedElasticMeshes[domainNumber]->isCellBroken);
+      &distributedElasticMeshes[domainNumber]->isCellBroken);*/
+      
+    distributedElasticMeshes[domainNumber]->FindDestructions(&distributedElasticMeshes[domainNumber]->isCellBroken);
   }
 
   VectorFunctor<Space>* CreateBoundaryFunctor(std::vector<typename MeshSettings<Space>::BoundarySection::VectorFunctor> &functors)

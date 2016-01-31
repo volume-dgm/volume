@@ -498,7 +498,7 @@ typename System::ValueType VolumeMesh<Space2, FunctionSpace, System>::
       Scalar basisFunctionCoefficient = 
         cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
 
-      result.values[valueIndex] += basisFunctionCoefficient * edgeAverages[edgeNumber].surfaceIntegral[functionIndex]; 
+      result.values[valueIndex] += basisFunctionCoefficient * edgeAverages[edgeNumber].surfaceIntegral[functionIndex] / ::Cell<Space2>::GetEdgeRefLen(edgeNumber);
     }
   }
   return result;

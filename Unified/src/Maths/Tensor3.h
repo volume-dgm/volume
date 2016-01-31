@@ -111,9 +111,10 @@ public:
           for (int l = 0; l < 3; ++l)
             res.data[i][j] += s.data[k][l] * p.data[i][k] * p.data[j][l];
 
+    /*
     assert(res.data[0][1] == res.data[1][0] && 
            res.data[0][2] == res.data[2][0] && 
-           res.data[1][2] == res.data[2][1]);
+           res.data[1][2] == res.data[2][1]); */
 
     return Tensor3(res.data[0][0], res.data[0][1], res.data[0][2],
                                    res.data[1][1], res.data[1][2],

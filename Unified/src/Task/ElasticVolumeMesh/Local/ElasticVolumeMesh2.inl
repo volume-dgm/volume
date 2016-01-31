@@ -175,7 +175,7 @@ struct ContinuousDestructionCorrector
     bool brittle = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
     Elastic elastic = mesh->InterpolateElasticRef(cellIndex, refPoint);
 
-    if (brittle) 
+    if (brittle)
     {
       const Scalar k0 = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
       const Scalar  a = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
@@ -186,28 +186,29 @@ struct ContinuousDestructionCorrector
       {
         mesh->DestroyCellMaterial(cellIndex, Scalar(0.1));
       }
-
-      if (mesh->volumeMesh.cellMediumParameters[cellIndex].destroyed)
-      {
-        Scalar mainStresses[2];
-        Scalar maxTangentStress = Scalar(0.5) * (sqrt(Sqr(elastic.GetXX() - elastic.GetYY()) + 4 * Sqr(elastic.GetXY())));
-
-        mainStresses[0] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) + maxTangentStress;
-        mainStresses[1] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) - maxTangentStress;
-
-        Vector normal = Vector(mainStresses[0] - elastic.GetYY(), elastic.GetXY()).GetNorm();
-
-        for (IndexType stressIndex = 0; stressIndex < 2; ++stressIndex)
-        {
-          mainStresses[stressIndex] = std::min<Scalar>(0, mainStresses[stressIndex]);
-        }
-
-        // rotate from local main tensions axes to global coordinates
-        elastic.SetTension(mainStresses[0] * Sqr(normal.x) + mainStresses[1] * Sqr(normal.y), 
-          mainStresses[0] * Sqr(normal.y) + mainStresses[1] * Sqr(normal.x),
-          (mainStresses[0] - mainStresses[1]) * normal.x * normal.y);
-      }
     }
+
+    if (mesh->volumeMesh.cellMediumParameters[cellIndex].destroyed)
+    {
+      Scalar mainStresses[2];
+      Scalar maxTangentStress = Scalar(0.5) * (sqrt(Sqr(elastic.GetXX() - elastic.GetYY()) + 4 * Sqr(elastic.GetXY())));
+
+      mainStresses[0] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) + maxTangentStress;
+      mainStresses[1] = Scalar(0.5) * (elastic.GetXX() + elastic.GetYY()) - maxTangentStress;
+
+      Vector normal = Vector(mainStresses[0] - elastic.GetYY(), elastic.GetXY()).GetNorm();
+
+      for (IndexType stressIndex = 0; stressIndex < 2; ++stressIndex)
+      {
+        mainStresses[stressIndex] = std::min<Scalar>(0, mainStresses[stressIndex]);
+      }
+
+      // rotate from local main tensions axes to global coordinates
+      elastic.SetTension(mainStresses[0] * Sqr(normal.x) + mainStresses[1] * Sqr(normal.y), 
+        mainStresses[0] * Sqr(normal.y) + mainStresses[1] * Sqr(normal.x),
+        (mainStresses[0] - mainStresses[1]) * normal.x * normal.y);
+    }
+    
     std::copy(elastic.values, elastic.values + mesh->volumeMesh.dimsCount, values);
   }
   MeshType* mesh;

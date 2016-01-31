@@ -672,10 +672,7 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
       Scalar basisFunctionCoefficient =
         cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
 
-      Scalar mult = Space::Dimension * (Space::Dimension - 1);
-      // *2 because of triangle    square equals 1/2 for 2d case
-      // *6 because of tetrahedron volume equals 1/6 for 3d case
-      result.values[valueIndex] += basisFunctionCoefficient * cellVolumeAverageIntegrals[functionIndex] * mult;
+      result.values[valueIndex] += basisFunctionCoefficient * cellVolumeAverageIntegrals[functionIndex] / ::Cell<Space>::GetRefCellVolume();
     }
   }
   return result;

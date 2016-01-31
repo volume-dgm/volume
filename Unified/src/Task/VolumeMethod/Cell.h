@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../src/Maths/Spaces.h"
+#include <math.h>
 
 template <typename Space>
 struct Cell;
@@ -29,6 +30,11 @@ struct Cell<Space2>
     }
     assert(0);
     return Vector(-1, -1);
+  }
+
+  static Scalar GetEdgeRefLen(IndexType refEdgeNumber)
+  {
+    return (GetEdgeRefCoords(refEdgeNumber, 1) - GetEdgeRefCoords(refEdgeNumber, 0)).Len();
   }
 
   static void GetEdgeRefTransitionPolynomials(IndexType refEdgeNumber, Polynomial<Scalar, IndexType, 1>* coords)
@@ -362,5 +368,20 @@ struct Cell<Space3>
     break;
     }
     assert(0);
+  }
+
+  static Scalar GetFaceRefArea(IndexType refFaceNumber)
+  {
+    Vector p[Space3::NodesPerFace];
+    p[0] = GetSurfaceRefCoords(refFaceNumber, Vector2(0.0, 0.0));
+    p[1] = GetSurfaceRefCoords(refFaceNumber, Vector2(0.0, 1.0));
+    p[2] = GetSurfaceRefCoords(refFaceNumber, Vector2(1.0, 0.0));
+    Scalar area = ((p[2] - p[0]) ^ (p[1] - p[0])).Len();
+    return fabs(area) * Scalar(0.5);
+  }
+
+  static Scalar GetRefCellVolume()
+  {
+    return Scalar(1.0) / Scalar(6.0);
   }
 };

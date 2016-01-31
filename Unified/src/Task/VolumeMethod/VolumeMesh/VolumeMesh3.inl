@@ -101,12 +101,11 @@ void VolumeMesh<Space3, FunctionSpace, System>::BuildMatrices()
   for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
     cellVolumeAverageIntegrals[functionIndex] = functionSpace->ComputeCellVolumeIntegral(functionIndex);
-    /* TODO
     for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; faceNumber++)
     {
       faceAverages[faceNumber].surfaceIntegral[functionIndex] =
         functionSpace->ComputeFaceFlux(faceNumber, functionIndex);
-    }*/
+    }
   }
 }
 
@@ -547,4 +546,25 @@ bool VolumeMesh<Space3, FunctionSpace, System>::IsCellRegular(IndexType cellInde
     if (interactionType == IndexType(-1)) regularCell = false;
   }
   return regularCell;
+}
+
+template<typename FunctionSpace, typename System>
+typename System::ValueType VolumeMesh<Space3, FunctionSpace, System>::GetFaceAverageSolution(IndexType cellIndex, IndexType faceNumber) const
+{
+  typename System::ValueType result;
+  result.SetZeroValues();
+
+  Scalar refFaceArea = ::Cell<Space3>::GetFaceRefArea(faceNumber);
+
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  {
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    {
+      Scalar basisFunctionCoefficient =
+        cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
+
+      result.values[valueIndex] += basisFunctionCoefficient * faceAverages[faceNumber].surfaceIntegral[functionIndex] / refFaceArea;
+    }
+  }
+  return result;
 }

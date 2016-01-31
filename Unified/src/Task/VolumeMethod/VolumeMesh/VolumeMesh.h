@@ -443,6 +443,7 @@ public:
   Vector    GetRefZDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dζ/dx, dζ/dy, dζ/dz) * J
   void      GetRefDerivatives(Vector cellVertices[Space::NodesPerCell], Vector* refDerivatives) const;
 
+
 private:
   void BuildMatrices();
   bool IsCellRegular(IndexType cellIndex) const;
@@ -478,6 +479,11 @@ private:
     };
     SrcFaceFlux srcFaces[Space::FacesPerCell];
   } incomingFlux;
+
+  struct FaceAverage
+  {
+    Scalar surfaceIntegral[VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount];
+  } faceAverages[Space::FacesPerCell];
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
