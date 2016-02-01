@@ -450,7 +450,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDamping
 }
 
 template<typename Space, typename FunctionSpace>
-bool ElasticVolumeMeshCommon<Space, FunctionSpace>::ProcessPlasticity(const Scalar k, Elastic& elastic, bool updateElastic = false)
+bool ElasticVolumeMeshCommon<Space, FunctionSpace>::ProcessPlasticity(const Scalar k, Elastic& elastic, bool updateElastic)
 {
   const Scalar pressure = elastic.GetPressure();
 

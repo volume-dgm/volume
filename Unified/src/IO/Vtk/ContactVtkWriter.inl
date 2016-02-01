@@ -44,7 +44,7 @@ ContactVtkWriter<Space, FunctionSpace>::ConstructOutputData(
           IndexType faceNodeNumbers[Space::NodesPerFace];
           mesh->volumeMesh.GetCellFaceNodes(cellIndex, faceNumber, faceNodeNumbers);
 
-          OutputData::Face face;
+          typename OutputData::Face face;
           for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerFace; ++nodeNumber)
           {
             face.incidentNodes[nodeNumber] = faceNodeNumbers[nodeNumber];

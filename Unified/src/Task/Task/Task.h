@@ -896,7 +896,7 @@ void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshot
 template<typename Space, unsigned int order>
 void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space2>)
 {
-  printf("This is debug processing code. Don't forget to turn it off for regular tasks.\n");con
+  printf("This is debug processing code. Don't forget to turn it off for regular tasks.\n");
 
   IniStateMaker<ElasticSpace> *dstStateMaker = stateMakers[0]; //state to match to
 

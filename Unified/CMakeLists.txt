@@ -5,7 +5,7 @@ set(CMAKE_C_COMPILER mpicc)
 set(CMAKE_CXX_COMPILER mpic++)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=native -funroll-loops -ffast-math -ftree-vectorize -ftree-vectorizer-verbose=0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -funroll-loops -ffast-math -ftree-vectorize -ftree-vectorizer-verbose=0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -mtune=native -funroll-loops -ffast-math -ftree-vectorize -ftree-vectorizer-verbose=0")
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
@@ -49,11 +49,12 @@ add_definitions(-DTIXML_USE_STL)
 set(VtkSrc
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/BasicVtkWriter.h
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.inl
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/MeshVtkWriter.h
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/SnapshotVtkWriter.h
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/VtkReader.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter2.inl
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter3.inl
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.inl
   ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.h
   ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.inl
 )
@@ -73,11 +74,12 @@ set(MathsSrc
   ${CMAKE_SOURCE_DIR}/src/Maths/MatrixInv.h
   ${CMAKE_SOURCE_DIR}/src/Maths/MatrixMaths.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Random.h
-  #${CMAKE_SOURCE_DIR}/src/Maths/timer.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Spaces.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Util.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Vector2.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Vector3.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Tensor2.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Tensor3.h
   ${CMAKE_SOURCE_DIR}/src/Maths/VectorMaths.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Collisions.h
 )

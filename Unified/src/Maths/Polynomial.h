@@ -304,8 +304,8 @@ private:
     };*/
     char numericString[1024];
 
-    State::Types currState = State::WaitingOperand;
-    Operator::Types currOperator = Operator::None;
+    typename State::Types currState = State::WaitingOperand;
+    typename Operator::Types currOperator = Operator::None;
 
     Polynomial<Scalar, IndexType, DimsCount> prevOperand;
     Polynomial<Scalar, IndexType, DimsCount> currOperand;
@@ -318,7 +318,7 @@ private:
     if(DimsCount > 2)
       charTerms['z'].pows[2] = 1;
 
-    std::map<char, Operator::Types > charOperators;
+    std::map<char, typename Operator::Types > charOperators;
     charOperators['+'] = Operator::Add;
     charOperators['*'] = Operator::Mul;
     charOperators['-'] = Operator::Substract;
@@ -343,7 +343,7 @@ private:
       {
         numericString[numberLen] = 0;
         float value;
-        sscanf_s(numericString, "%f", &value);
+        sscanf(numericString, "%f", &value);
         currOperand = Polynomial<Scalar, IndexType, DimsCount>(value);
         currPos += numberLen;
         operandFound = true;
