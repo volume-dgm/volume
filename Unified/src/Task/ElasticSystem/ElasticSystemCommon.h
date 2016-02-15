@@ -103,6 +103,9 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
       Scalar params[ParamsCount];
     };
 
+    Scalar initialVolume;
+    Scalar initialRho;
+
     bool IsZero() const;
 
     Vector flowVelocity;
@@ -116,12 +119,14 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
       // s:s < 2 * k^2 
       // k = k0 + a * pressure
       Plasticity(): k0(std::numeric_limits<Scalar>::infinity()), a(0) /* without plasticity */, brittle(false),
-        maxPlasticDeform(std::numeric_limits<Scalar>::infinity())
+        maxPlasticDeform(std::numeric_limits<Scalar>::infinity()),
+        powderShearMult(0)
       {}
       Scalar k0;
       Scalar a;
       bool brittle;
       Scalar maxPlasticDeform;
+      Scalar powderShearMult;
     };
     Plasticity plasticity;
     bool fixed;

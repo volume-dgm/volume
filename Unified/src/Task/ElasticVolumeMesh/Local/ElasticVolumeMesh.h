@@ -114,6 +114,8 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   bool ProcessPlasticity(const Scalar k, Elastic& elastic, bool updateElastic = false);
 
+  void MakeRhoCorrection();
+
 protected:
   void ComputeElasticMults()
   {

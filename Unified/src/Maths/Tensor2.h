@@ -77,7 +77,7 @@ public:
           for (int l = 0; l < 2; ++l)
             res.data[i][j] += s.data[k][l] * p.data[i][k] * p.data[j][l];
 
-    assert(res.data[0][1] == res.data[1][0]);
+    // assert(res.data[0][1] == res.data[1][0]);
     return Tensor2(res.data[0][0], res.data[0][1], 
                                    res.data[1][1]);
   }

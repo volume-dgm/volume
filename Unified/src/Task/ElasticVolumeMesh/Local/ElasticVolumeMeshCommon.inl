@@ -542,7 +542,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
 
       if (plasticDeforms[cellIndex] > volumeMesh.cellMediumParameters[cellIndex].plasticity.maxPlasticDeform)
       {
-        DestroyCellMaterial(cellIndex, Scalar(0.1)); //TODO
+        DestroyCellMaterial(cellIndex, volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
       }
     }
   }
@@ -552,23 +552,38 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
 }
 
 template<typename Space, typename FunctionSpace>
-void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::MakeRhoCorrection()
 {
   for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
   {
+    Scalar currentVolume = volumeMesh.GetVolume(cellIndex);
+    Scalar initialMass = volumeMesh.cellMediumParameters[cellIndex].initialVolume * volumeMesh.cellMediumParameters[cellIndex].initialRho;
+    volumeMesh.cellMediumParameters[cellIndex].invRho = std::max(currentVolume / initialMass, Scalar(1.0) / volumeMesh.cellMediumParameters[cellIndex].initialRho);
+  }
+}
+
+template<typename Space, typename FunctionSpace>
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
+{
+  //MakeRhoCorrection();
+
+  for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
+  {
+    bool lowDensity =  volumeMesh.GetVolume(cellIndex) > erosion.rhoReduction * volumeMesh.cellMediumParameters[cellIndex].initialVolume;
     if (volumeMesh.isCellAvailable[cellIndex] && (
       volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || 
       volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
-      (allowPlasticity && plasticDeforms[cellIndex] > erosion.maxPlasticDeformation)))
+      (allowPlasticity && plasticDeforms[cellIndex] > erosion.maxPlasticDeformation) ||
+      lowDensity))
     {
       volumeMesh.cellSolutions[cellIndex].SetToZero();
 
       const IndexType MaxContactCellsCount = 64;
       IndexType contactCells[MaxContactCellsCount];
       IndexType contactCellsCount = 0;
-
+      
       Elastic elastic = GetAverageCellElastic(cellIndex);
-      if (elastic.GetPressure() < 0)
+      if (elastic.GetPressure() > 0 && !lowDensity)
       {
         ContactFinder< VolumeMeshType > contactFinder(&volumeMesh, cellIndex);
         contactFinder.Find(contactCells, &contactCellsCount);

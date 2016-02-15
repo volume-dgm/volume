@@ -141,7 +141,7 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::
 
             if (incidentCellsCount == 1)
             {
-              DestroyCellMaterial(cellIndex, Scalar(0.1)); // TODO
+              DestroyCellMaterial(cellIndex, volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
               (*isCellBroken)[cellIndex] = true;
               continue;
             }
@@ -196,7 +196,7 @@ struct ContinuousDestructionCorrector3
 
       if (mesh->ProcessPlasticity(k, elastic, false))
       {
-        mesh->DestroyCellMaterial(cellIndex, Scalar(0.1));
+        mesh->DestroyCellMaterial(cellIndex, mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
       }
     }
 
@@ -419,7 +419,7 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::FindDestructions(std::vector<bool
 
         if (incidentCellsCount == 1)
         {
-          DestroyCellMaterial(cellIndex, Scalar(0.1)); // TODO
+          DestroyCellMaterial(cellIndex, volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
           (*isCellBroken)[cellIndex] = true;
           continue;
         }

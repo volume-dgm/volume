@@ -184,7 +184,7 @@ struct ContinuousDestructionCorrector
 
       if (mesh->ProcessPlasticity(k, elastic, false))
       {
-        mesh->DestroyCellMaterial(cellIndex, Scalar(0.1));
+        mesh->DestroyCellMaterial(cellIndex, mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
       }
     }
 
@@ -394,7 +394,7 @@ void ElasticVolumeMesh<Space2, FunctionSpace>::FindDestructions(EdgePairIndices*
 
             if (incidentCellsCount == 1)
             {
-              DestroyCellMaterial(cellIndex, Scalar(0.01));
+              DestroyCellMaterial(cellIndex, volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
               (*isCellBroken)[cellIndex] = true;
               continue;
             }

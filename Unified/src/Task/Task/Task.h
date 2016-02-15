@@ -391,8 +391,7 @@ void Task<Space, order>::Run()
     distributedElasticMeshes[domainNumber]->allowContinuousDestruction = settings.solver.allowContinuousDestruction;
     distributedElasticMeshes[domainNumber]->allowDiscreteDestruction   = settings.solver.allowDiscreteDestruction;
 
-    distributedElasticMeshes[domainNumber]->erosion.cellAspectRatio = settings.solver.erosion.cellAspectRatio;
-    distributedElasticMeshes[domainNumber]->erosion.minHeightRatio  = settings.solver.erosion.minHeightRatio;
+    distributedElasticMeshes[domainNumber]->erosion = settings.solver.erosion;
   }
   detectorsData.resize(GetCurrentNodeDomainsCount());
 
@@ -768,11 +767,15 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
   res.lambda  = params.lambda;
   res.mju     = params.mju;
   res.invRho  = Scalar(1.0) / params.rho;
+
+  res.initialRho = params.rho;
+
   res.plasticity.k0 = params.k;
   res.plasticity.a = params.alpha;
   res.plasticity.brittle = params.brittle;
   res.fixed = params.fixed;
   res.plasticity.maxPlasticDeform = params.maxPlasticDeform;
+  res.plasticity.powderShearMult = params.powderShearMult;
 
   // grad(flowVelocity) must be equiled 0. it`s standart divergence-free condition
   res.flowVelocity = params.flowVelocity;
@@ -1102,6 +1105,13 @@ void Task<Space, order>::LoadMeshes()
     }
 
     LoadGeom(domainNumber);
+
+
+    for (IndexType cellIndex = 0; cellIndex < distributedElasticMeshes[domainNumber]->volumeMesh.cells.size(); ++cellIndex)
+    {
+      distributedElasticMeshes[domainNumber]->volumeMesh.cellMediumParameters[cellIndex].initialVolume =
+        distributedElasticMeshes[domainNumber]->volumeMesh.GetVolume(cellIndex);
+    }
 
     distributedElasticMeshes[domainNumber]->Initialize(
       settings.solver.allowMovement,

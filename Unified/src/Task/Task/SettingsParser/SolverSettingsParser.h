@@ -47,12 +47,14 @@ struct SolverSettings
   {
     Erosion() : cellAspectRatio(std::numeric_limits<Scalar>::max() / 2),
       minHeightRatio(0),
-      maxPlasticDeformation(1.0)
+      maxPlasticDeformation(1.0),
+      rhoReduction(std::numeric_limits<Scalar>::max() / 2)
     {
     }
     Scalar cellAspectRatio;
     Scalar minHeightRatio;
     Scalar maxPlasticDeformation;
+    Scalar rhoReduction;
   } erosion;
 
   void Parse(TiXmlElement* solverElement);
@@ -141,5 +143,6 @@ void SolverSettings<Space>::Parse(TiXmlElement *solverElement)
     ParseScalar(erosionElement, "cellAspectRatio", &erosion.cellAspectRatio);
     ParseScalar(erosionElement, "minHeightRatio",  &erosion.minHeightRatio);
     ParseScalar(erosionElement, "maxPlasticDeformation", &erosion.maxPlasticDeformation);
+    ParseScalar(erosionElement, "rhoReduction", &erosion.rhoReduction);
   }
 }

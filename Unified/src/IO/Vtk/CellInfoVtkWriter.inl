@@ -28,6 +28,7 @@ CellInfoVtkWriter<Space, FunctionSpace>::ConstructOutputData(
         typename OutputData::CellData data;
         data.isCellBroken = mesh->isCellBroken[cellIndex] ? 1 : 0;
         data.plasticDeforms = mesh->plasticDeforms.size() ? mesh->plasticDeforms[cellIndex] : 0;
+        data.density = Scalar(1.0) / mesh->volumeMesh.cellMediumParameters[cellIndex].invRho;
         outputData.cells.push_back(mesh->volumeMesh.cells[cellIndex]);
         outputData.cellData.push_back(data);
       }
@@ -109,6 +110,13 @@ void CellInfoVtkWriter<Space, FunctionSpace>::SaveToFile(const std::string& file
   for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
   {
     file << outputData.cellData[cellIndex].isCellBroken << std::endl;
+  }
+
+  file << "SCALARS DENSITY float 1\n";
+  file << "LOOKUP_TABLE default\n";
+  for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
+  {
+    file << outputData.cellData[cellIndex].density << std::endl;
   }
 
   file.close();
