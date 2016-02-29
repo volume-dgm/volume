@@ -181,6 +181,11 @@ private:
           functors[functorIndex]->SetCurrentVelocity(v);
         }
       }
+
+      bool IsEmpty() const
+      {
+        return functors.empty();
+      }
       std::vector<VectorFunctor<Space> *> functors;
     };
     CombinedFunctor *combinedFunctor = new CombinedFunctor();
@@ -244,7 +249,7 @@ private:
         } break;
       }
     }
-    return combinedFunctor;
+    return combinedFunctor->IsEmpty() ? 0 : combinedFunctor;
   }
 
   void PrintSolverState(const SolverState& solverState, Scalar currTime, Scalar timeStep);
@@ -392,6 +397,7 @@ void Task<Space, order>::Run()
     distributedElasticMeshes[domainNumber]->allowDiscreteDestruction   = settings.solver.allowDiscreteDestruction;
 
     distributedElasticMeshes[domainNumber]->erosion = settings.solver.erosion;
+    distributedElasticMeshes[domainNumber]->dynamicContactBox = settings.solver.dynamicContactBox;
   }
   detectorsData.resize(GetCurrentNodeDomainsCount());
 
@@ -1106,7 +1112,6 @@ void Task<Space, order>::LoadMeshes()
 
     LoadGeom(domainNumber);
 
-
     for (IndexType cellIndex = 0; cellIndex < distributedElasticMeshes[domainNumber]->volumeMesh.cells.size(); ++cellIndex)
     {
       distributedElasticMeshes[domainNumber]->volumeMesh.cellMediumParameters[cellIndex].initialVolume =
@@ -1157,7 +1162,7 @@ void Task<Space, order>::LoadMeshes()
   {
     if (settings.solver.allowMovement)
     {
-      distributedElasticMeshes[domainNumber]->volumeMesh.BuildAABBTree();
+      distributedElasticMeshes[domainNumber]->volumeMesh.BuildAABBTree(settings.solver.dynamicContactBox.boxPoint1, settings.solver.dynamicContactBox.boxPoint2);
     }
   }
 }
@@ -1541,8 +1546,8 @@ typename Task<Space, order>::IndexType Task<Space, order>::GetCurrentNodeDomains
 template<typename Space, unsigned int order>
 void Task<Space, order>::SetThreadsCount()
 {
-  // omp_set_num_threads(1);
-  // return;
+   // omp_set_num_threads(1);
+   // return;
 
   int size, rank;
   int nthreads, tid;

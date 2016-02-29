@@ -39,6 +39,15 @@ public:
     }
   }
 
+  void operator()(IndexType basisPointIndex, Scalar* values)
+  {
+  }
+
+  bool ForBasisPointsOnly() const
+  {
+    return false;
+  }
+
   void BuildExternalNormal(IndexType cellIndex, IndexType boundaryFaceNumber)
   {
     BuildExternalNormal(Overload<Space>(), cellIndex, boundaryFaceNumber);

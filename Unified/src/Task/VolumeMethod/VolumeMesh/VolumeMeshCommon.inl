@@ -23,6 +23,43 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
 
 template <typename Space, typename FunctionSpace, typename System>
 typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
+  GetRefCellSolution(IndexType cellIndex, IndexType pointIndex, PointType pointType, bool halfStepSolution) const
+{
+  typename System::ValueType result;
+  result.SetZeroValues();
+
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  {
+    Scalar basisFunctionValue = 0;
+
+    switch (pointType)
+    {
+      case Basis: 
+        basisFunctionValue = basisPointFunctionValues[functionIndex][pointIndex]; 
+       break;
+      case Quadrature: 
+        basisFunctionValue = quadraturePointFunctionValues[functionIndex][pointIndex]; 
+      break;
+      case CellNode:
+        basisFunctionValue = cellNodeBasisFunctionValues[functionIndex][pointIndex];
+      break;
+      default:
+        assert(0);
+    }
+
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    {
+      Scalar basisFunctionCoefficient =
+        (halfStepSolution ? halfStepCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] :
+          cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex]);
+      result.values[valueIndex] += basisFunctionCoefficient * basisFunctionValue;
+    }
+  }
+  return result;
+} 
+
+template <typename Space, typename FunctionSpace, typename System>
+typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepSolution) const
 {
   Vector points[Space::NodesPerCell];
@@ -486,7 +523,6 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::
   return maxError;
 }
 
-
 template <typename Space, typename FunctionSpace, typename System>
 void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(IndexType globalStepIndex, 
   bool allowCollisions, bool externalInitialization)
@@ -495,9 +531,13 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
   int threadsCount = 1;
   #pragma omp parallel
   {
-    threadsCount = omp_get_num_threads();
+    if (omp_get_thread_num() == 0)
+    {
+      threadsCount = omp_get_num_threads();
+    }
   }
 
+  std::fill(threadWorkloads.begin(),     threadWorkloads.end(),     0);
   std::fill(threadCellsCount.begin(),    threadCellsCount.end(),    0);
   std::fill(threadCellOffsets.begin(),   threadCellOffsets.end(),   0);
   std::fill(threadSegmentBegins.begin(), threadSegmentBegins.end(), 0);
@@ -511,9 +551,21 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
     cellMaxWaveSpeeds[cellIndex] = system.GetMaxWaveSpeed(cellMediumParameters[cellIndex]);
   }
 
+  Scalar minTimeStep = std::numeric_limits<Scalar>::max();
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+  {
+    if (!cellMediumParameters[cellIndex].fixed)
+    {
+      Scalar cellTimeStep = GetMinHeight(cellIndex) / cellMaxWaveSpeeds[cellIndex];
+      minTimeStep = std::min(minTimeStep, cellTimeStep);
+    }
+  }
+
+  // std::cout << "Min timestep: " << minTimeStep << std::endl;
+
   if (GetHierarchyLevelsCount() > 1)
   {
-    timeHierarchyLevelsManager.BuildTimeHierarchyLevels(this, cellMaxWaveSpeeds, allowCollisions);
+    timeHierarchyLevelsManager.BuildTimeHierarchyLevels(this, cellMaxWaveSpeeds, allowCollisions, minTimeStep);
 
     const bool writeTimeHierarchyLevels = true;
     if (writeTimeHierarchyLevels)
@@ -545,9 +597,14 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
           threadCellsCount[stateIndex] = 0;
           for (IndexType cellIndex = segmentBegin; cellIndex < segmentEnd; ++cellIndex)
           {
+            // ***
             if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState))
             {
               threadCellsCount[stateIndex]++;
+              if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
+              {
+                threadWorkloads[stateIndex]++;
+              }
             }
           }
           totalCellCount += threadCellsCount[stateIndex];
@@ -562,7 +619,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
           {
             IndexType stateIndex = threadIndex * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2 + solverState.Index();
             IndexType nextThreadStateIndex = (threadIndex + 1) * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2 + solverState.Index();
-            while (threadCellsCount[stateIndex] > threadCellsCount[nextThreadStateIndex] + 1)
+            while (threadWorkloads[stateIndex] > threadWorkloads[nextThreadStateIndex] + 1)
             {
               threadSegmentEnds[stateIndex]--;
               threadSegmentBegins[nextThreadStateIndex]--;
@@ -572,17 +629,29 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
               {
                 threadCellsCount[stateIndex]--;
                 threadCellsCount[nextThreadStateIndex]++;
-                balanced = true;
+
+                if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
+                {
+                  threadWorkloads[stateIndex]--;
+                  threadWorkloads[nextThreadStateIndex]++;
+                  balanced = true;
+                }
               }
             }
-            while (threadCellsCount[stateIndex] + 1 < threadCellsCount[nextThreadStateIndex])
+            while (threadWorkloads[stateIndex] + 1 < threadWorkloads[nextThreadStateIndex])
             {
               IndexType cellIndex = threadSegmentEnds[stateIndex];
               if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState))
               {
                 threadCellsCount[stateIndex]++;
                 threadCellsCount[nextThreadStateIndex]--;
-                balanced = true;
+
+                if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
+                {
+                  threadWorkloads[stateIndex]++;
+                  threadWorkloads[nextThreadStateIndex]--;
+                  balanced = true;
+                }
               }
               threadSegmentEnds[stateIndex]++;
               threadSegmentBegins[nextThreadStateIndex]++;
@@ -652,6 +721,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::Initialize()
 
   isCellAvailable.resize(cells.size(), true);
   inBuffer.resize(cells.size(), 0);
+  threadWorkloads.resize(threadsCount     * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2);
   threadCellsCount.resize(threadsCount    * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2);
   threadCellOffsets.resize(threadsCount   * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2);
   threadSegmentBegins.resize(threadsCount * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2);
@@ -801,13 +871,29 @@ bool VolumeMeshCommon<Space, FunctionSpace, System>::IsReadyForCollisionCell(Ind
 }
 
 template<typename Space, typename FunctionSpace, typename System>
-void VolumeMeshCommon<Space, FunctionSpace, System>::BuildAABBTree()
+void VolumeMeshCommon<Space, FunctionSpace, System>::BuildAABBTree(const Vector& boxPoint1, const Vector& boxPoint2)
 {
   printf("Building AABB tree for boundary cells\n");
   treeNodeCellIndices.resize(cells.size(), IndexType(-1));
+
+  AABB dynamicContactBox(boxPoint1, boxPoint2);
+
   for (IndexType cellIndex = 0; cellIndex < cells.size(); cellIndex++)
   {
     // if (IsReadyForCollisionCell(cellIndex))
+    Vector cellVertices[Space::NodesPerCell];
+    GetCellVertices(cellIndex, cellVertices);
+    bool needToAdd = false;
+    for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
+    {
+      if (dynamicContactBox.Includes(cellVertices[nodeNumber]))
+      {
+        needToAdd = true;
+        break;
+      }
+    }
+
+    if (needToAdd)
     {
       treeNodeCellIndices[cellIndex] = aabbTree.InsertNode(GetCellAABB(cellIndex));
       aabbTree.SetUserData(treeNodeCellIndices[cellIndex], cellIndex);

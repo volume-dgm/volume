@@ -233,7 +233,7 @@ void GeomMeshCommon<Space2>::GetCellEdgeNodes(const IndexType* cellIncidentNodes
 }
 
 template <>
-void GeomMeshCommon<Space2>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
+inline void GeomMeshCommon<Space2>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
 {
   std::copy(cells[cellIndex].incidentNodes, cells[cellIndex].incidentNodes + Space::NodesPerCell, incidentNodes);
   if(((nodes[incidentNodes[1]].pos - nodes[incidentNodes[0]].pos) ^ (nodes[incidentNodes[2]].pos - nodes[incidentNodes[0]].pos)) < 0)
@@ -243,7 +243,7 @@ void GeomMeshCommon<Space2>::GetFixedCellIndices(IndexType cellIndex, IndexType*
 }
 
 template <>
-void GeomMeshCommon<Space3>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
+inline void GeomMeshCommon<Space3>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
 {
   std::copy(cells[cellIndex].incidentNodes, cells[cellIndex].incidentNodes + Space::NodesPerCell, incidentNodes);
   if(MixedProduct(nodes[incidentNodes[1]].pos - nodes[incidentNodes[0]].pos,
@@ -509,7 +509,7 @@ void GeomMeshCommon<Space3>::LoadGeom(Vector* vertexPositions, IndexType* cellIn
 }
 
 template <typename Space>
-void GeomMeshCommon<Space>::GetCellVertices(IndexType cellIndex, Vector* points) const
+inline void GeomMeshCommon<Space>::GetCellVertices(IndexType cellIndex, Vector* points) const
 {
   IndexType cellIndices[Space::NodesPerCell];
   GetFixedCellIndices(cellIndex, cellIndices);
@@ -996,9 +996,6 @@ typename GeomMeshCommon<Space>::NodeGroupSize
 {
   assert(GetIncidentCellsCount(nodeIndex) > 0);
   IndexType incidentCellIndex = GetIncidentCellIndex(nodeIndex, 0);
-
-  groupNodes.resize(0);
-  groupNodes.reserve(16);
 
   // TODO: replace with stack-memory-allocated structure
   std::stack<IndexType> s;

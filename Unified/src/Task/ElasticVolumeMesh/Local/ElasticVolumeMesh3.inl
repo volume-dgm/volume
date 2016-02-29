@@ -182,10 +182,10 @@ struct ContinuousDestructionCorrector3
     this->cellIndex = cellIndex;
   }
 
-  void operator()(const Vector& refPoint, Scalar* values) const
+  void operator()(IndexType basisPointIndex, Scalar* values) const
   {
     bool brittle = mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
-    Elastic elastic = mesh->InterpolateElasticRef(cellIndex, refPoint);
+    Elastic elastic = mesh->InterpolateElasticRef(cellIndex, basisPointIndex, MeshType::VolumeMeshType::Basis);
 
     if (brittle)
     {
@@ -227,6 +227,17 @@ struct ContinuousDestructionCorrector3
 
     std::copy(elastic.values, elastic.values + mesh->volumeMesh.dimsCount, values);
   }
+
+  void operator()(const Vector& refPoint, Scalar* values) const
+  {
+
+  }
+
+  bool ForBasisPointsOnly() const
+  {
+    return true;
+  }
+
   MeshType* mesh;
   IndexType cellIndex;
 };

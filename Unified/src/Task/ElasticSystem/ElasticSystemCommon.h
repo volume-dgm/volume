@@ -32,6 +32,13 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   typedef SourceFunctor<Space> SourceFunctorT;
   using ElasticSystemBase<Space>::dimsCount;
 
+  #ifdef USE_DYNAMIC_MATRICIES
+    typedef typename Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXDim;
+  #else
+   typedef typename Eigen::Matrix<Scalar, dimsCount, dimsCount> MatrixXDim;
+  #endif
+  
+
   struct ValueTypeCommon
   {
     Scalar values[ElasticSystemBase<Space>::dimsCount];
@@ -132,25 +139,29 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
     bool fixed;
   };
   
-  void BuildXMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xMatrix);
+  void BuildXMatrix(const MediumParameters& mediumParameters, MatrixXDim& xMatrix);
   
-  void BuildYMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& yMatrix);
+  void BuildYMatrix(const MediumParameters& mediumParameters, MatrixXDim& yMatrix);
   
   void BuildRMatrix(const MediumParameters& interiorMediumParameters, 
                     const MediumParameters& exteriorMediumParameters, 
-                    Eigen::Matrix<Scalar, dimsCount, dimsCount>& rMatrix);
+                    MatrixXDim& rMatrix);
 
   void BuildXnAuxMatrix(const MediumParameters& interiorMediumParameters, 
                         const MediumParameters& exteriorMediumParameters,
-                        Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnAuxMatrix);
+                        MatrixXDim& xnAuxMatrix);
 
   void BuildXnInteriorMatrix(const MediumParameters& interiorMediumParameters, 
                              const MediumParameters& exteriorMediumParameters,
-                             const Vector& edgeNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnInteriorMatrix);
+                             const Vector& edgeNormal,
+                             const MatrixXDim& xnAuxMatrix,
+                             MatrixXDim& xnInteriorMatrix);
 
   void BuildXnExteriorMatrix(const MediumParameters& interiorMediumParameters, 
                              const MediumParameters& exteriorMediumParameters,
-                             const Vector& edgeNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnExteriorMatrix);
+                             const Vector& edgeNormal, 
+                             const MatrixXDim& xnAuxMatrix,
+                             MatrixXDim& xnExteriorMatrix);
 
   void BuildBoundaryMatrix(IndexType interactionType, Eigen::Matrix<Scalar, 1, dimsCount>& boundaryMatrix);
 

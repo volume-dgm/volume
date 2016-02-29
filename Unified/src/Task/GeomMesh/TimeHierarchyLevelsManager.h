@@ -31,7 +31,7 @@ public:
   bool UseHalfStepSolutionForNeighbour(IndexType cellIndex, const SolverState&, bool auxCell, IndexType correspondingCellIndex) const;
 
   void BuildTimeHierarchyLevels(const GeomMesh<Space>* const geomMesh, 
-    const std::vector<Scalar>& cellMaxWaveSpeeds, bool allowCollisions);
+    const std::vector<Scalar>& cellMaxWaveSpeeds, bool allowCollisions, Scalar minTimeStep);
   void SaveToVtk(const GeomMesh<Space>* const geomMesh, IndexType globalStepIndex) const;
 
   IndexType GetComputationalTotalCost() const;
@@ -86,7 +86,10 @@ void TimeHierarchyLevelsManager<Space>::Initialize(IndexType cellsCount, IndexTy
   threadsCount = 1;
   #pragma omp parallel
   {
-    threadsCount = omp_get_num_threads();
+    if (omp_get_thread_num() == 0)
+    {
+      threadsCount = omp_get_num_threads();
+    }
   }
 
   cellNeighboursInfos.resize(cellsCount);
@@ -208,15 +211,8 @@ bool TimeHierarchyLevelsManager<Space>::UseHalfStepSolutionForNeighbour(
 
 template <typename Space>
 void TimeHierarchyLevelsManager<Space>::BuildTimeHierarchyLevels(const GeomMesh<Space>* const geomMesh,
-  const std::vector<Scalar>& cellMaxWaveSpeeds,  bool allowCollisions)
+  const std::vector<Scalar>& cellMaxWaveSpeeds,  bool allowCollisions, Scalar minTimeStep)
 {
-  Scalar minTimeStep = std::numeric_limits<Scalar>::max();
-  for (IndexType cellIndex = 0; cellIndex < cellsCount; ++cellIndex)
-  {
-    Scalar cellTimeStep = geomMesh->GetMinHeight(cellIndex) / cellMaxWaveSpeeds[cellIndex];
-    minTimeStep = std::min(minTimeStep, cellTimeStep);
-  }
-
   // compute time hierarchy levels
   for (IndexType cellIndex = 0; cellIndex < cellsCount; ++cellIndex)
   { 

@@ -137,31 +137,33 @@ void VolumeMesh<Space2, FunctionSpace, System>::
     IndexType offset = threadCellOffsets[stateIndex];
     IndexType targetCellIndex = offset + 0;
 
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> currCellValues;
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> correspondingCellValues;
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> timeDerivatives;
+    MatrixXDimFunc currCellValues;
+    MatrixXDimFunc correspondingCellValues;
+    MatrixXDimFunc timeDerivatives;
+    MatrixXDimFunc edgeFlux;
 
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> edgeTransformMatrix;
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> edgeTransformMatrixInv;
+    MatrixXDim edgeTransformMatrix;
+    MatrixXDim edgeTransformMatrixInv;
 
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> xInteriorMatrix;
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> xExteriorMatrix;
+    MatrixXDim xnAuxMatrix;
+    MatrixXDim xInteriorMatrix;
+    MatrixXDim xExteriorMatrix;
 
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> xMatrix;
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> yMatrix;
+    MatrixXDim xMatrix;
+    MatrixXDim yMatrix;
 
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> xMixedMatrix;
-    Eigen::Matrix<Scalar, dimsCount, dimsCount> yMixedMatrix;
+    MatrixXDim xMixedMatrix;
+    MatrixXDim yMixedMatrix;
 
     Eigen::Matrix<Scalar, 1, dimsCount> boundaryMatrix;
     Eigen::Matrix<Scalar, 1, dimsCount> leftContactMatrix;
     Eigen::Matrix<Scalar, 1, dimsCount> rightContactMatrix;
 
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> boundaryInfoValues;
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> sourceValues;
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> sourcePointValues;
+    MatrixXDimFunc boundaryInfoValues;
+    MatrixXDimFunc sourceValues;
+    MatrixXDimFunc sourcePointValues;
 
-    Eigen::Matrix<Scalar, dimsCount, functionsCount> flux;
+    MatrixXDimFunc flux;
 
     Vector cellVertices[Space::NodesPerCell];
 
@@ -202,6 +204,8 @@ void VolumeMesh<Space2, FunctionSpace, System>::
 
         for (IndexType edgeNumber = 0; edgeNumber < Space::EdgesPerCell; edgeNumber++)
         {
+          edgeFlux.setZero();
+
           IndexType edgeNodeIndices[Space::NodesPerEdge];
           GetCellEdgeNodes(cellIncidentNodes, edgeNumber, edgeNodeIndices);
 
@@ -223,19 +227,24 @@ void VolumeMesh<Space2, FunctionSpace, System>::
 
           if (interactionType == IndexType(-1)) continue;
 
+          system.BuildXnAuxMatrix(cellMediumParameters[cellIndex],
+            //cellMediumParameters[cellIndex],
+            cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
+            xnAuxMatrix);
+
           // interior matrix
           system.BuildXnInteriorMatrix(
             cellMediumParameters[cellIndex],
             //cellMediumParameters[cellIndex],
             cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
-            edgeNormal, xInteriorMatrix);
+            edgeNormal, xnAuxMatrix, xInteriorMatrix);
 
           // exterior matrix
           system.BuildXnExteriorMatrix(
             cellMediumParameters[cellIndex],
             //cellMediumParameters[cellIndex], 
             cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
-            edgeNormal, xExteriorMatrix);
+            edgeNormal, xnAuxMatrix, xExteriorMatrix);
 
           bool outgoingFluxAdded = false;
 
@@ -253,16 +262,16 @@ void VolumeMesh<Space2, FunctionSpace, System>::
 
               functionSpace->template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
 
-              timeDerivatives.noalias() += (Scalar(2.0) * edgeLen * invJacobian) *
-                (edgeTransformMatrix * xExteriorMatrix * edgeTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+              edgeFlux.noalias() += Scalar(2.0) * (xExteriorMatrix * edgeTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
             }
+
+            outgoingFluxAdded = true;
 
             if (!allowDynamicCollisions || dynamicContactType == IndexType(-1)) //set 1 for regular boundary, 0 for dynamic collisions
             {
               system.BuildBoundaryMatrix(interactionType, boundaryMatrix);
-              timeDerivatives.noalias() += (edgeLen * invJacobian) *
-                (edgeTransformMatrix * xExteriorMatrix * boundaryMatrix.asDiagonal() * edgeTransformMatrixInv *
-                  currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+              edgeFlux.noalias() +=  (xInteriorMatrix + xExteriorMatrix * boundaryMatrix.asDiagonal()) * 
+                edgeTransformMatrixInv * currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral;
             }
             else
             {
@@ -289,7 +298,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
                 functionGetter(ghostRefPoint, exteriorSolution.values);
 
                 MediumParameters exteriorParams;
-                paramsGetter.operator()(ghostRefPoint, exteriorParams.params);
+                paramsGetter(ghostRefPoint, exteriorParams.params);
 
                 Scalar tmp[dimsCount];
                 MatrixMulVector(edgeTransformMatrixInv.data(), interiorSolution.values, tmp, dimsCount, dimsCount);
@@ -304,22 +313,19 @@ void VolumeMesh<Space2, FunctionSpace, System>::
                     interactionType, // boundary type
                     dynamicContactType);
 
-                for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
+                for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
                 {
-                  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+                  Scalar basisFunctionValue = functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
+                  for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
                   {
                     flux(valueIndex, functionIndex) +=
                       quadratureWeightsForBorder[pointIndex] *
-                      riemannSolution.values[valueIndex] *
-                      functionSpace->GetBasisFunctionValue(refPoint, functionIndex);
+                      riemannSolution.values[valueIndex] * basisFunctionValue;
                   }
                 }
               }
 
-              timeDerivatives.noalias() += (edgeLen * invJacobian) *
-                (edgeTransformMatrix * xMatrix * flux * cellVolumeIntegralsInv);
-
-              outgoingFluxAdded = true;
+              edgeFlux.noalias() += xMatrix * flux * cellVolumeIntegralsInv;
             }
           }
           else
@@ -344,20 +350,19 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             // for glue contact left matrix equals 0
             if (!leftContactMatrix.isZero(std::numeric_limits<Scalar>::epsilon()))
             {
-              timeDerivatives.noalias() += (edgeLen * invJacobian) * (edgeTransformMatrix * xExteriorMatrix * leftContactMatrix.asDiagonal() * edgeTransformMatrixInv *
-                currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+              edgeFlux.noalias() += xExteriorMatrix * leftContactMatrix.asDiagonal() * edgeTransformMatrixInv *
+                currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral;
             }
 
             // exterior side contribution
-            timeDerivatives.noalias() += (edgeLen * invJacobian) * (edgeTransformMatrix * xExteriorMatrix * rightContactMatrix.asDiagonal() * edgeTransformMatrixInv *
-              correspondingCellValues * incomingFlux.srcEdges[edgeNumber].dstEdges[correspondingEdgeNumber].surfaceIntegral);
-          }
-          if (!outgoingFluxAdded)
-          {
+            edgeFlux.noalias() += xExteriorMatrix * rightContactMatrix.asDiagonal() * edgeTransformMatrixInv *
+              correspondingCellValues * incomingFlux.srcEdges[edgeNumber].dstEdges[correspondingEdgeNumber].surfaceIntegral;
+
             // outgoing flux
-            timeDerivatives.noalias() += (edgeLen * invJacobian) * (edgeTransformMatrix * xInteriorMatrix * edgeTransformMatrixInv *
-              currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
+            edgeFlux.noalias() += xInteriorMatrix * edgeTransformMatrixInv *
+              currCellValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral;
           }
+          timeDerivatives.noalias() += (edgeLen * invJacobian) * (edgeTransformMatrix * edgeFlux);
         }
 
         Vector refXDerivatives = GetRefXDerivatives(cellVertices) * invJacobian;
@@ -380,7 +385,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
         if (sourceFunctor)
         {
           typedef SourceFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > SourceFunctorWrapper;
-          SourceFunctorWrapper wrapper(sourceFunctor, time, this, cellIndex);
+          SourceFunctorWrapper wrapper(sourceFunctor, time, this, cellVertices);
           functionSpace->template Decompose< SourceFunctorWrapper, dimsCount >(wrapper, sourceValues.data());
           timeDerivatives.noalias() -= sourceValues;
         }

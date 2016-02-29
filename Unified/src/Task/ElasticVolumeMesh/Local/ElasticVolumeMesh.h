@@ -8,6 +8,7 @@
 #include "../../../Maths/Spaces.h"
 #include "../../VolumeMethod/VolumeMesh/VolumeMesh.h"
 #include "../../Task/SettingsParser/SolverSettingsParser.h"
+#include "../../GeomMesh/NodeGroupManager.h"
 
 template<typename Space, typename FunctionSpace>
 struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar>
@@ -18,6 +19,7 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   typedef typename ElasticSystemType::ElasticSpace                     ElasticSpaceType;
   typedef typename ElasticSystemType::MediumParameters                 MediumParameters;
   typedef          VolumeMesh<Space, FunctionSpace, ElasticSystemType> VolumeMeshType;
+  typedef          VolumeMeshCommon<Space, FunctionSpace, ElasticSystemType> VolumeMeshTypeCommon;
   typedef typename ElasticSpaceType::Elastic                           Elastic;
   typedef typename VolumeMeshType::Node                                Node;
   typedef typename VolumeMeshType::Cell                                Cell;
@@ -63,6 +65,7 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   void LoadState(const std::vector< IniStateMaker<ElasticSpaceType>* >& stateMakers, Scalar mult);
 
   Elastic InterpolateElasticRef(IndexType cellIndex, Vector refCoords) const;
+  Elastic InterpolateElasticRef(IndexType cellIndex, IndexType pointIndex, typename VolumeMeshTypeCommon::PointType pointType) const;
   Elastic InterpolateElastic(IndexType cellIndex, Vector globalPoint, bool halfStepSolution = false) const;
 
   Elastic GetAverageCellElastic(IndexType cellIndex) const;
@@ -102,6 +105,7 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   void HandlePlasticity(Scalar dt);
 
   typename SolverSettings<Space>::Erosion erosion;
+  typename SolverSettings<Space>::DynamicContactBox dynamicContactBox;
 
   void HandleMaterialErosion();
 
@@ -122,12 +126,12 @@ protected:
     ComputeElasticMults(Overload<Space>());
   }
 
+  NodeGroupManager<Space, VolumeMeshType> nodeGroupManager;
+
   // for error computation
   Scalar elasticMults[dimsCount];
   Scalar damping;
   Scalar minHeightInMesh;
-
-  std::vector<bool> isNodeVelocityFound;
 
   struct PrecomputedBasisFunctions
   {
@@ -349,6 +353,14 @@ struct FunctionGetter
     {
       values[valueIndex] = elastic.values[valueIndex];
     }
+  }
+
+  void operator()(IndexType basisPointIndex, Scalar* values)
+  {}
+
+  bool ForBasisPointsOnly() const
+  {
+    return false;
   }
 
   StateMaker* stateMaker;

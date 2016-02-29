@@ -129,7 +129,7 @@ void ElasticSystemCommon<Space3>::ValueTypeCommon::MakeDimension(
 }
 
 template <>
-void ElasticSystemCommon<Space2>::BuildXMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xMatrix)
+void ElasticSystemCommon<Space2>::BuildXMatrix(const MediumParameters& mediumParameters, MatrixXDim& xMatrix)
 {
   xMatrix << 
     mediumParameters.flowVelocity.x,                               0,                               0, -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju),                               0,
@@ -140,7 +140,7 @@ void ElasticSystemCommon<Space2>::BuildXMatrix(const MediumParameters& mediumPar
 }
 
 template <>
-void ElasticSystemCommon<Space3>::BuildXMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xMatrix)
+void ElasticSystemCommon<Space3>::BuildXMatrix(const MediumParameters& mediumParameters, MatrixXDim& xMatrix)
 {
   xMatrix <<
     mediumParameters.flowVelocity.x,                               0,                               0,                               0,                               0,                               0, -(mediumParameters.lambda + Scalar(2.0) * mediumParameters.mju),                               0,                               0,
@@ -155,7 +155,7 @@ void ElasticSystemCommon<Space3>::BuildXMatrix(const MediumParameters& mediumPar
 }
 
 template <>
-void ElasticSystemCommon<Space2>::BuildYMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& yMatrix)
+void ElasticSystemCommon<Space2>::BuildYMatrix(const MediumParameters& mediumParameters, MatrixXDim& yMatrix)
 {
   yMatrix <<
     mediumParameters.flowVelocity.y,                               0,                               0,                               0,                                        -mediumParameters.lambda,
@@ -166,7 +166,7 @@ void ElasticSystemCommon<Space2>::BuildYMatrix(const MediumParameters& mediumPar
 }
 
 template <>
-void ElasticSystemCommon<Space3>::BuildYMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& yMatrix)
+void ElasticSystemCommon<Space3>::BuildYMatrix(const MediumParameters& mediumParameters, MatrixXDim& yMatrix)
 {
   yMatrix <<
     mediumParameters.flowVelocity.y,                               0,                               0,                               0,                               0,                               0,                               0,  -mediumParameters.lambda                                      ,                               0,
@@ -184,7 +184,7 @@ template <>
 void ElasticSystemCommon<Space2>::BuildRMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters, 
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& rMatrix)
+  MatrixXDim& rMatrix)
 {
   rMatrix << 
     interiorMediumParameters.lambda + 2 * interiorMediumParameters.mju,                                    0, 0,                                     0, exteriorMediumParameters.lambda + 2 * exteriorMediumParameters.mju,
@@ -198,7 +198,7 @@ template <>
 void ElasticSystemCommon<Space3>::BuildRMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters, 
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& rMatrix)
+  MatrixXDim& rMatrix)
 {
   rMatrix <<
     interiorMediumParameters.lambda + 2 * interiorMediumParameters.mju,                                    0,                                    0, 0, 0, 0,                                     0,                                     0, exteriorMediumParameters.lambda + 2 * exteriorMediumParameters.mju,
@@ -216,7 +216,7 @@ template <>
 void ElasticSystemCommon<Space2>::BuildXnAuxMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnAuxMatrix)
+  MatrixXDim& xnAuxMatrix)
 {  
 /*
   Eigen::Matrix<Scalar, dimsCount, dimsCount> rMatrix;
@@ -263,7 +263,7 @@ template <>
 void ElasticSystemCommon<Space3>::BuildXnAuxMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnAuxMatrix)
+  MatrixXDim& xnAuxMatrix)
 {
 /*
   Eigen::Matrix<Scalar, dimsCount, dimsCount> rMatrix;
@@ -315,10 +315,13 @@ template <>
 void ElasticSystemCommon<Space2>::BuildXnInteriorMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  const Vector& edgeNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnInteriorMatrix)
+  const Vector& edgeNormal, 
+  const MatrixXDim& xnAuxMatrix,
+  MatrixXDim& xnInteriorMatrix)
 {
-  BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnInteriorMatrix);
-  
+  // BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnInteriorMatrix);
+  xnInteriorMatrix = xnAuxMatrix;
+
   // XMatrix
   xnInteriorMatrix(0, 3) -= interiorMediumParameters.lambda + Scalar(2.0) * interiorMediumParameters.mju;
   xnInteriorMatrix(1, 3) -= interiorMediumParameters.lambda;
@@ -338,9 +341,12 @@ template <>
 void ElasticSystemCommon<Space3>::BuildXnInteriorMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  const Vector& faceNormal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnInteriorMatrix)
+  const Vector& faceNormal, 
+  const MatrixXDim& xnAuxMatrix,
+  MatrixXDim& xnInteriorMatrix)
 {
-  BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnInteriorMatrix);
+  //BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnInteriorMatrix);
+  xnInteriorMatrix = xnAuxMatrix;
 
   // XMatrix
   xnInteriorMatrix(0, 6) -= interiorMediumParameters.lambda + Scalar(2.0) * interiorMediumParameters.mju;
@@ -364,10 +370,13 @@ template <typename Space>
 void ElasticSystemCommon<Space>::BuildXnExteriorMatrix(
   const MediumParameters& interiorMediumParameters, 
   const MediumParameters& exteriorMediumParameters,
-  const Vector& normal, Eigen::Matrix<Scalar, dimsCount, dimsCount>& xnExteriorMatrix)
+  const Vector& normal, 
+  const MatrixXDim& xnAuxMatrix,
+  MatrixXDim& xnExteriorMatrix)
 {
-  BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnExteriorMatrix);
-  xnExteriorMatrix *= Scalar(-1.0);
+  //BuildXnAuxMatrix(interiorMediumParameters, exteriorMediumParameters, xnExteriorMatrix);
+  //xnExteriorMatrix *= Scalar(-1.0);
+  xnExteriorMatrix = -xnAuxMatrix;
 
   Scalar un = interiorMediumParameters.flowVelocity * normal;
   for (int row = 0; row < dimsCount; ++row)

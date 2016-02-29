@@ -11,12 +11,12 @@ public:
     SourceFunctionGetter(typename System::SourceFunctorT* functor,
     const Scalar time,
     const VolumeMesh* const volumeMesh,
-    IndexType cellIndex):
+    Vector* cellVertices):
     functor(functor),
     time(time),
-    volumeMesh(volumeMesh)
+    volumeMesh(volumeMesh),
+    cellVertices(cellVertices)
   {
-    volumeMesh->GetCellVertices(cellIndex, cellVertices);
   }
 
   void operator()(const Vector& refPoint, Scalar* values)
@@ -27,16 +27,23 @@ public:
       functor->operator()(globalPoint, time, values);
     } else
     {
-      for (IndexType valueIndex = 0; valueIndex < VolumeMesh::dimsCount; ++valueIndex)
-      {
-        values[valueIndex] = Scalar(0.0);
-      }
+      std::fill(values, values + VolumeMesh::dimsCount, Scalar(0.0));
     }
+  }
+
+  void operator()(IndexType basisPointIndex, Scalar* values)
+  {
+
+  }
+
+  bool ForBasisPointsOnly() const
+  {
+    return false;
   }
 
 private:
   typename System::SourceFunctorT* functor;
   Scalar time;
   const VolumeMesh* const volumeMesh;
-  Vector cellVertices[Space::NodesPerCell];
+  Vector* cellVertices;
 };

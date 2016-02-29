@@ -30,6 +30,14 @@ public:
   typedef typename AdditionalCellInfo<Space>:: template AuxInfo<int>    IntTypeCellInfo;
   typedef typename AdditionalCellInfo<Space>:: template AuxInfo<Scalar> ScalarTypeCellInfo;
 
+  #ifdef USE_DYNAMIC_MATRICIES
+    typedef typename Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXDimFunc;
+    typedef typename Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXFunc;
+  #else
+    typedef typename Eigen::Matrix<Scalar, dimsCount, functionsCount> MatrixXDimFunc;
+    typedef typename Eigen::Matrix<Scalar, functionsCount, functionsCount> MatrixXFunc;
+  #endif
+
   VolumeMeshCommon(int solverPhasesCount, int hierarchyLevelsCount):
     DifferentialSystem<Scalar>(solverPhasesCount, hierarchyLevelsCount), GeomMesh<Space>(),
     xDerivativeVolumeIntegralsSparse(functionsCount, functionsCount),
@@ -43,6 +51,25 @@ public:
 
     QuadraturePrecomputer::BuildQuadrature<Space>(2 * FunctionSpace::order,
       quadratureWeights, quadraturePoints);
+
+    for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
+    {
+      std::vector<Vector> basisPoints = functionSpace->GetBasisPoints();
+      for (IndexType pointIndex = 0; pointIndex < basisPoints.size(); ++pointIndex)
+      {
+        basisPointFunctionValues[functionIndex].push_back(functionSpace->GetBasisFunctionValue(basisPoints[pointIndex], functionIndex));
+      }
+
+      for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+      {
+        quadraturePointFunctionValues[functionIndex].push_back(functionSpace->GetBasisFunctionValue(quadraturePoints[pointIndex], functionIndex));
+      }
+
+      for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
+      {
+        cellNodeBasisFunctionValues[functionIndex].push_back(functionSpace->GetBasisFunctionValue(::Cell<Space>::GetNode(nodeNumber), functionIndex));
+      }
+    }
   }
 
   virtual ~VolumeMeshCommon()
@@ -99,6 +126,7 @@ public:
 
   using GeomMesh<Space>::additionalCellInfos;
   using GeomMesh<Space>::GetMassCenter;
+  using GeomMesh<Space>::GetMinHeight;
   using GeomMesh<Space>::GetCellVertices;
   using GeomMesh<Space>::GetFixedCellIndices;
   using GeomMesh<Space>::GetGhostCellVertices;
@@ -111,7 +139,10 @@ public:
   using GeomMesh<Space>::GetCellAABB;
   using GeomMesh<Space>::GetVolume;
 
+  enum PointType {Basis, Quadrature, CellNode};
+
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
+  typename System::ValueType GetRefCellSolution(IndexType cellIndex, IndexType pointIndex, PointType pointType, bool halfStepCellSolution = false) const;
   typename System::ValueType GetCellSolution(IndexType cellIndex, Vector globalPoint, bool halfStepCellSolution = false) const;
 
   typename System::ValueType GetRefCellSolution(Scalar* coeffs, Vector refCoords) const;
@@ -160,7 +191,7 @@ public:
 
   virtual Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const = 0;
 
-  void BuildAABBTree();
+  void BuildAABBTree(const Vector& boxPoint1, const Vector& boxPoint2);
 
   // for quadtature integration
   std::vector<Scalar> quadratureWeightsForBorder;
@@ -179,8 +210,8 @@ protected:
   Eigen::Matrix<Scalar, functionsCount, functionsCount> cellVolumeIntegrals;
   Eigen::Matrix<Scalar, functionsCount, functionsCount> cellVolumeIntegralsInv;
 
-  Eigen::Matrix<Scalar, functionsCount, functionsCount> xDerivativeVolumeIntegrals;
-  Eigen::Matrix<Scalar, functionsCount, functionsCount> yDerivativeVolumeIntegrals;
+  MatrixXFunc xDerivativeVolumeIntegrals;
+  MatrixXFunc yDerivativeVolumeIntegrals;
 
   Eigen::SparseMatrix<Scalar> xDerivativeVolumeIntegralsSparse;
   Eigen::SparseMatrix<Scalar> yDerivativeVolumeIntegralsSparse;
@@ -191,9 +222,16 @@ protected:
 
   std::vector<IndexType> hierarchyDimentionsCount;
   std::vector<IndexType> threadCellsCount;
+  std::vector<IndexType> threadWorkloads;
   std::vector<IndexType> threadCellOffsets;
   std::vector<IndexType> threadSegmentBegins;
   std::vector<IndexType> threadSegmentEnds;
+
+  /* precomputed basis values for each basis decomposer`s point */
+  std::vector<Scalar> basisPointFunctionValues[functionsCount];
+  /* precomputed basis values for each quadrature point */
+  std::vector<Scalar> quadraturePointFunctionValues[functionsCount];
+  std::vector<Scalar> cellNodeBasisFunctionValues[functionsCount];
 
   /*
     There are regular cells, where we compute solution,
@@ -228,6 +266,10 @@ public:
   typedef VolumeMesh<Space, FunctionSpace, SystemT>  VolumeMeshT;
   typedef typename System::MediumParameters          MediumParameters;
   typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::GeomMeshT GeomMeshT;
+
+  typedef typename System::MatrixXDim MatrixXDim;
+  typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXDimFunc MatrixXDimFunc;
+  typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXFunc MatrixXFunc;
 
   typedef typename GeomMesh<Space2>::EdgeLocationPair EdgeLocationPair;
   typedef typename GeomMesh<Space2>::EdgeLocation     EdgeLocation;
@@ -367,6 +409,10 @@ public:
   typedef typename System::MediumParameters          MediumParameters;
   typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::GeomMeshT GeomMeshT;
 
+  typedef typename System::MatrixXDim MatrixXDim;
+  typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXDimFunc MatrixXDimFunc;
+  typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXFunc MatrixXFunc;
+
   using VolumeMeshCommon<Space, FunctionSpace, System>::additionalCellInfos;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMassCenter;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellVertices;
@@ -448,15 +494,13 @@ private:
   void BuildMatrices();
   bool IsCellRegular(IndexType cellIndex) const;
 
-  Eigen::Matrix<Scalar, functionsCount, functionsCount> zDerivativeVolumeIntegrals;
+  MatrixXFunc zDerivativeVolumeIntegrals;
 
   struct OutgoingFlux
   {
     struct SrcFaceFlux
     {
-      Eigen::Matrix<Scalar,
-        VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount,
-        VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount> surfaceIntegral;
+      MatrixXFunc surfaceIntegral;
     };
     SrcFaceFlux srcFaces[Space::FacesPerCell];
   } outgoingFlux;
@@ -469,9 +513,7 @@ private:
       {
         struct OrientationFlux
         {
-          Eigen::Matrix<Scalar,
-            VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount,
-            VolumeMeshCommon<Space3, FunctionSpace, System>::functionsCount> surfaceIntegral;
+          MatrixXFunc surfaceIntegral;
         };
         OrientationFlux orientations[3];
       };

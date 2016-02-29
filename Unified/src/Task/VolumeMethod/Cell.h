@@ -11,6 +11,17 @@ struct Cell<Space2>
 {
   SPACE2_TYPEDEFS
 
+  static Vector GetNode(IndexType nodeNumber)
+  {
+    switch (nodeNumber)
+    {
+      case 0: return Vector(0, 0); break;
+      case 1: return Vector(1, 0); break;
+      case 2: return Vector(0, 1); break;
+      default: assert(0); return Vector(-1, -1); break;
+    }
+  }
+
   static Vector GetEdgeRefCoords(IndexType refEdgeNumber, Scalar edgeCoord)
   {
     switch(refEdgeNumber)
@@ -157,6 +168,18 @@ template <>
 struct Cell<Space3>
 {
   SPACE3_TYPEDEFS
+
+  static Vector GetNode(IndexType nodeNumber)
+  {
+    switch (nodeNumber)
+    {
+      case 0: return Vector(0, 0, 0); break;
+      case 1: return Vector(1, 0, 0); break;
+      case 2: return Vector(0, 1, 0); break;
+      case 3: return Vector(0, 0, 1); break;
+      default: assert(0); return Vector(-1, -1, -1); break;
+    }
+  }
 
   static Vector GetSurfaceRefCoords(IndexType refFaceNumber, Vector2 surfaceCoords)
   {

@@ -292,7 +292,7 @@ Space3::Tensor ElasticSystem<Space3>::ValueType::GetTension() const
 }
 
 void ElasticSystem<Space2>::BuildEdgeTransformMatrix(Vector edgeVertices[Space::NodesPerEdge], 
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix)
+  MatrixXDim& transformMatrix)
 {
   Vector normal  = Vector((edgeVertices[1] - edgeVertices[0]).y, -(edgeVertices[1] - edgeVertices[0]).x).GetNorm();
 
@@ -305,7 +305,7 @@ void ElasticSystem<Space2>::BuildEdgeTransformMatrix(Vector edgeVertices[Space::
 }
 
 void ElasticSystem<Space2>::BuildEdgeTransformMatrixInv(Vector edgeVertices[Space::NodesPerEdge], 
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv)
+  MatrixXDim& transformMatrixInv)
 {
   Vector normal  = Vector((edgeVertices[1] - edgeVertices[0]).y, -(edgeVertices[1] - edgeVertices[0]).x).GetNorm();
 
@@ -318,7 +318,7 @@ void ElasticSystem<Space2>::BuildEdgeTransformMatrixInv(Vector edgeVertices[Spac
 }
 
 void ElasticSystem<Space3>::BuildFaceTransformMatrix(Vector faceVertices[Space::NodesPerFace], 
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix)
+  MatrixXDim& transformMatrix)
 {
   Vector normal   = ((faceVertices[1] - faceVertices[0]) ^ (faceVertices[2] - faceVertices[0])).GetNorm();
   Vector tangent0 = (faceVertices[1] - faceVertices[0]).GetNorm();
@@ -337,7 +337,7 @@ void ElasticSystem<Space3>::BuildFaceTransformMatrix(Vector faceVertices[Space::
 }
 
 void ElasticSystem<Space3>::BuildFaceTransformMatrixInv(Vector faceVertices[Space::NodesPerFace], 
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv)
+  MatrixXDim& transformMatrixInv)
 {
   Vector normal = ((faceVertices[1] - faceVertices[0]) ^ (faceVertices[2] - faceVertices[0])).GetNorm();
   Vector tangent0 = (faceVertices[1] - faceVertices[0]).GetNorm();
@@ -359,7 +359,7 @@ void ElasticSystem<Space3>::BuildFaceTransformMatrixInv(Vector faceVertices[Spac
 }
 
 void ElasticSystem<Space3>::BuildZMatrix(const MediumParameters& mediumParameters, 
-  Eigen::Matrix<Scalar, dimsCount, dimsCount>& zMatrix)
+  MatrixXDim& zMatrix)
 {
   zMatrix <<
     mediumParameters.flowVelocity.z,                               0,                               0,                               0,                               0,                               0,                               0,                               0,  -mediumParameters.lambda                                      ,

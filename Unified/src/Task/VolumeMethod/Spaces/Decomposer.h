@@ -38,6 +38,16 @@ struct QuadratureDecomposer : public FunctionSpaceT
       }
     }
 
+    basisFunctionValues.resize(functionsCount * points.size());
+
+    for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+    {
+      for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+      {
+        basisFunctionValues[pointIndex * functionsCount + functionIndex] = this->GetBasisFunctionValue(points[pointIndex], functionIndex);
+      }
+    }
+
     MatrixInverse<Scalar, IndexType>(cellVolumeIntegrals, cellVolumeIntegralsInv, functionsCount);
   }
 
@@ -50,11 +60,14 @@ struct QuadratureDecomposer : public FunctionSpaceT
     for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
     {
       Scalar values[ValuesCount];
-      func(points[pointIndex], values);
+      if (func.ForBasisPointsOnly())
+        func(pointIndex, values);
+      else
+        func(points[pointIndex], values);
 
       for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
       {
-        Scalar basisFunctionValue = this->GetBasisFunctionValue(points[pointIndex], functionIndex);
+        Scalar basisFunctionValue = basisFunctionValues[pointIndex * functionsCount + functionIndex];
         for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
         {
           correlations[valueIndex * functionsCount + functionIndex] += basisFunctionValue * values[valueIndex] * weights[pointIndex];
@@ -75,9 +88,16 @@ struct QuadratureDecomposer : public FunctionSpaceT
     return space.GetBasisFunctionValue(point, functionIndex);
   }*/
 
+  std::vector<Vector> GetBasisPoints() const
+  {
+    return points;
+  }
+
   // for quadrature integration
   std::vector<Scalar> weights;
   std::vector<Vector> points;
+
+  std::vector<Scalar> basisFunctionValues;
 
   Scalar cellVolumeIntegrals[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
   Scalar cellVolumeIntegralsInv[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
@@ -95,6 +115,11 @@ struct NodalDecomposer : public PolynomialSpaceT
 
   NodalDecomposer()
   {
+    basisPoints.reserve(functionsCount);
+    for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    {
+      basisPoints.push_back(this->GetBasisPoint(functionIndex));
+    }
   }
 
   template<typename Function, int ValuesCount>
@@ -102,9 +127,11 @@ struct NodalDecomposer : public PolynomialSpaceT
   {
     for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
     {
-      Vector basisPoint = this->GetBasisPoint(functionIndex);
       Scalar values[ValuesCount];
-      func(basisPoint, values);
+      if (func.ForBasisPointsOnly())
+        func(functionIndex, values);
+      else
+        func(basisPoints[functionIndex], values);
 
       for(IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
       {
@@ -112,4 +139,11 @@ struct NodalDecomposer : public PolynomialSpaceT
       }
     }
   }
+
+  std::vector<Vector> GetBasisPoints() const
+  {
+    return basisPoints;
+  }
+
+  std::vector<Vector> basisPoints;
 };

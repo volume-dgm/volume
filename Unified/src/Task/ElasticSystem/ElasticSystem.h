@@ -15,8 +15,9 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
 {
   SPACE2_TYPEDEFS
   typedef Space2                                        Space;
-  typedef ElasticSystemCommon<Space2>::ValueTypeCommon  ValueTypeCommon;
-  typedef ElasticSystemCommon<Space2>::MediumParameters MediumParameters;
+  typedef ElasticSystemCommon<Space>::ValueTypeCommon  ValueTypeCommon;
+  typedef ElasticSystemCommon<Space>::MediumParameters MediumParameters;
+  typedef ElasticSystemCommon<Space>::MatrixXDim MatrixXDim;
 
   using ElasticSystemCommon<Space2>::GetContactDynamicBoundaryType;
 
@@ -47,8 +48,8 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
   ValueType GetGlueRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution,
     const MediumParameters& interiorParams, const MediumParameters& exteriorParams);
 
-  void BuildEdgeTransformMatrix(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix);
-  void BuildEdgeTransformMatrixInv(Vector edgeVertices[2], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv);
+  void BuildEdgeTransformMatrix(Vector edgeVertices[2], MatrixXDim& transformMatrix);
+  void BuildEdgeTransformMatrixInv(Vector edgeVertices[2], MatrixXDim& transformMatrixInv);
 };
 
 template <>
@@ -58,7 +59,8 @@ struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
   typedef Space3            Space;
   using ElasticSystemCommon<Space>::ValueTypeCommon;
   using ElasticSystemCommon<Space>::MediumParameters;
-  using ElasticSystemCommon<Space3>::GetContactDynamicBoundaryType;
+  using ElasticSystemCommon<Space>::GetContactDynamicBoundaryType;
+  typedef ElasticSystemCommon<Space>::MatrixXDim MatrixXDim;
 
   struct ValueType: public ValueTypeCommon
   {
@@ -90,9 +92,9 @@ struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
   ValueType GetGlueRiemannSolution(const ValueType& interiorSolution, ValueType& exteriorSolution,
     const MediumParameters& interiorParams, const MediumParameters& exteriorParams);
 
-  void BuildFaceTransformMatrix(Vector faceVertices[3], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrix);
-  void BuildFaceTransformMatrixInv(Vector faceVertices[3], Eigen::Matrix<Scalar, dimsCount, dimsCount>& transformMatrixInv);
-  void BuildZMatrix(const MediumParameters& mediumParameters, Eigen::Matrix<Scalar, dimsCount, dimsCount>& zMatrix);
+  void BuildFaceTransformMatrix(Vector faceVertices[3], MatrixXDim& transformMatrix);
+  void BuildFaceTransformMatrixInv(Vector faceVertices[3], MatrixXDim& transformMatrixInv);
+  void BuildZMatrix(const MediumParameters& mediumParameters, MatrixXDim& zMatrix);
 };
 
 #include "ElasticSystem.inl"

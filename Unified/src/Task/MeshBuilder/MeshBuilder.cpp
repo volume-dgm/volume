@@ -166,7 +166,14 @@ private:
         }
       }
 
-      timeHierarchyLevelsManager.BuildTimeHierarchyLevels(geomMesh, cellMaxWaveSpeeds, settings.solver.allowMovement);
+      Scalar minTimeStep = std::numeric_limits<Scalar>::max();
+      for (IndexType cellIndex = 0; cellIndex < geomMesh->cells.size(); ++cellIndex)
+      {
+        Scalar cellTimeStep = geomMesh->GetMinHeight(cellIndex) / cellMaxWaveSpeeds[cellIndex];
+        minTimeStep = std::min(minTimeStep, cellTimeStep);
+      }
+
+      timeHierarchyLevelsManager.BuildTimeHierarchyLevels(geomMesh, cellMaxWaveSpeeds, settings.solver.allowMovement, minTimeStep);
       IndexType maxComputationalCost = timeHierarchyLevelsManager.GetComputationalTotalCost(updatedCellsDomainIds, domainsCount);
 
       if (maxComputationalCost < lastComputationalCost)

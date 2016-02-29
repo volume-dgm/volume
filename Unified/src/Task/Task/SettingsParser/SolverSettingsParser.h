@@ -57,6 +57,17 @@ struct SolverSettings
     Scalar rhoReduction;
   } erosion;
 
+  struct DynamicContactBox
+  {
+    DynamicContactBox()
+    {
+      boxPoint1 = -Scalar(0.5) * std::numeric_limits<Scalar>::max() * Vector::one();
+      boxPoint2 =  Scalar(0.5) * std::numeric_limits<Scalar>::max() * Vector::one();
+    }
+    Vector boxPoint1;
+    Vector boxPoint2;
+  } dynamicContactBox;
+
   void Parse(TiXmlElement* solverElement);
 };
 
@@ -144,5 +155,27 @@ void SolverSettings<Space>::Parse(TiXmlElement *solverElement)
     ParseScalar(erosionElement, "minHeightRatio",  &erosion.minHeightRatio);
     ParseScalar(erosionElement, "maxPlasticDeformation", &erosion.maxPlasticDeformation);
     ParseScalar(erosionElement, "rhoReduction", &erosion.rhoReduction);
+  }
+
+  TiXmlElement* dynamicContactBoxElement = solverElement->FirstChildElement("DynamicContactBox");
+  if (dynamicContactBoxElement)
+  {
+    ParseVector(dynamicContactBoxElement, "boxPoint1", &dynamicContactBox.boxPoint1);
+    ParseVector(dynamicContactBoxElement, "boxPoint2", &dynamicContactBox.boxPoint2);
+  }
+
+  TiXmlElement* dynamicContactFrameElement = solverElement->FirstChildElement("DynamicContactFrame");
+  if (dynamicContactFrameElement)
+  {
+    Vector center = Vector::zeroVector();
+    Vector size = Vector::one();
+    Scalar margin = 0;
+
+    ParseVector(dynamicContactFrameElement, "center", &center);
+    ParseVector(dynamicContactFrameElement, "size", &size);
+    ParseScalar(dynamicContactFrameElement, "margin", &margin);
+
+    dynamicContactBox.boxPoint1 = center - size / Scalar(2.0) - Vector::one() * margin;
+    dynamicContactBox.boxPoint2 = center + size / Scalar(2.0) + Vector::one() * margin;
   }
 }

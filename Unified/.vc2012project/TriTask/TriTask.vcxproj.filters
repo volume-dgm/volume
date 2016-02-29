@@ -416,12 +416,12 @@
     <ClInclude Include="..\..\src\IO\Vtk\CellInfoVtkWriter.h">
       <Filter>IO\Vtk</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Task\GeomMesh\NodeGroupManager.h">
+      <Filter>GeomMesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Task\ElasticSystem\ElasticSystem.inl">
-      <Filter>ElasticSystem</Filter>
-    </None>
-    <None Include="..\..\src\Task\ElasticSystem\ElasticSystemCommon.inl">
       <Filter>ElasticSystem</Filter>
     </None>
     <None Include="..\..\src\Task\ElasticVolumeMesh\Local\ElasticVolumeMesh2.inl">
@@ -483,6 +483,9 @@
     </None>
     <None Include="..\..\src\IO\Vtk\CellInfoVtkWriter.inl">
       <Filter>IO\Vtk</Filter>
+    </None>
+    <None Include="..\..\src\Task\ElasticSystem\ElasticSystemCommon.inl">
+      <Filter>ElasticSystem</Filter>
     </None>
   </ItemGroup>
 </Project>
