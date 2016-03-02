@@ -286,7 +286,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::
 
               IndexType contactCellsCount = 0;
 
-              if (collisionWidth > std::numeric_limits<Scalar>::epsilon())
+              if (collisionWidth < std::numeric_limits<Scalar>::epsilon())
               {
                 ContactFinder< VolumeMeshT > contactFinder(this, cellIndex);
                 contactFinder.Find(contactCells, &contactCellsCount);

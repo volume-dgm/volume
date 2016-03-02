@@ -320,7 +320,7 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
 
               IndexType contactCellsCount = 0;
 
-              if (collisionWidth > std::numeric_limits<Scalar>::epsilon())
+              if (collisionWidth < std::numeric_limits<Scalar>::epsilon())
               {
                 ContactFinder< VolumeMeshT > contactFinder(this, cellIndex);
                 contactFinder.Find(contactCells, &contactCellsCount);

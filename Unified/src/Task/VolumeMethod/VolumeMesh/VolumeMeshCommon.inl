@@ -554,14 +554,15 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
   Scalar minTimeStep = std::numeric_limits<Scalar>::max();
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
   {
-    if (!cellMediumParameters[cellIndex].fixed)
+    if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
     {
       Scalar cellTimeStep = GetMinHeight(cellIndex) / cellMaxWaveSpeeds[cellIndex];
       minTimeStep = std::min(minTimeStep, cellTimeStep);
     }
   }
 
-  // std::cout << "Min timestep: " << minTimeStep << std::endl;
+  if (globalStepIndex % 100 == 0)
+    std::cout << "Min timestep: " << minTimeStep << std::endl;
 
   if (GetHierarchyLevelsCount() > 1)
   {
