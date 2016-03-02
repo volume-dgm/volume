@@ -14,14 +14,18 @@ struct CollisionProcessor
 
   CollisionProcessor(GhostCellFunctionGetter* functionGetter,
     const Vector& testPoint, Scalar* values):
-    functionGetter(functionGetter), testPoint(testPoint), values(values), found(false)
+    functionGetter(functionGetter), testPoint(testPoint), values(values), found(false), collidedCellIndex(IndexType(-1))
   {}
   void operator()(int nodeIndex)
   {
     if (!found)
     {
       IndexType neighbourCellIndex = functionGetter->mesh->aabbTree.GetUserData(nodeIndex);
-      if (functionGetter->TryGhostCell(testPoint, neighbourCellIndex, values)) found = true;
+      if (functionGetter->TryGhostCell(testPoint, neighbourCellIndex, values))
+      {
+        found = true;
+        collidedCellIndex = neighbourCellIndex;
+      }
     }
   }
 
@@ -29,6 +33,7 @@ struct CollisionProcessor
   Vector testPoint;
   Scalar* values;
   bool found;
+  IndexType collidedCellIndex;
 };
 
 template<typename MeshType>
@@ -55,11 +60,9 @@ struct GhostCellFunctionGetter
     MeshType* mesh,
     IndexType cellIndex,
     const Vector& edgeNormal,
-    Vector* ghostCellVertices,
     Scalar currTime,
     GetterType getterType):
       cellIndex(cellIndex),
-      ghostCellVertices(ghostCellVertices),
       edgeNormal(edgeNormal),
       mesh(mesh),
       currTime(currTime),
@@ -70,13 +73,12 @@ struct GhostCellFunctionGetter
 
   IndexType cellIndex;
   IndexType cellIndices[Space::NodesPerCell];
-  Vector* ghostCellVertices;
   Vector edgeNormal;
   MeshType* mesh;
   Scalar currTime;
   GetterType getterType;
 
-  void operator()(const Vector& point, Scalar* values)
+  IndexType operator()(const Vector& testPoint, Scalar* values)
   {
     switch (getterType)
     {
@@ -84,12 +86,35 @@ struct GhostCellFunctionGetter
       case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
     }
 
-    Vector globalPoint = mesh->RefToGlobalVolumeCoords(point, ghostCellVertices) + edgeNormal * mesh->collisionWidth;
+    Vector globalPoint = testPoint + edgeNormal * mesh->collisionWidth;
 
     CollisionProcessorT collisionProcessor(this, globalPoint, values);
     mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(globalPoint, globalPoint), collisionProcessor);
 
-    if (collisionProcessor.found) return;
+    return collisionProcessor.collidedCellIndex;
+  }
+
+  IndexType operator()(const Vector& testPoint, IndexType* const contactCells, IndexType contactCellsCount, Scalar* values)
+  {
+    switch (getterType)
+    {
+      case Solution: std::fill(values, values + dimsCount, 0); break;
+      case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
+    }
+
+    Vector globalPoint = testPoint + edgeNormal * mesh->collisionWidth;
+
+    IndexType collidedCellIndex(-1);
+    for (IndexType cellNumber = 0; cellNumber < contactCellsCount; ++cellNumber)
+    {
+      IndexType neighbourCellIndex = contactCells[cellNumber];
+      if (TryGhostCell(globalPoint, neighbourCellIndex, values))
+      {
+        collidedCellIndex = neighbourCellIndex;
+        break;
+      }
+    }
+    return collidedCellIndex;
   }
 
   bool TryGhostCell(const Vector& testPoint, int neighbourCellIndex,
@@ -111,7 +136,7 @@ struct GhostCellFunctionGetter
     if (hasSharedVertex) return false;
 
     Vector neighbourCellVertices[Space::NodesPerCell];
-    mesh->GetCellVertices(neighbourCellIndex, neighbourCellVertices);
+    mesh->GetCellVertices(neighbourCellIndices, neighbourCellVertices);
 
     //point is inside a colliding cell, counting it as a contact
     if (PointInCell<Scalar>(neighbourCellVertices, testPoint))

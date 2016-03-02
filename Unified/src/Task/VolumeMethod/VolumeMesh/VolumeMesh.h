@@ -310,6 +310,7 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::yDerivativeVolumeIntegralsSparse;
   using VolumeMeshCommon<Space, FunctionSpace, System>::cellVolumeAverageIntegrals;
   using VolumeMeshCommon<Space, FunctionSpace, System>::Initialize;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::collisionWidth;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::hierarchyDimentionsCount;
   using VolumeMeshCommon<Space, FunctionSpace, System>::threadCellsCount;
@@ -443,6 +444,7 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::yDerivativeVolumeIntegralsSparse;
   using VolumeMeshCommon<Space, FunctionSpace, System>::cellVolumeAverageIntegrals;
   using VolumeMeshCommon<Space, FunctionSpace, System>::Initialize;
+  using VolumeMeshCommon<Space, FunctionSpace, System>::collisionWidth;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetHierarchyLevelsCount;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMaxHierarchyLevel;

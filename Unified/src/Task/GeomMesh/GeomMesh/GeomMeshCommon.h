@@ -110,6 +110,7 @@ struct GeomMeshCommon: public GeomMeshBase<Space>
   void LoadGeom(Vector* vertices, IndexType* indices, IndexType verticesCount, IndexType cellsCount);
 
   void GetCellVertices(IndexType cellIndex, Vector* points) const;
+  void GetCellVertices(const IndexType* cellIncidentNodes, Vector* points) const;
   void GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const;
 
   // mass center of all nodes

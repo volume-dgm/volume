@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings dimsCount = "2">
+<Settings dimsCount= "2">
 
   <MeshBuilder>
     <SalomeFile fileName= "salome/icefield2d_side_01" />
@@ -13,11 +13,12 @@
 
   <Mesh fileName="meshes/icefield2d_side_01[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.00000"> 
     <MediumParams>
-      <PerSubmesh fileName = "meshes/icefield2d_side_01[<domain>].params">
+      <PerSubmesh fileName= "meshes/icefield2d_side_01[<domain>].params">
 
         <Submesh index="0" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> 
-        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "120" k= "2.2e+5" alpha="0" brittle="false" internalContactType= "0"
-          maxPlasticDeform="0.0003"/> 
+        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "900" k= "2.2e+5" alpha="0" brittle="false" internalContactType= "0"
+          maxPlasticDeform="0.0003" powderShearMult="0.1"/> <!-- E,G[Pa] rho[kg/m^3] k[Pa] maxPlaticDeform[dimentionless]  параметры льда, k - предел пластичности, powderShearMult in [0,1]
+          maxPlasticDeform -  -->
       </PerSubmesh> 
     </MediumParams>
 
@@ -25,47 +26,41 @@
       <Free interactionType= "0"/>
 	    <Free interactionType= "1" dynamicContactInteractionType= "2">
         <ExternalForce>
-          <HydraulicPressureFunctor fluidRho="1024" g="0 -9.81" fluidSurfacePoint="0 0.4"/>
+          <!-- <HydraulicPressureFunctor fluidRho="1000" g="0 -9.81" fluidSurfacePoint="0 0.4"/> -->
         </ExternalForce>
       </Free>
 
-<!--
-      <Fixed interactionType= "2">
+
+       <Fixed interactionType= "2"> 
         <ExternalVelocity>
           <ConstFunctor value= "-1.0 0 0"/>
         </ExternalVelocity>
       </Fixed>
-	-->
-
-   <Free interactionType= "2" dynamicContactInteractionType= "2">
-        <ExternalForce>
-          <HydraulicPressureFunctor fluidRho="1024" g="0 -9.81" fluidSurfacePoint="0 0.4"/>
-        </ExternalForce>
-   </Free>
-
+  
+  <!-- <Free interactionType= "2" dynamicContactInteractionType= "2"/> -->
 
 	 <Free interactionType= "3" dynamicContactInteractionType= "2">
         <ExternalForce>
-          <HydraulicPressureFunctor fluidRho="1024" g="0 -9.81" fluidSurfacePoint="0 0.4"/>
+          <!-- <HydraulicPressureFunctor fluidRho="1000" g="0 -9.81" fluidSurfacePoint="0 0.4"/> -->
         </ExternalForce>
    </Free>
 
 	 <Free interactionType= "4" dynamicContactInteractionType= "2">
         <ExternalForce>
-          <HydraulicPressureFunctor fluidRho="1024" g="0 -9.81" fluidSurfacePoint="0 0.4"/>
+          <!-- <HydraulicPressureFunctor fluidRho="1000" g="0 -9.81" fluidSurfacePoint="0 0.4"/> -->
         </ExternalForce>
    </Free>
 
 	 <Free interactionType= "5" dynamicContactInteractionType= "2">
         <ExternalForce>
-          <HydraulicPressureFunctor fluidRho="1024" g="0 -9.81" fluidSurfacePoint="0 0.4"/>
+          <!-- <HydraulicPressureFunctor fluidRho="1000" g="0 -9.81" fluidSurfacePoint="0 0.4"/> -->
         </ExternalForce>    
    </Free>
 
     </Boundaries>
 
     <Contacts>
-      <Glue interactionType= "0" dynamicBoundaryInteractionType= "1" maxLongitudinalStress="1.2e+6"/>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "1" maxLongitudinalStress="0.9e+6"/> <!-- maxLongitudinalStress - максимальное растягивающее напряжение, критерий разрушения-->
       <Glue interactionType= "1"/>
       <Glide interactionType= "2" dynamicBoundaryInteractionType= "1" />
     </Contacts>
@@ -76,7 +71,7 @@
     locationsFileName="meshes/iceFieldDetectorPositions.loc" />
 
   <Snapshot>
-    <Period frames="200" />
+    <Period frames="300" />
     <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
       <Frame  center = "5 0" size = "12 3" margin = "0.0" />
       <Resolution resolution="450 150" />
@@ -94,25 +89,22 @@
 
   <Task destinationTime = "10e-0">
     <IniState>
-
       <BoxState boxPoint1 = "-5000 -5000" boxPoint2 = "0.255 5000" velocity = "0.0 0.0" />
-      <BoxState boxPoint1 = "0.255 -5000" boxPoint2 = "5000 5000" velocity = "1.5 -1.5" /> <!-- -1.0 0 -->
-
+      <BoxState boxPoint1 = "0.255 -5000" boxPoint2 = "5000 5000" velocity = "-1 0" /> <!-- Начальное значение скорости -->
     </IniState>
 
     <SourceTerms> 
-      <ConstantAcceleration acceleration="0 -9.81"/> 
+      <!-- <ConstantAcceleration acceleration="0 -9.81"/>  -->
     </SourceTerms>
   </Task>
 
-
   <Solver polynomialsOrder= "1" precision="double" integrator="RK4" 
-        tolerance="1e-1" maxScale="1e-0" maxTimeStep="3e-6" hierarchyLevelsCount="1"
+        tolerance="1e-1" maxScale="1e-0" maxTimeStep="2e-6" hierarchyLevelsCount="1"
         allowMovement="true" allowPlasticity="true" 
         allowContinuousDestruction="true" allowDiscreteDestruction="false"
         tensionErrorMult="1e-6" velocityErrorMult="1e-0" positionErrorMult="1e-5"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
-        <Erosion cellAspectRatio="6" minHeightRatio="0.0"/>
+        <Erosion cellAspectRatio="6" minHeightRatio="0.0" rhoReduction="4" maxPlasticDeformation="0.03"/>
   </Solver>
 
 </Settings>

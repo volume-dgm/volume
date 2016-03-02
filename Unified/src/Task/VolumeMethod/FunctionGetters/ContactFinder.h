@@ -25,8 +25,13 @@ struct ContactProcessor
     IndexType neighbourCellIndex = contactFinder->mesh->aabbTree.GetUserData(nodeIndex);
     if (contactFinder->TryCell(cellIndex, neighbourCellIndex))
     {
-      contactedCells[*contactedCellsCount] = neighbourCellIndex;
-      (*contactedCellsCount)++;
+      if (contactedCellsCount)
+      {
+        (*contactedCellsCount)++;
+
+        if (contactedCells)
+          contactedCells[*contactedCellsCount] = neighbourCellIndex;
+      }
     }
   }
 
@@ -58,7 +63,7 @@ struct ContactFinder
     cellIndex(cellIndex)
   {
     mesh->GetFixedCellIndices(cellIndex, cellIndices);
-    mesh->GetCellVertices(cellIndex, cellVertices);
+    mesh->GetCellVertices(cellIndices, cellVertices);
   }
 
   MeshType* mesh;

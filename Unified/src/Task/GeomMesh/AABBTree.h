@@ -264,10 +264,10 @@ private:
   }
 
   template<typename Functor>
-  void FindCollisionsRecursive(const AABB &aabb, Functor &functor, int currNode)
+  void FindCollisionsRecursive(const AABB &aabb, Functor& functor, int currNode)
   {
     if(!aabb.Intersects(nodes[currNode].aabb)) return;
-    //functor(currNode);
+
     if(!nodes[currNode].IsLeaf())
     {
       for(int childNumber = 0; childNumber < 2; childNumber++)
@@ -276,8 +276,8 @@ private:
     {
       functor(currNode);
     }
-
   }
+
   template<typename OtherTree, typename Functor>
   void FindTreeCollisionsRecursive(const OtherTree &otherTree, Functor &functor, int currNode0, int currNode1) const
   {

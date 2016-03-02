@@ -166,6 +166,11 @@ void VolumeMesh<Space2, FunctionSpace, System>::
     MatrixXDimFunc flux;
 
     Vector cellVertices[Space::NodesPerCell];
+    Scalar tmp[dimsCount];
+
+    const IndexType MaxContactCellsCount = 64;
+    IndexType contactCells[MaxContactCellsCount];
+
 
     for(int cellIndex = segmentBegin; cellIndex < segmentEnd; ++cellIndex)
     {
@@ -246,8 +251,6 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             cellMediumParameters[(correspondingCellIndex == IndexType(-1)) ? cellIndex : correspondingCellIndex],
             edgeNormal, xnAuxMatrix, xExteriorMatrix);
 
-          bool outgoingFluxAdded = false;
-
           if (correspondingCellIndex == IndexType(-1))
           {
             // bounary condition
@@ -265,8 +268,6 @@ void VolumeMesh<Space2, FunctionSpace, System>::
               edgeFlux.noalias() += Scalar(2.0) * (xExteriorMatrix * edgeTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcEdges[edgeNumber].surfaceIntegral);
             }
 
-            outgoingFluxAdded = true;
-
             if (!allowDynamicCollisions || dynamicContactType == IndexType(-1)) //set 1 for regular boundary, 0 for dynamic collisions
             {
               system.BuildBoundaryMatrix(interactionType, boundaryMatrix);
@@ -275,37 +276,53 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             }
             else
             {
-              Vector ghostCellVertices[Space::NodesPerCell];
-              GetGhostCellVertices(cellIndex, edgeNumber, ghostCellVertices);
-              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, edgeNormal, ghostCellVertices, time,
+              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, edgeNormal, time,
                 GhostCellFunctionGetter<VolumeMeshT>::Solution);
 
-              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, edgeNormal, ghostCellVertices, time,
+              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, edgeNormal, time,
                 GhostCellFunctionGetter<VolumeMeshT>::MediumParams);
 
               flux.setZero();
+
+              IndexType contactCellsCount = 0;
+
+              if (collisionWidth > std::numeric_limits<Scalar>::epsilon())
+              {
+                ContactFinder< VolumeMeshT > contactFinder(this, cellIndex);
+                contactFinder.Find(contactCells, &contactCellsCount);
+              }
 
               // quadrature integration of numerical flux
               for (IndexType pointIndex = 0; pointIndex < quadraturePointsForBorder.size(); ++pointIndex)
               {
                 Vector globalPoint = (edgeGlobalVertices[1] - edgeGlobalVertices[0]) * quadraturePointsForBorder[pointIndex] + edgeGlobalVertices[0];
+
                 Vector refPoint = GlobalToRefVolumeCoords(globalPoint, cellVertices);
-
-                Vector ghostRefPoint = GlobalToRefVolumeCoords(globalPoint, ghostCellVertices);
-
                 typename System::ValueType interiorSolution = GetRefCellSolution(cellIndex, refPoint);
-                typename System::ValueType exteriorSolution;
-                functionGetter(ghostRefPoint, exteriorSolution.values);
-
-                MediumParameters exteriorParams;
-                paramsGetter(ghostRefPoint, exteriorParams.params);
-
-                Scalar tmp[dimsCount];
+                
                 MatrixMulVector(edgeTransformMatrixInv.data(), interiorSolution.values, tmp, dimsCount, dimsCount);
                 std::copy(tmp, tmp + dimsCount, interiorSolution.values);
 
-                MatrixMulVector(edgeTransformMatrixInv.data(), exteriorSolution.values, tmp, dimsCount, dimsCount);
-                std::copy(tmp, tmp + dimsCount, exteriorSolution.values);
+                MediumParameters exteriorParams;
+                IndexType collidedCellIndex;
+
+                if (collisionWidth > std::numeric_limits<Scalar>::epsilon())
+                  collidedCellIndex = paramsGetter(globalPoint, exteriorParams.params);
+                else
+                  collidedCellIndex = paramsGetter(globalPoint, contactCells, contactCellsCount, exteriorParams.params);
+
+                typename System::ValueType exteriorSolution;
+
+                if (collidedCellIndex != IndexType(-1))
+                {
+                  if (!functionGetter.TryGhostCell(globalPoint + edgeNormal * collisionWidth, collidedCellIndex, exteriorSolution.values))
+                  {
+                    assert(0);
+                  }
+
+                  MatrixMulVector(edgeTransformMatrixInv.data(), exteriorSolution.values, tmp, dimsCount, dimsCount);
+                  std::copy(tmp, tmp + dimsCount, exteriorSolution.values);
+                }
 
                 typename System::ValueType riemannSolution =
                   system.GetRiemannSolution(interiorSolution, exteriorSolution,

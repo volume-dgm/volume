@@ -514,9 +514,15 @@ inline void GeomMeshCommon<Space>::GetCellVertices(IndexType cellIndex, Vector* 
   IndexType cellIndices[Space::NodesPerCell];
   GetFixedCellIndices(cellIndex, cellIndices);
 
-  for(IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
+  GetCellVertices(cellIndices, points);
+}
+
+template <typename Space>
+inline void GeomMeshCommon<Space>::GetCellVertices(const IndexType* cellIncidentNodes, Vector* points) const
+{
+  for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
   {
-    points[nodeNumber] = nodes[cellIndices[nodeNumber]].pos;
+    points[nodeNumber] = nodes[cellIncidentNodes[nodeNumber]].pos;
   }
 }
 

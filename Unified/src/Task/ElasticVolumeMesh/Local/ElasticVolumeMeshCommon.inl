@@ -228,8 +228,8 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
 
       for(IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
       {
-        //Vector v = InterpolateElasticRef(cellIndex, nodeNumber, VolumeMeshTypeCommon::CellNode).GetVelocity();
-        Vector v = InterpolateElastic(cellIndex, volumeMesh.nodes[cellIndices[nodeNumber]].pos).GetVelocity();
+        Vector v = InterpolateElasticRef(cellIndex, nodeNumber, VolumeMeshTypeCommon::CellNode).GetVelocity();
+        //Vector v = InterpolateElastic(cellIndex, volumeMesh.nodes[cellIndices[nodeNumber]].pos).GetVelocity();
 
         nodeVelocities[cellIndices[nodeNumber]] += v;
       }
