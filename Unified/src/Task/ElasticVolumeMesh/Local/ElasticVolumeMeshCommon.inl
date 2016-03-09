@@ -528,7 +528,6 @@ struct PlasticityCorrector
 
   void operator()(const Vector& refPoint, Scalar* values) const
   {
-
   }
 
   bool ForBasisPointsOnly() const
@@ -554,6 +553,9 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
       volumeMesh.GetCellVertices(cellIndex, cellVertices);
       Scalar jacobian = volumeMesh.GetCellDeformJacobian(cellVertices);
 
+      const Scalar k0 = volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
+      const Scalar  a = volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
+
       for (IndexType pointIndex = 0; pointIndex < volumeMesh.quadraturePoints.size(); ++pointIndex)
       {
         const bool brittle = volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
@@ -561,16 +563,14 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
         {
           Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, pointIndex, VolumeMeshTypeCommon::Quadrature);
           // Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, volumeMesh.quadraturePoints[pointIndex]);
-          const Scalar k0 = volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
-          const Scalar  a = volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
           const Scalar pressure = elastic.GetPressure();
           const Scalar k = k0 + a * pressure;
 
           if (ProcessPlasticity(k, elastic, false))
           {
             plasticDeformRate += GetDeformRate(cellIndex, volumeMesh.quadraturePoints[pointIndex]) *
-                volumeMesh.quadratureWeights[pointIndex] *
-                jacobian;
+              volumeMesh.quadratureWeights[pointIndex] *
+              jacobian;
           }
         }
       }
@@ -582,7 +582,6 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
       }
     }
   }
-
   typedef PlasticityCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace> > PlasticityCorrectorType;
   ApplyCorrector< ElasticVolumeMeshCommon<Space, FunctionSpace>, PlasticityCorrectorType>(this);
 }
@@ -614,7 +613,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
     {
       volumeMesh.cellSolutions[cellIndex].SetToZero();
 
-      const IndexType MaxContactCellsCount = 64;
+      const IndexType MaxContactCellsCount = 1024;
       IndexType contactCells[MaxContactCellsCount];
       IndexType contactCellsCount = 0;
       
@@ -648,7 +647,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
         IndexType contactTypeIndex = volumeMesh.GetInteractionType(cellIndex, faceNumber);
         IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber);
 
-        if (contactTypeIndex == IndexType(-1)) continue;
+        if (contactTypeIndex == IndexType(-1) || correspondingCellIndex == IndexType(-1)) continue;
         IndexType dynamicBoundaryType = volumeMesh.system.GetContactDynamicBoundaryType(contactTypeIndex);
         if (dynamicBoundaryType != IndexType(-1))
         {
@@ -703,4 +702,10 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
   }
 
   return pow(Scalar(2.0 / 3) * effectiveStrain, Scalar(0.5));
+}
+
+template<typename Space, typename FunctionSpace>
+typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetTimeStepPrediction()
+{
+  return volumeMesh.GetTimeStepPrediction();
 }

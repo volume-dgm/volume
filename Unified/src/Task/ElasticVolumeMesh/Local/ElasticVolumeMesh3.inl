@@ -17,7 +17,8 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::
   if (allowContinuousDestruction)
   {
     HandleContinuousDestruction();
-    for (IndexType cellIndex = 0; cellIndex < volumeMesh.cellMediumParameters.size(); ++cellIndex)
+    #pragma omp parallel for
+    for (int cellIndex = 0; cellIndex < int(volumeMesh.cellMediumParameters.size()); ++cellIndex)
     {
       (*isCellBroken)[cellIndex] = volumeMesh.cellMediumParameters[cellIndex].destroyed;
     }
@@ -54,7 +55,8 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::
       // DetectionApproaches::Surface;
       // DetectionApproaches::Combined;
 
-      for (IndexType contactFaceIndex = 0; contactFaceIndex < contactFacesCount[contactTypeIndex]; ++contactFaceIndex)
+      #pragma omp parallel for
+      for (int contactFaceIndex = 0; contactFaceIndex < int(contactFacesCount[contactTypeIndex]); ++contactFaceIndex)
       {
         bool isCurrentContactBroken = false;
         FaceLocationPair contactFacesLocation = volumeMesh.GetFaceLocation(contactFaces[offset + contactFaceIndex]);
@@ -68,14 +70,11 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::
           Elastic elastic = GetAverageCellElastic(cellIndex);
 
           Scalar principalStresses[Space3::Dimension];
-          Vector principalNormals[Space3::Dimension];
-          elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
-
+          elastic.GetTension().GetEigenValues(principalStresses);
           IndexType maxStressIndex = IndexType(-1);
 
           for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
           {
-            /* only extension */
             if (principalStresses[stressIndex] > fabs(maxLongitudinalStress))
             {
               if (maxStressIndex == IndexType(-1) || principalStresses[stressIndex] > principalStresses[maxStressIndex])
@@ -86,6 +85,10 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::
           }
 
           if (maxStressIndex == IndexType(-1)) continue;
+
+          Vector principalNormals[Space3::Dimension];
+          elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
+
           const Vector& mainNormal = principalNormals[maxStressIndex];
 
           // minimun cos of angle between normal to crack and edge tangent
@@ -203,26 +206,43 @@ struct ContinuousDestructionCorrector3
     if (mesh->volumeMesh.cellMediumParameters[cellIndex].destroyed)
     {
       Scalar principalStresses[Space3::Dimension];
-      Vector principalNormals[Space3::Dimension];
-      elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
 
+      Scalar test[Space3::Dimension];
+      elastic.GetTension().GetEigenValues(test);
+
+      bool needToCorrect = false;
       for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
       {
-        principalStresses[stressIndex] = std::min<Scalar>(0, principalStresses[stressIndex]);
+        if (principalStresses[stressIndex] > 0)
+        {
+          needToCorrect = true;
+          break;
+        }
       }
 
-      Tensor t;
-      t.xx = principalStresses[0];
-      t.yy = principalStresses[1];
-      t.zz = principalStresses[2];
+      if (needToCorrect)
+      {
+        Vector principalNormals[Space3::Dimension];
+        elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
 
-      std::swap(principalNormals[0].y, principalNormals[1].x);
-      std::swap(principalNormals[0].z, principalNormals[2].x);
-      std::swap(principalNormals[1].z, principalNormals[2].y);
-      
-      t = t.RotateAxes(principalNormals[0], principalNormals[1], principalNormals[2]);
-      // rotate from local principal tensions axes to global coordinates
-      elastic.SetTension(t);
+        for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
+        {
+          principalStresses[stressIndex] = std::min<Scalar>(0, principalStresses[stressIndex]);
+        }
+
+        Tensor t;
+        t.xx = principalStresses[0];
+        t.yy = principalStresses[1];
+        t.zz = principalStresses[2];
+
+        std::swap(principalNormals[0].y, principalNormals[1].x);
+        std::swap(principalNormals[0].z, principalNormals[2].x);
+        std::swap(principalNormals[1].z, principalNormals[2].y);
+
+        t = t.RotateAxes(principalNormals[0], principalNormals[1], principalNormals[2]);
+        // rotate from local principal tensions axes to global coordinates
+        elastic.SetTension(t);
+      }
     }
 
     std::copy(elastic.values, elastic.values + mesh->volumeMesh.dimsCount, values);
@@ -230,7 +250,6 @@ struct ContinuousDestructionCorrector3
 
   void operator()(const Vector& refPoint, Scalar* values) const
   {
-
   }
 
   bool ForBasisPointsOnly() const
@@ -346,109 +365,118 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::FindDestructions(std::vector<bool
 
   if (allowDiscreteDestruction)
   {
-    for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
+    #pragma omp parallel
     {
-      Scalar maxSinOfAngle = 0;
-      IndexType bestFaceNumber = IndexType(-1);
-      IndexType dynamicBoundaryTypes[Space::FacesPerCell];
+      int threadIndex = omp_get_thread_num();
+      // todo
+      IndexType stateIndex = threadIndex * volumeMesh.GetMaxHierarchyLevel() * volumeMesh.GetHierarchyLevelsCount() * 2 + 1;
+      int segmentBegin = volumeMesh.threadSegmentBegins[stateIndex];
+      int segmentEnd   = volumeMesh.threadSegmentEnds[stateIndex];
 
-      for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+      for (int cellIndex = segmentBegin; cellIndex < segmentEnd; ++cellIndex)
       {
-        Scalar maxLongitudinalStress;
-        Scalar maxShearStress;
-
-        IndexType correspondingCellIndex  = volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber);
-        IndexType correspondingFaceNumber = volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber);
-        IndexType interactionType = volumeMesh.GetInteractionType(cellIndex, faceNumber);
-
-        if (interactionType == IndexType(-1)) continue;
-
-        dynamicBoundaryTypes[faceNumber] = volumeMesh.system.GetContactDynamicBoundaryType(interactionType);
-
-        if (dynamicBoundaryTypes[faceNumber] != IndexType(-1))
-        {
-          volumeMesh.system.GetContactCriticalInfo(interactionType, maxShearStress, maxLongitudinalStress);
-        } else
-        {
-          continue;
-        }
-
-        Elastic elastic = volumeMesh.GetFaceAverageSolution(cellIndex, faceNumber);
-        //Elastic elastic = volumeMesh.GetCellAverageSolution(cellIndex);
-
-        Scalar principalStresses[Space3::Dimension];
-        Vector principalNormals[Space3::Dimension];
-        elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
-
-        IndexType maxStressIndex = IndexType(-1);
-
-        for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
-        {
-          if (maxStressIndex == IndexType(-1) || principalStresses[stressIndex] > principalStresses[maxStressIndex])
-          {
-            maxStressIndex = stressIndex;
-          }
-        }
-
-        /* only extension */
-        if (principalStresses[maxStressIndex] > fabs(maxLongitudinalStress) || correspondingCellIndex == IndexType(-1))
-        {
-          const Vector& mainNormal = principalNormals[maxStressIndex];
-          Vector faceNormal = volumeMesh.GetFaceExternalNormal(cellIndex, faceNumber).GetNorm();
-
-          if (maxSinOfAngle < fabs(mainNormal * faceNormal))
-          {
-            maxSinOfAngle = fabs(mainNormal * faceNormal);
-            bestFaceNumber = faceNumber;
-          }
-        }
-      }
-
-      if (bestFaceNumber != IndexType(-1))
-      {
-        if (volumeMesh.cellMediumParameters[cellIndex].destroyed) continue;
+        Scalar maxSinOfAngle = 0;
+        IndexType bestFaceNumber = IndexType(-1);
+        IndexType dynamicBoundaryTypes[Space::FacesPerCell];
 
         // if this cell is deleted due to erosion
-        if (!volumeMesh.isCellAvailable[cellIndex]) continue;
+        if (!volumeMesh.isCellAvailable[cellIndex] || volumeMesh.cellMediumParameters[cellIndex].fixed) continue;
+        if (volumeMesh.cellMediumParameters[cellIndex].destroyed) continue;
 
-        IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, bestFaceNumber);
-        IndexType correspondingFaceNumber = volumeMesh.GetCorrespondingFaceNumber(cellIndex, bestFaceNumber);
-        if (correspondingCellIndex == IndexType(-1) ||
-          correspondingFaceNumber == IndexType(-1) ||
-          volumeMesh.cellMediumParameters[correspondingCellIndex].destroyed) continue;
-
-        // check if it is last non-destructed edge for this cell
-        IndexType incidentCellsCount = 0;
         for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
         {
-          if (volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber) != IndexType(-1) &&
-            volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber) != IndexType(-1))
+          Scalar maxLongitudinalStress;
+          Scalar maxShearStress;
+
+          IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber);
+          IndexType correspondingFaceNumber = volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber);
+          IndexType interactionType = volumeMesh.GetInteractionType(cellIndex, faceNumber);
+
+          if (interactionType == IndexType(-1)) continue;
+
+          dynamicBoundaryTypes[faceNumber] = volumeMesh.system.GetContactDynamicBoundaryType(interactionType);
+
+          if (dynamicBoundaryTypes[faceNumber] != IndexType(-1))
           {
-            incidentCellsCount++;
+            volumeMesh.system.GetContactCriticalInfo(interactionType, maxShearStress, maxLongitudinalStress);
+          }
+          else
+          {
+            continue;
+          }
+
+          Elastic elastic = volumeMesh.GetFaceAverageSolution(cellIndex, faceNumber);
+          //Elastic elastic = volumeMesh.GetCellAverageSolution(cellIndex);
+
+          Scalar principalStresses[Space3::Dimension];
+          Vector principalNormals[Space3::Dimension];
+          elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
+
+          IndexType maxStressIndex = IndexType(-1);
+
+          for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
+          {
+            if (maxStressIndex == IndexType(-1) || principalStresses[stressIndex] > principalStresses[maxStressIndex])
+            {
+              maxStressIndex = stressIndex;
+            }
+          }
+
+          // only extension
+          if (principalStresses[maxStressIndex] > fabs(maxLongitudinalStress) || correspondingCellIndex == IndexType(-1))
+          {
+            const Vector& mainNormal = principalNormals[maxStressIndex];
+            Vector faceNormal = volumeMesh.GetFaceExternalNormal(cellIndex, faceNumber).GetNorm();
+
+            if (maxSinOfAngle < fabs(mainNormal * faceNormal))
+            {
+              maxSinOfAngle = fabs(mainNormal * faceNormal);
+              bestFaceNumber = faceNumber;
+            }
           }
         }
 
-        if (incidentCellsCount == 1)
+        if (bestFaceNumber != IndexType(-1))
         {
-          DestroyCellMaterial(cellIndex, volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
-          (*isCellBroken)[cellIndex] = true;
-          continue;
-        }
+          IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, bestFaceNumber);
+          IndexType correspondingFaceNumber = volumeMesh.GetCorrespondingFaceNumber(cellIndex, bestFaceNumber);
+          if (correspondingCellIndex == IndexType(-1) ||
+            correspondingFaceNumber == IndexType(-1) ||
+            volumeMesh.cellMediumParameters[correspondingCellIndex].destroyed) continue;
 
-        if (volumeMesh.isCellAvailable[cellIndex])
-        {
-          //  volumeMesh.AddToAABBTree(cellIndex);
-        }
+          // check if it is last non-destructed edge for this cell
+          IndexType incidentCellsCount = 0;
+          for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+          {
+            if (volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber) != IndexType(-1) &&
+              volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber) != IndexType(-1))
+            {
+              incidentCellsCount++;
+            }
+          }
 
-        if (volumeMesh.isCellAvailable[correspondingCellIndex])
-        {
-          //  volumeMesh.AddToAABBTree(correspondingCellIndex);
-        }
+          if (incidentCellsCount == 1)
+          {
+            DestroyCellMaterial(cellIndex, volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
+            (*isCellBroken)[cellIndex] = true;
+            continue;
+          }
 
-        DestroyFace(cellIndex, bestFaceNumber, dynamicBoundaryTypes[bestFaceNumber]);
+          if (volumeMesh.isCellAvailable[cellIndex])
+          {
+            //  volumeMesh.AddToAABBTree(cellIndex);
+          }
+
+          if (volumeMesh.isCellAvailable[correspondingCellIndex])
+          {
+            //  volumeMesh.AddToAABBTree(correspondingCellIndex);
+          }
+
+          DestroyFace(cellIndex, bestFaceNumber, dynamicBoundaryTypes[bestFaceNumber]);
+        }
       }
     }
   }
 
   HandleMaterialErosion();
-}
+} 

@@ -93,6 +93,7 @@
     <ClInclude Include="..\..\src\Task\GeomMesh\MeshIO\Distributed\TransitionInfo.h" />
     <ClInclude Include="..\..\src\Task\GeomMesh\MeshIO\Local\MeshIO.h" />
     <ClInclude Include="..\..\src\Task\GeomMesh\MeshIO\Local\MeshIOBase.h" />
+    <ClInclude Include="..\..\src\Task\GeomMesh\NodeGroupManager.h" />
     <ClInclude Include="..\..\src\Task\GeomMesh\TimeHierarchyLevelsManager.h" />
     <ClInclude Include="..\..\src\Task\GeomMesh\TopologyReconstructor.h" />
     <ClInclude Include="..\..\src\Task\Task\SettingsParser\MeshBuilderSettingsParser.h" />
@@ -212,6 +213,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <OpenMP>GenerateSequentialCode</OpenMP>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(ProjectName)Debug.exe</OutputFile>
@@ -224,7 +227,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;TIXML_USE_STL;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;EIGEN_DEFAULT_TO_ROW_MAJOR;EIGEN_NO_DEBUG;EIGEN_NO_AUTOMATIC_RESIZING;EIGEN_FAST_MATH;EIGEN_NO_MALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;TIXML_USE_STL;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;EIGEN_NO_DEBUG;EIGEN_NO_AUTOMATIC_RESIZING;EIGEN_DEFAULT_TO_ROW_MAJOR;EIGEN_FAST_MATH;EIGEN_NO_MALLOC;EIGEN_DONT_PARALLELIZE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <OpenMPSupport>true</OpenMPSupport>
       <PrecompiledHeader>
@@ -232,13 +235,22 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FlushDenormalResultsToZero>true</FlushDenormalResultsToZero>
+      <EnableMatrixMultiplyLibraryCall>Yes</EnableMatrixMultiplyLibraryCall>
+      <Parallelization>true</Parallelization>
+      <UseIntelOptimizedHeaders>true</UseIntelOptimizedHeaders>
+      <OpenMP>GenerateSequentialCode</OpenMP>
+      <Cpp0xSupport>true</Cpp0xSupport>
+      <OffloadOpenMP>Default</OffloadOpenMP>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

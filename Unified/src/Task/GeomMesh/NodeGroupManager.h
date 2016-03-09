@@ -49,6 +49,7 @@ public:
   void RemoveNode(IndexType nodeIndex)
   {
     IndexType groupIndex = nodeGroupIndices[nodeIndex];
+    assert(groupIndex != IndexType(-1));
 
     IndexType nodeNumber = 0;
     while (nodeNumber < nodeGroupSizes[groupIndex] && nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber] != nodeIndex)
@@ -59,6 +60,7 @@ public:
     std::swap(nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber], nodeGroupPool[groupIndex * maxNodeGroupSize + nodeGroupSizes[groupIndex] - 1]);
     nodeGroupPool[groupIndex * maxNodeGroupSize + nodeGroupSizes[groupIndex] - 1] = 0;
     nodeGroupSizes[groupIndex]--;
+    nodeGroupIndices[nodeIndex] = IndexType(-1);
   }
 
   void RemoveCell(IndexType cellIndex)

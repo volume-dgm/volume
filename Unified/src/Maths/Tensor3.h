@@ -44,7 +44,7 @@ public:
 
   T GetSecondInv() const
   {
-    return xx * xy + xx * xz + xy * yz - Sqr(xy) - Sqr(xz) - Sqr(yz);
+    return xx * yy + xx * zz + yy * zz - Sqr(xy) - Sqr(xz) - Sqr(yz);
   }
 
   T GetThirdInv() const
@@ -119,6 +119,27 @@ public:
     return Tensor3(res.data[0][0], res.data[0][1], res.data[0][2],
                                    res.data[1][1], res.data[1][2],
                                                    res.data[2][2]);
+  }
+
+  void GetEigenValues(T* eigenValues) const
+  {
+    // from http://www.continuummechanics.org/cm/principalstress.html
+    T i1 = GetTrace();
+    T i2 = GetSecondInv();
+    T i3 = GetThirdInv();
+
+    T q = (3 * i2 - Sqr(i1)) / 9;
+    T r = (2 * pow(i1, 3) - 9 * i1 * i2 + 27 * i3) / 54;
+
+    T theta = acos(r / pow(fabs(q), 1.5) );
+
+
+    Vector3<T> res = T(2.0) * sqrt( fabs(q) ) * Vector3<T>(cos(theta / 3), cos((theta + 2 * pi) / 3), cos((theta + 4 * pi) / 3)) +
+    i1 / T(3.0) * Vector3<T>::one();
+
+    eigenValues[0] = res.x;
+    eigenValues[1] = res.y;
+    eigenValues[2] = res.z;
   }
 
   void GetEigenValues(T* eigenValues, Vector3<T>* eigenVectors) const

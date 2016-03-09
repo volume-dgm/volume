@@ -20,7 +20,7 @@
         <!-- fileName - name of params file. [optional, defValue = Mesh/filename + ".params"] -->
 
         <Submesh index="0" pSpeed = "2.0" sSpeed = "1.0" rho = "1.0" internalContactType = "0"
-          k= "2.2e+5" alpha="0" brittle="false" maxPlasticDeform="0.006"/> <!-- Description of one submesh params. Must contain one such section for every submesh used. [optional] -->
+          k= "2.2e+5" alpha="0" brittle="false" maxPlasticDeform="0.006" powderShearMult="0.1"/> <!-- Description of one submesh params. Must contain one such section for every submesh used. [optional] -->
         <!-- index - number of submesh index properties are assigned to. [required]
         pSpeed, sSpeed, rho - p-wave speeds, s-wave speeds [optional, defValue = values calculated from lambda/mju/rho]
         lambda, mju, rho - Lame params [optional, defValue = values calculated from pSpeed, sSpeed]
@@ -150,7 +150,8 @@
         allowContinuousDestruction="false" 
         tensionErrorMult="1e+2" velocityErrorMult="1e+2" positionErrorMult="1e-0"
         velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
-    <Erosion cellAspectRatio="6" minHeightRatio="0.0" maxPlasticDeformation="0.1"/>
+    <Erosion cellAspectRatio="6" minHeightRatio="0.0" maxPlasticDeformation="0.1" maxPlasticDeformation="0.03"/>
+    <DynamicContactFrame center="5 0 1" size="6 10 6"/>
   </Solver>
 
 

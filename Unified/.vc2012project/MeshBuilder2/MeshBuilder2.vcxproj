@@ -128,7 +128,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)..\.bin\</OutDir>
     <IntDir>$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)../3rdparty/metis/programs/.;$(SolutionDir)../3rdparty/metis/libmetis/.;$(SolutionDir)../3rdparty/metis/GKlib/.;$(SolutionDir)../3rdparty/metis/include/.;$(SolutionDir)..\3rdparty\eigen;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../3rdparty/metis/programs/.;$(SolutionDir)../3rdparty/metis/libmetis/.;$(SolutionDir)../3rdparty/metis/GKlib/.;$(SolutionDir)../3rdparty/metis/include/.;$(SolutionDir)../3rdparty/eigen/.;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../.lib/Metis;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,7 +139,7 @@
     <OutDir>$(SolutionDir)..\.bin\</OutDir>
     <IntDir>$(SolutionDir)..\.build\$(ProjectName)\$(Configuration)\</IntDir>
     <LibraryPath>$(SolutionDir)../.lib/Metis;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)../3rdparty/metis/libmetis/.;$(SolutionDir)../3rdparty/metis/GKlib/.;$(SolutionDir)../3rdparty/metis/include/.;$(SolutionDir)../3rdparty/metis/programs/.;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../3rdparty/metis/libmetis/.;$(SolutionDir)../3rdparty/metis/GKlib/.;$(SolutionDir)../3rdparty/metis/include/.;$(SolutionDir)../3rdparty/metis/programs/.;$(SolutionDir)../3rdparty/eigen/.;$(IncludePath)</IncludePath>
     <TargetName>$(ProjectName)Debug</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

@@ -17,7 +17,7 @@ struct ContactProcessor
     IndexType cellIndex, IndexType* contactedCells, IndexType* contactedCellsCount):
     contactFinder(contactFinder), cellIndex(cellIndex), contactedCells(contactedCells), contactedCellsCount(contactedCellsCount)
   {
-    *contactedCellsCount = 0;
+    (*contactedCellsCount) = 0;
   }
 
   void operator()(int nodeIndex)
@@ -27,10 +27,10 @@ struct ContactProcessor
     {
       if (contactedCellsCount)
       {
-        (*contactedCellsCount)++;
-
         if (contactedCells)
           contactedCells[*contactedCellsCount] = neighbourCellIndex;
+
+        (*contactedCellsCount)++;
       }
     }
   }

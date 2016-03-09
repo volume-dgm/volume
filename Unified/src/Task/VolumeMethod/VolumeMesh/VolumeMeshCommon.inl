@@ -524,6 +524,27 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::
 }
 
 template <typename Space, typename FunctionSpace, typename System>
+typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTimeStepPrediction()
+{
+  #pragma omp parallel for
+  for (int cellIndex = 0; cellIndex < int(cells.size()); ++cellIndex)
+  {
+    cellMaxWaveSpeeds[cellIndex] = system.GetMaxWaveSpeed(cellMediumParameters[cellIndex]);
+  }
+
+  Scalar minTimeStep = std::numeric_limits<Scalar>::max();
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+  {
+    if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
+    {
+      Scalar cellTimeStep = GetMinHeight(cellIndex) / cellMaxWaveSpeeds[cellIndex];
+      minTimeStep = std::min(minTimeStep, cellTimeStep);
+    }
+  }
+  return minTimeStep / Scalar(FunctionSpace::order + 0.5);
+}
+
+template <typename Space, typename FunctionSpace, typename System>
 void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(IndexType globalStepIndex, 
   bool allowCollisions, bool externalInitialization)
 {
@@ -546,20 +567,8 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
   // build time hierachy levels
   timeHierarchyLevelsManager.Initialize(cells.size(), GetHierarchyLevelsCount(), GetSolverPhasesCount(), externalInitialization);
 
-  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
-  {
-    cellMaxWaveSpeeds[cellIndex] = system.GetMaxWaveSpeed(cellMediumParameters[cellIndex]);
-  }
 
-  Scalar minTimeStep = std::numeric_limits<Scalar>::max();
-  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
-  {
-    if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
-    {
-      Scalar cellTimeStep = GetMinHeight(cellIndex) / cellMaxWaveSpeeds[cellIndex];
-      minTimeStep = std::min(minTimeStep, cellTimeStep);
-    }
-  }
+  Scalar minTimeStep = GetTimeStepPrediction();
 
   if (globalStepIndex % 100 == 0)
     std::cout << "Min timestep: " << minTimeStep << std::endl;
@@ -611,7 +620,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
           totalCellCount += threadCellsCount[stateIndex];
         }
         hierarchyDimentionsCount[solverState.Index()] = dimsCount * functionsCount * totalCellCount;
-
+        
         // cells per thread balancing
         bool balanced;
         do {
@@ -658,10 +667,10 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
               threadSegmentBegins[nextThreadStateIndex]++;
             }
           }
-        } while (balanced);
+        } while (balanced); 
       }
     }
-  }
+  } 
 
   for (int globalStepIndex = 0; globalStepIndex < GetMaxHierarchyLevel(); ++globalStepIndex)
   {

@@ -40,6 +40,7 @@
 
 
 #define PROFILING
+// #define SINGLE_THREAD
 // #define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
@@ -550,6 +551,7 @@ void Task<Space, order>::Run()
         }
         currTime = distributedElasticMeshes[0]->solver->GetCurrTime();
 
+        double beginDestruction = MPI_Wtime();
         if (solverState.IsPreInitial())
         {
           for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
@@ -562,6 +564,9 @@ void Task<Space, order>::Run()
             if (settings.solver.damping > 0)      distributedElasticMeshes[domainNumber]->HandleDamping();
           }
         }
+        double endDestruction = MPI_Wtime();
+        SaveProfilingData("   Destruction", beginDestruction, endDestruction);
+
         SynchronizeMeshes();
         solverState = nextState;
       } else
@@ -1546,8 +1551,10 @@ typename Task<Space, order>::IndexType Task<Space, order>::GetCurrentNodeDomains
 template<typename Space, unsigned int order>
 void Task<Space, order>::SetThreadsCount()
 {
-   // omp_set_num_threads(1);
-   // return;
+  #ifdef SINGLE_THREAD
+    omp_set_num_threads(1);
+    return;
+  #endif
 
   int size, rank;
   int nthreads, tid;
