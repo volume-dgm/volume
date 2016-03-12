@@ -181,25 +181,28 @@ private:
       elasticMults[valueIndex] = mult;
     }
   }
-
+protected:
+  // for test only
   bool CheckNodeGroupInfo(IndexType nodeIndex)
   {
     IndexType nodeGroupSize = nodeGroupManager.GetGroupSize(nodeIndex);
+
+    if (nodeGroupSize == 0) return true;
 
     std::vector<IndexType> pool;
     pool.reserve(60);
 
     int test[99] = { 0 };
     IndexType size = volumeMesh.GetNodeGroup(nodeIndex, pool);
-    const IndexType* nodeGroupP = nodeGroupManager.GetGroup(nodeIndex);
-    std::copy(nodeGroupP, nodeGroupP + size, test);
-
-
+    
     if (size != nodeGroupSize)
     {
       std::cout << nodeIndex << "\n";
       return false;
     }
+
+    const IndexType* nodeGroupP = nodeGroupManager.GetGroup(nodeIndex);
+    std::copy(nodeGroupP, nodeGroupP + size, test);
 
     std::sort(pool.begin(), pool.end());
     std::sort(test, test + size);
@@ -210,6 +213,30 @@ private:
       {
         return false;
       }
+    }
+    return true;
+  }
+
+  bool CheckFace(IndexType cellIndex, IndexType faceNumber)
+  {
+    IndexType faceIndices[Space::NodesPerFace];
+    volumeMesh.GetCellFaceNodes(cellIndex, faceNumber, faceIndices);
+
+    for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerFace; ++nodeNumber)
+    {
+      if (!CheckNodeGroupInfo(faceIndices[nodeNumber])) return false;
+    }
+    return true;
+  }
+
+  bool CheckCell(IndexType cellIndex)
+  {
+    IndexType cellIndices[Space::NodesPerCell];
+    volumeMesh.GetFixedCellIndices(cellIndex, cellIndices);
+
+    for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
+    {
+      if (!CheckNodeGroupInfo(cellIndices[nodeNumber])) return false;
     }
     return true;
   }

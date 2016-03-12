@@ -409,6 +409,20 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::FindDestructions(std::vector<bool
           //Elastic elastic = volumeMesh.GetCellAverageSolution(cellIndex);
 
           Scalar principalStresses[Space3::Dimension];
+          elastic.GetTension().GetEigenValues(principalStresses);
+
+          bool stressFound = false;
+
+          for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
+          {
+            if (principalStresses[stressIndex] > fabs(maxLongitudinalStress))
+            {
+              stressFound = true;
+            }
+          }
+
+          if (!stressFound) continue;
+
           Vector principalNormals[Space3::Dimension];
           elastic.GetTension().GetEigenValues(principalStresses, principalNormals);
 
@@ -416,9 +430,12 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::FindDestructions(std::vector<bool
 
           for (IndexType stressIndex = 0; stressIndex < Space3::Dimension; ++stressIndex)
           {
-            if (maxStressIndex == IndexType(-1) || principalStresses[stressIndex] > principalStresses[maxStressIndex])
+            if (principalStresses[stressIndex] > fabs(maxLongitudinalStress))
             {
-              maxStressIndex = stressIndex;
+              if (maxStressIndex == IndexType(-1) || principalStresses[stressIndex] > principalStresses[maxStressIndex])
+              {
+                maxStressIndex = stressIndex;
+              }
             }
           }
 
@@ -472,7 +489,10 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::FindDestructions(std::vector<bool
             //  volumeMesh.AddToAABBTree(correspondingCellIndex);
           }
 
-          DestroyFace(cellIndex, bestFaceNumber, dynamicBoundaryTypes[bestFaceNumber]);
+          #pragma omp critical
+          {
+            DestroyFace(cellIndex, bestFaceNumber, dynamicBoundaryTypes[bestFaceNumber]);
+          }
         }
       }
     }

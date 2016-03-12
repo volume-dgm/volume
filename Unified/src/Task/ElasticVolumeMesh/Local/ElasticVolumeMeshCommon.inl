@@ -2,7 +2,7 @@ template<typename Space, typename FunctionSpace>
 ElasticVolumeMeshCommon<Space, FunctionSpace>::
   ElasticVolumeMeshCommon(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount):
   DifferentialSystem<Scalar>(solver->GetPhasesCount(), hierarchyLevelsCount), volumeMesh(solver->GetPhasesCount(), hierarchyLevelsCount),
-  nodeGroupManager(20)
+  nodeGroupManager(200)
 {
   this->solver = solver;
   this->tolerance = tolerance;
@@ -246,10 +246,11 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
       {
         IndexType nodeGroupSize = nodeGroupManager.GetGroupSize(nodeIndex);
 
-        if (nodeGroupSize != IndexType(-1))
+        if (nodeGroupSize > 0)
         {
           Vector groupMeanVelocity = Vector::zero();
           const IndexType* nodeGroupPool = nodeGroupManager.GetGroup(nodeIndex);
+
           for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSize; ++nodeNumber)
           {
             groupMeanVelocity += nodeVelocities[nodeGroupPool[nodeNumber]];

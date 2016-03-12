@@ -47,7 +47,7 @@ public:
   void UpdateNode(IndexType nodeIndex)
   {
     IndexType groupIndex = nodeGroupIndices[nodeIndex];
-    assert(groupIndex != IndexType(-1));
+    if (groupIndex == IndexType(-1)) return;
 
     std::vector<IndexType> group;
     group.reserve(nodeGroupSizes[groupIndex]);
@@ -122,14 +122,13 @@ public:
   {
     IndexType groupIndex = nodeGroupIndices[nodeIndex];
     // assert(groupIndex != IndexType(-1));
-    return groupIndex != IndexType(-1) ? nodeGroupSizes[groupIndex] : IndexType(-1);
+    return groupIndex != IndexType(-1) ? nodeGroupSizes[groupIndex] : 0;
   }
 
   const IndexType* GetGroup(IndexType nodeIndex) const
   {
     IndexType groupIndex = nodeGroupIndices[nodeIndex];
-    assert(groupIndex != IndexType(-1));
-    return nodeGroupPool.data() + groupIndex * maxNodeGroupSize;
+    return groupIndex != IndexType(-1) ? nodeGroupPool.data() + groupIndex * maxNodeGroupSize : 0;
   }
 
 private:
