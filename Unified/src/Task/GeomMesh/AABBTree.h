@@ -66,7 +66,7 @@ public:
   {
     nodes[nodeIndex].userData = data;
   }
-  UserData GetUserData(int nodeIndex)
+  UserData GetUserData(int nodeIndex) const
   {
     return nodes[nodeIndex].userData;
   }
@@ -118,14 +118,14 @@ public:
   }
 
   template<typename Functor>
-  void FindCollisions(AABB aabb, Functor &functor)
+  void FindCollisions(AABB aabb, Functor &functor) const
   {
     if(rootNodeIndex != -1)
       FindCollisionsRecursive(aabb, functor, rootNodeIndex);
   }
 
   template<typename OtherTree, typename Functor>
-  void FindTreeCollisions(const OtherTree &otherTree, Functor &functor)
+  void FindTreeCollisions(const OtherTree &otherTree, Functor &functor) const
   {
     if(rootNodeIndex != -1 && otherTree.rootNodeIndex != -1)
       FindTreeCollisionsRecursive(otherTree, functor, rootNodeIndex, otherTree.rootNodeIndex);
@@ -264,7 +264,7 @@ private:
   }
 
   template<typename Functor>
-  void FindCollisionsRecursive(const AABB &aabb, Functor& functor, int currNode)
+  void FindCollisionsRecursive(const AABB &aabb, Functor& functor, int currNode) const
   {
     if(!aabb.Intersects(nodes[currNode].aabb)) return;
 

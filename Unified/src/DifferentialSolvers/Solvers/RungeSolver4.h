@@ -149,7 +149,7 @@ public:
 
   Scalar GetTimeStepPrediction()
   {
-    return timeStep;
+    return system->GetTimeStepPrediction() * Scalar(0.5);
   }
 
 private:

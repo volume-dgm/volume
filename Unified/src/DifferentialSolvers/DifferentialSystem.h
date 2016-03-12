@@ -50,6 +50,8 @@ public:
     return solverPhasesCount;
   }
 
+  virtual Scalar GetTimeStepPrediction() = 0;
+
 private:
   int hierarchyLevelsCount;
   int solverPhasesCount;

@@ -44,7 +44,8 @@ bool CellsCollide(
   const Space3::Vector points1[Space3::NodesPerCell],
   Space3::Scalar collisionWidth)
 {
-  Space3::Vector axes[2 * Space3::FacesPerCell];
+  Space3::Vector axes[2 * Space3::FacesPerCell + Space3::EdgesPerCell * Space3::EdgesPerCell];
+  
   for (int pointNumber = 0; pointNumber < Space3::FacesPerCell; pointNumber++)
   {
     int faceNodes[Space3::NodesPerFace];
@@ -56,7 +57,22 @@ bool CellsCollide(
     axes[pointNumber + Space3::FacesPerCell] = ((points1[faceNodes[2]] - points1[faceNodes[0]]) ^ (points1[faceNodes[1]] - points1[faceNodes[0]])).GetNorm();
   }
 
-  for (int axisNumber = 0; axisNumber < 2 * Space3::FacesPerCell; axisNumber++)
+  int axesCount = 2 * Space3::FacesPerCell;
+
+  for (int p0 = 0; p0 + 1 < Space3::NodesPerCell; ++p0)
+    for (int p1 = p0 + 1; p1 < Space3::NodesPerCell; ++p1)
+    {
+      Space3::Vector v0 = points0[p1] - points0[p0];
+      for (int i0 = 0; i0 + 1 < Space3::NodesPerCell; ++i0)
+        for (int i1 = i0 + 1; i1 < Space3::NodesPerCell; ++i1)
+        {
+          Space3::Vector v1 = points1[i1] - points1[i0];
+          axes[axesCount] = (v0 ^ v1).GetNorm();
+          axesCount++;
+        }
+    }
+
+  for (int axisNumber = 0; axisNumber < axesCount; axisNumber++)
   {
     Space3::Scalar mins[2], maxes[2];
     mins[0]  = mins[1]  =  std::numeric_limits<Space3::Scalar>::max() / 2;

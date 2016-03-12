@@ -9,7 +9,7 @@ public:
   SPACE_TYPEDEFS
 
   NodeGroupManager(IndexType maxNodeGroupSize): 
-    maxNodeGroupSize(maxNodeGroupSize), volumeMesh(0)
+    maxNodeGroupSize(maxNodeGroupSize), volumeMesh(0), groupsCount(0)
   {
   }
 
@@ -24,8 +24,6 @@ public:
 
   void BuildNodeGroups()
   {
-    IndexType groupsCount = 0;
-
     for (IndexType nodeIndex = 0; nodeIndex < volumeMesh->nodes.size(); ++nodeIndex)
     {
       if (nodeGroupIndices[nodeIndex] == IndexType(-1))
@@ -43,6 +41,52 @@ public:
 
         groupsCount++;
       }
+    }
+  }
+
+  void UpdateNode(IndexType nodeIndex)
+  {
+    IndexType groupIndex = nodeGroupIndices[nodeIndex];
+    assert(groupIndex != IndexType(-1));
+
+    std::vector<IndexType> group;
+    group.reserve(nodeGroupSizes[groupIndex]);
+
+    for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSizes[groupIndex]; ++nodeNumber)
+    {
+      group.push_back(nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber]);
+    }
+
+    RemoveGroup(groupIndex);
+
+    for (IndexType nodeIndex : group)
+    {
+      if (nodeGroupIndices[nodeIndex] == IndexType(-1))
+      {
+        std::vector<IndexType> pool;
+        pool.reserve(maxNodeGroupSize);
+
+        nodeGroupSizes[groupsCount] = volumeMesh->GetNodeGroup(nodeIndex, pool);
+
+        for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSizes[groupsCount]; ++nodeNumber)
+        {
+          nodeGroupIndices[pool[nodeNumber]] = groupsCount;
+          nodeGroupPool[groupsCount * maxNodeGroupSize + nodeNumber] = pool[nodeNumber];
+        }
+
+        groupsCount++;
+      }
+    }
+  }
+
+  void UpdateFace(IndexType cellIndex, IndexType faceNumber)
+  {
+    IndexType faceNodeIndices[Space::NodesPerFace];
+    volumeMesh->GetCellFaceNodes(cellIndex, faceNumber, faceNodeIndices);
+
+    for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerFace; ++nodeNumber)
+    {
+      UpdateNode(faceNodeIndices[nodeNumber]);
     }
   }
 
@@ -77,18 +121,47 @@ public:
   IndexType GetGroupSize(IndexType nodeIndex) const
   {
     IndexType groupIndex = nodeGroupIndices[nodeIndex];
-    return groupIndex == IndexType(-1) ? 1 : nodeGroupSizes[nodeIndex];
+    // assert(groupIndex != IndexType(-1));
+    return groupIndex != IndexType(-1) ? nodeGroupSizes[groupIndex] : IndexType(-1);
   }
 
   const IndexType* GetGroup(IndexType nodeIndex) const
   {
-    return nodeGroupPool.data() + nodeIndex * maxNodeGroupSize;
+    IndexType groupIndex = nodeGroupIndices[nodeIndex];
+    assert(groupIndex != IndexType(-1));
+    return nodeGroupPool.data() + groupIndex * maxNodeGroupSize;
   }
 
 private:
-  IndexType maxNodeGroupSize;
+  const IndexType maxNodeGroupSize;
   VolumeMeshType* volumeMesh;
   std::vector<IndexType> nodeGroupPool;
   std::vector<IndexType> nodeGroupIndices;
   std::vector<IndexType> nodeGroupSizes;
+  IndexType groupsCount;
+
+  void RemoveGroup(IndexType groupIndex)
+  {
+    for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSizes[groupIndex]; ++nodeNumber)
+    {
+      IndexType nodeIndex = nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber];
+      nodeGroupIndices[nodeIndex] = IndexType(-1);
+    }
+
+    for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSizes[groupsCount - 1]; ++nodeNumber)
+    {
+      IndexType nodeIndex = nodeGroupPool[(groupsCount - 1) * maxNodeGroupSize + nodeNumber];
+      nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber] = nodeIndex;
+    }
+
+    nodeGroupSizes[groupIndex] = nodeGroupSizes[groupsCount - 1];
+    nodeGroupSizes[groupsCount - 1] = 0;
+    groupsCount--;
+
+    for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSizes[groupIndex]; ++nodeNumber)
+    {
+      IndexType nodeIndex = nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber];
+      nodeGroupIndices[nodeIndex] = groupIndex;
+    }
+  }
 };

@@ -215,6 +215,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <OpenMP>GenerateSequentialCode</OpenMP>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(ProjectName)Debug.exe</OutputFile>
@@ -223,6 +224,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>false</Profile>
       <AdditionalDependencies>zdll.lib;mpi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -246,7 +246,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
       {
         IndexType nodeGroupSize = nodeGroupManager.GetGroupSize(nodeIndex);
 
-        if (nodeGroupSize > 1)
+        if (nodeGroupSize != IndexType(-1))
         {
           Vector groupMeanVelocity = Vector::zero();
           const IndexType* nodeGroupPool = nodeGroupManager.GetGroup(nodeIndex);
@@ -605,14 +605,15 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
   for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
   {
     bool lowDensity =  volumeMesh.GetVolume(cellIndex) > erosion.rhoReduction * volumeMesh.cellMediumParameters[cellIndex].initialVolume;
-    if (volumeMesh.isCellAvailable[cellIndex] && (
-      volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || 
+    if (volumeMesh.isCellAvailable[cellIndex] && 
+      !volumeMesh.cellMediumParameters[cellIndex].fixed &&
+      (volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || 
       volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
       (allowPlasticity && plasticDeforms[cellIndex] > erosion.maxPlasticDeformation) ||
       lowDensity))
     {
       volumeMesh.cellSolutions[cellIndex].SetToZero();
-
+      /*
       const IndexType MaxContactCellsCount = 1024;
       IndexType contactCells[MaxContactCellsCount];
       IndexType contactCellsCount = 0;
@@ -637,9 +638,8 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
           }
         }
       }
-
+      */
       volumeMesh.RemoveCellFromAABBTree(cellIndex);
-      nodeGroupManager.RemoveCell(cellIndex);
       volumeMesh.isCellAvailable[cellIndex] = false;
 
       for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
@@ -659,6 +659,8 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
           DestroyFace(cellIndex, faceNumber, dynamicBoundaryType);
         }
       }
+
+      nodeGroupManager.RemoveCell(cellIndex);
     }
   }
 }

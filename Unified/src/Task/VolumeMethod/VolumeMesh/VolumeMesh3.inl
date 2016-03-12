@@ -206,7 +206,7 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
     #endif
 
     Vector cellVertices[Space::NodesPerCell];
-    const IndexType MaxContactCellsCount = 64;
+    const IndexType MaxContactCellsCount = 1024;
     IndexType contactCells[MaxContactCellsCount];
 
     double beginPhase = MPI_Wtime();
@@ -346,6 +346,22 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
                   collidedCellIndex = paramsGetter(globalPoint, exteriorParams.params);
                 else
                   collidedCellIndex = paramsGetter(globalPoint, contactCells, contactCellsCount, exteriorParams.params);
+
+                if (contactCellsCount > 1000)
+                {
+                  MeshVtkWriter< Space, typename VolumeMeshCommon<Space, FunctionSpace, System>::IntTypeCellInfo > meshWriter;
+                  std::vector<int> v(cells.size(), 0);
+                  for (int i = 0; i < contactCellsCount; ++i)
+                    v[contactCells[i]] = 1;
+                  v[cellIndex] = 2;
+
+                  std::ostringstream testFileName;
+                  testFileName << "out/test[" << 
+                    solverState.globalStepIndex
+                    << "].vtk";
+
+                  meshWriter.Write(testFileName.str(), nodes, cells, v);
+                }
 
                 typename System::ValueType exteriorSolution; //GetRefCellSolution(ghostValues.data(), ghostRefPoint);
                 if (collidedCellIndex != IndexType(-1))

@@ -109,6 +109,8 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   void HandleMaterialErosion();
 
+  virtual Scalar GetTimeStepPrediction();
+
   virtual void DestroyFace(IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType) = 0;
 
   // total work of the plasticity for each cell
@@ -178,6 +180,38 @@ private:
       }
       elasticMults[valueIndex] = mult;
     }
+  }
+
+  bool CheckNodeGroupInfo(IndexType nodeIndex)
+  {
+    IndexType nodeGroupSize = nodeGroupManager.GetGroupSize(nodeIndex);
+
+    std::vector<IndexType> pool;
+    pool.reserve(60);
+
+    int test[99] = { 0 };
+    IndexType size = volumeMesh.GetNodeGroup(nodeIndex, pool);
+    const IndexType* nodeGroupP = nodeGroupManager.GetGroup(nodeIndex);
+    std::copy(nodeGroupP, nodeGroupP + size, test);
+
+
+    if (size != nodeGroupSize)
+    {
+      std::cout << nodeIndex << "\n";
+      return false;
+    }
+
+    std::sort(pool.begin(), pool.end());
+    std::sort(test, test + size);
+
+    for (int i = 0; i < size; ++i)
+    {
+      if (test[i] != pool[i])
+      {
+        return false;
+      }
+    }
+    return true;
   }
 
 public:
@@ -250,6 +284,7 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
       volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringEdges[correspondingEdgeNumber].correspondingEdgeNumber = IndexType(-1);
       volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringEdges[correspondingEdgeNumber].interactionType = dynamicBoundaryType;
     }
+    this->nodeGroupManager.UpdateFace(cellIndex, edgeNumber);
   }
 
 private:
@@ -322,6 +357,7 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
       volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringFaces[correspondingFaceNumber].orientation = IndexType(-1);
       volumeMesh.additionalCellInfos[correspondingCellIndex].neighbouringFaces[correspondingFaceNumber].interactionType = dynamicBoundaryType;
     }
+    this->nodeGroupManager.UpdateFace(cellIndex, faceNumber);
   }
 
 };

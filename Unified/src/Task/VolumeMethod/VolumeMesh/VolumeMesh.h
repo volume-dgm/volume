@@ -168,6 +168,8 @@ public:
   // associatedPermutation = 0 1 2 -> 1 2 0
   void TransformCellSolution(IndexType cellIndex, IndexType associatedPermutation[Space::NodesPerCell], CellSolution* cellSolution);
 
+  Scalar GetTimeStepPrediction();
+
   FunctionSpace* functionSpace;
   System system;
 
