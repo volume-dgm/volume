@@ -188,7 +188,7 @@ public:
 
   void   GetCellEnergy(IndexType cellIndex, Scalar& kineticEnergy, Scalar& potentialEnergy) const;
   Vector GetTotalImpulse() const;
-  Scalar GetTotalEnergy() const;
+  Scalar GetTotalEnergy(Scalar& kineticEnergy, Scalar& potentialEnergy) const;
   Scalar GetTotalMass() const;
 
   virtual Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const = 0;

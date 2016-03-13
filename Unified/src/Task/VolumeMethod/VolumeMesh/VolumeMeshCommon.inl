@@ -806,10 +806,9 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy(IndexType cel
 }
 
 template<typename Space, typename FunctionSpace, typename System>
-typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalEnergy() const
+typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalEnergy(Scalar& kineticEnergy, Scalar& potentialEnergy) const
 {
-  Scalar kineticEnergy   = 0;
-  Scalar potentialEnergy = 0;
+  kineticEnergy = potentialEnergy = 0;
 
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
   {

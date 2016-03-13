@@ -41,7 +41,7 @@
 
 #define PROFILING
 // #define SINGLE_THREAD
-// #define WRITE_ENERGY_AND_IMPULSE
+#define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
 class Task: public NotifyListener, public ReceiveListener
@@ -457,7 +457,8 @@ void Task<Space, order>::Run()
   std::vector<Vector> initialImpulses;
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
-    initialEnergies.push_back(distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy());
+    Scalar kineticEnergy, potentialEnergy;
+    initialEnergies.push_back(distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy(kineticEnergy, potentialEnergy));
     initialImpulses.push_back(distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalImpulse());
   }
 
@@ -1662,7 +1663,9 @@ void Task<Space, order>::WriteEnergyAndImpulseDeviation(const std::vector<Scalar
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
     Vector totalImpulse = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalImpulse();
-    Scalar totalEnergy = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy();
+
+    Scalar kineticEnergy, potentialEnergy;
+    Scalar totalEnergy = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy(kineticEnergy, potentialEnergy);
     file << currTime << " " 
                      << "Energy deviation: " << totalEnergy - initialEnergies[domainNumber] << "; "
                      << "Energy: " << totalEnergy << "; " 
@@ -1674,6 +1677,8 @@ void Task<Space, order>::WriteEnergyAndImpulseDeviation(const std::vector<Scalar
     }
     
     file << "Mass: " << distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalMass();
+    file << " Kinetic E: " << kineticEnergy << ";";
+    file << " Potential E: " << potentialEnergy;
     file << std::endl;
   }
   file.close();
