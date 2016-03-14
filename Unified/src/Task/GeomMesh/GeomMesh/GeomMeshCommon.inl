@@ -1,5 +1,6 @@
 #include <stack>
 #include <set>
+#include <algorithm>
 
 // Node
 template <typename Space>
@@ -906,8 +907,29 @@ Space2::Scalar GeomMeshCommon<Space2>::GetAspectRatio(IndexType cellIndex) const
 template <>
 Space3::Scalar GeomMeshCommon<Space3>::GetAspectRatio(IndexType cellIndex) const
 {
-  // TODO
-  return 1;
+  Vector cellVertices[Space::NodesPerCell];
+  GetCellVertices(cellIndex, cellVertices);
+
+  // http://docs.salome-platform.org/latest/gui/SMESH/aspect_ratio_3d_page.html
+
+  Scalar maxEdge = 0;
+
+  for (IndexType i0 = 0; i0 + 1 < Space::NodesPerCell; ++i0)
+  {
+    for (IndexType i1 = i0 + 1; i1 < Space::NodesPerCell; ++i1)
+    {
+      maxEdge = Max(maxEdge, (cellVertices[i1] - cellVertices[i0]).Len());
+    }
+  }
+
+  Scalar alpha = fabs(MixedProduct(cellVertices[3] - cellVertices[0], cellVertices[2] - cellVertices[0], cellVertices[1] - cellVertices[0]));
+
+  Scalar d = ((cellVertices[2] - cellVertices[0]) ^ (cellVertices[1] - cellVertices[0])).Len() +
+    ((cellVertices[3] - cellVertices[0]) ^ (cellVertices[1] - cellVertices[0])).Len() +
+    ((cellVertices[3] - cellVertices[0]) ^ (cellVertices[2] - cellVertices[0])).Len() +
+    ((cellVertices[3] - cellVertices[1]) ^ (cellVertices[2] - cellVertices[1])).Len();
+
+  return maxEdge / alpha * d / (2 * sqrt(Scalar(6.0)));
 }
 
 /*
