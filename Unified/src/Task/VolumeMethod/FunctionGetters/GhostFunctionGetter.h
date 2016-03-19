@@ -66,11 +66,9 @@ struct GhostCellFunctionGetter
       currTime(currTime),
       getterType(getterType)
   {
-    mesh->GetFixedCellIndices(cellIndex, cellIndices);
   }
 
   IndexType cellIndex;
-  IndexType cellIndices[Space::NodesPerCell];
   MeshType* mesh;
   Scalar currTime;
   GetterType getterType;
@@ -116,17 +114,7 @@ struct GhostCellFunctionGetter
     if (cellIndex == neighbourCellIndex) return false;
 
     IndexType neighbourCellIndices[Space::NodesPerCell];
-    mesh->GetFixedCellIndices(neighbourCellIndex, neighbourCellIndices);
-
-    bool hasSharedVertex = false;
-    for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
-    {
-      for (IndexType neighbourNodeNumber = 0; neighbourNodeNumber < Space::NodesPerCell; ++neighbourNodeNumber)
-      {
-        if (cellIndices[nodeNumber] == neighbourCellIndices[neighbourNodeNumber]) hasSharedVertex = true;
-      }
-    }
-    if (hasSharedVertex) return false;
+    mesh->GetCellIndices(neighbourCellIndex, neighbourCellIndices);
 
     Vector neighbourCellVertices[Space::NodesPerCell];
     mesh->GetCellVertices(neighbourCellIndices, neighbourCellVertices);

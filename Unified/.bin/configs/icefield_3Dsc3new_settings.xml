@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount= "3">
+
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_ice_field3d_sc3new" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "meshes/icefield3D_sc3new[<domain>]" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+
+
+<!-- "meshes/ice_field_3d_sc3[<domain>].mesh" -->
+
+  <Mesh fileName="meshes/icefield3D_sc3new[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.00000"> 
+    <MediumParams>
+
+<!-- "meshes/ice_field_3d_sc3[<domain>].params" -->
+      <PerSubmesh fileName= "meshes/icefield3D_sc3new[<domain>].params">
+        <Submesh index="0" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> 
+
+        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "920" k= "2.2e+6" alpha="0.1" brittle="false" internalContactType= "0"
+          maxPlasticDeform="0.0003" powderShearMult="0.3"/>  
+      </PerSubmesh> 
+    </MediumParams>
+
+    <Boundaries>
+    	<Free interactionType= "0"/>
+    	<Free interactionType= "1"/>
+
+	    <Free interactionType= "2">
+        	<ExternalForce>
+        		<!-- <HydraulicPressureFunctor fluidRho="1024" g="0 0 -9.81" fluidSurfacePoint="0 0 1.8"/> -->
+        		<!-- <HydrodynamicResistanceFunctor boxPoint1= "-5000 -5000 -5000" boxPoint2= "5000 5000 1.8"  -->
+            <!-- alpha="1.0" beta="0.002" flowVelocity="-1 0 0" mediumRho="1000"/> -->
+        	</ExternalForce>
+    	</Free>
+
+      <Fixed interactionType= "3">
+          <ExternalVelocity>
+            <ConstFunctor value= "0 10 0"/>
+          </ExternalVelocity>
+        </Fixed>
+	
+      <Fixed interactionType= "4">
+	        <ExternalVelocity>
+    	    	<ConstFunctor value= "0 10 0"/>
+       	 	</ExternalVelocity>
+      	</Fixed>
+
+      <Fixed interactionType= "5">
+          <ExternalVelocity>
+            <ConstFunctor value= "0 10 0"/>
+          </ExternalVelocity>
+        </Fixed>
+
+    <!-- 
+	 	<Free interactionType= "4">
+        	<ExternalForce>
+        		 <HydraulicPressureFunctor fluidRho="1024" g="0 0 -9.81" fluidSurfacePoint="0 0 1.8"/> 
+        	    <HydrodynamicResistanceFunctor boxPoint1= "-5000 -5000 -5000" boxPoint2= "5000 5000 1.8" 
+            alpha="1.0" beta="0.002" flowVelocity="-1 0 0" mediumRho="1000"/>
+        	</ExternalForce>
+   		</Free> -->
+
+	 	<Free interactionType= "6" >
+        	<ExternalForce>
+        		<!-- <HydraulicPressureFunctor fluidRho="1024" g="0 0 -9.81" fluidSurfacePoint="0 0 1.8"/> -->
+        	    <!-- <HydrodynamicResistanceFunctor boxPoint1= "-5000 -5000 -5000" boxPoint2= "5000 5000 1.8"  -->
+            <!-- alpha="1.0" beta="0.002" flowVelocity="-1 0 0" mediumRho="1000"/> -->
+        	</ExternalForce>
+   		</Free>
+
+	 	<Free interactionType= "7" >
+        	<ExternalForce>
+        		<!-- <HydraulicPressureFunctor fluidRho="1024" g="0 0 -9.81" fluidSurfacePoint="0 0 1.8"/> -->
+        	    <!-- <HydrodynamicResistanceFunctor boxPoint1= "-5000 -5000 -5000" boxPoint2= "5000 5000 1.8"  -->
+            <!-- alpha="1.0" beta="0.002" flowVelocity="-1 0 0" mediumRho="1000"/> -->
+        	</ExternalForce>
+   		</Free>
+
+    <Free interactionType= "8" dynamicContactInteractionType="2">
+          <ExternalForce>
+            <!-- <HydraulicPressureFunctor fluidRho="1024" g="0 0 -9.81" fluidSurfacePoint="0 0 1.8"/> -->
+              <!-- <HydrodynamicResistanceFunctor boxPoint1= "-5000 -5000 -5000" boxPoint2= "5000 5000 1.8"  -->
+            <!-- alpha="1.0" beta="0.002" flowVelocity="-1 0 0" mediumRho="1000"/> -->
+          </ExternalForce>
+      </Free>
+
+
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "8" maxLongitudinalStress="2.2e+6"/>
+      <Glue interactionType= "1"/>
+      <Glide interactionType= "2" dynamicBoundaryInteractionType= "1" />
+      <!-- <Friction interactionType= "2" frictionCoeff="0.08" dynamicBoundaryInteractionType= "8"/> -->
+    </Contacts>
+  </Mesh>
+
+  <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    locationsFileName="meshes/iceFieldDetectorPositions.loc" />
+
+  <Snapshot>
+    <Period frames="100"/>
+    <Data fileName= "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <Frame  center= "0 10 -1" size= "20 20 2" margin = "0.2" />
+      <Resolution resolution="80 80 15" />
+    </Data> 
+     <!-- <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" /> -->
+     <!-- <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" /> -->
+     <Boundaries fileName="out/boundaties_full[<domain>]<step>.vtk"/>
+     <CellInfos fileName="out/cellinfo_full[<domain>]<step>.vtk" />
+  </Snapshot>
+
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> 
+  </Schedule>
+
+  <Task destinationTime = "5e-0">
+    <IniState>
+      <BoxState boxPoint1 = "-5000 -5000 -5000" boxPoint2 = "5000 5000 5000" velocity = "0 10 0" />
+      <!-- <BoxState boxPoint1 = "4.000001 -5000 -5000" boxPoint2 = "5000 5000 5000" velocity = "-10 0 0" /> -->
+    </IniState>
+
+    <SourceTerms> 
+      <!-- <ConstantAcceleration acceleration="0 0 -9.81"/>  -->
+    </SourceTerms>
+  </Task>
+
+  <Solver polynomialsOrder= "1" precision="double" integrator="RK4" 
+        tolerance="1e-1" maxScale="1e-5" maxTimeStep="2e-4" hierarchyLevelsCount="1"
+        allowMovement="true" updateCollisionInfoPeriod="10"
+        allowPlasticity="true" 
+        allowContinuousDestruction="true" allowDiscreteDestruction="true"
+        tensionErrorMult="1e-6" velocityErrorMult="1e-0" positionErrorMult="1e-5"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
+        <Erosion cellAspectRatio="6" minHeightRatio="0.0" maxPlasticDeformation="1.004" rhoReduction="6.0">
+          <FrameOfInterest center="0 0 1" size="100 100 60"/>
+        </Erosion>
+        <DynamicContactFrame center="5 0 1" size="6000 10000 6000"/>
+  </Solver>
+
+</Settings>

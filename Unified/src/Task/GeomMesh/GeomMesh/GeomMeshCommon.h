@@ -112,6 +112,7 @@ struct GeomMeshCommon: public GeomMeshBase<Space>
   void GetCellVertices(IndexType cellIndex, Vector* points) const;
   void GetCellVertices(const IndexType* cellIncidentNodes, Vector* points) const;
   void GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const;
+  void GetCellIndices(IndexType cellIndex, IndexType* incidentNodes) const; // bad orientation is possible
 
   // mass center of all nodes
   Vector GetMassCenter() const;

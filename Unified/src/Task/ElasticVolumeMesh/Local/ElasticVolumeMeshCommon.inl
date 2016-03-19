@@ -177,7 +177,6 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time, c
     {
       volumeMesh.nodes[nodeIndex].pos = nodePositions[nodeIndex];
     }
-    UnfoldMesh(minGridHeight, unfoldIterationsCount);
   }
 }
 

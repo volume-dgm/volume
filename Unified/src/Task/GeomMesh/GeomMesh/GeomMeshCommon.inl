@@ -234,9 +234,15 @@ void GeomMeshCommon<Space2>::GetCellEdgeNodes(const IndexType* cellIncidentNodes
 }
 
 template <>
-inline void GeomMeshCommon<Space2>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
+void GeomMeshCommon<Space2>::GetCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
 {
   std::copy(cells[cellIndex].incidentNodes, cells[cellIndex].incidentNodes + Space::NodesPerCell, incidentNodes);
+}
+
+template <>
+void GeomMeshCommon<Space2>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
+{
+  GetCellIndices(cellIndex, incidentNodes);
   if(((nodes[incidentNodes[1]].pos - nodes[incidentNodes[0]].pos) ^ (nodes[incidentNodes[2]].pos - nodes[incidentNodes[0]].pos)) < 0)
   {
     std::swap(incidentNodes[0], incidentNodes[1]);
@@ -244,9 +250,15 @@ inline void GeomMeshCommon<Space2>::GetFixedCellIndices(IndexType cellIndex, Ind
 }
 
 template <>
-inline void GeomMeshCommon<Space3>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
+void GeomMeshCommon<Space3>::GetCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
 {
   std::copy(cells[cellIndex].incidentNodes, cells[cellIndex].incidentNodes + Space::NodesPerCell, incidentNodes);
+}
+
+template <>
+void GeomMeshCommon<Space3>::GetFixedCellIndices(IndexType cellIndex, IndexType* incidentNodes) const
+{
+  GetCellIndices(cellIndex, incidentNodes);
   if(MixedProduct(nodes[incidentNodes[1]].pos - nodes[incidentNodes[0]].pos,
                   nodes[incidentNodes[2]].pos - nodes[incidentNodes[0]].pos,
                   nodes[incidentNodes[3]].pos - nodes[incidentNodes[0]].pos) < 0)
@@ -510,7 +522,7 @@ void GeomMeshCommon<Space3>::LoadGeom(Vector* vertexPositions, IndexType* cellIn
 }
 
 template <typename Space>
-inline void GeomMeshCommon<Space>::GetCellVertices(IndexType cellIndex, Vector* points) const
+void GeomMeshCommon<Space>::GetCellVertices(IndexType cellIndex, Vector* points) const
 {
   IndexType cellIndices[Space::NodesPerCell];
   GetFixedCellIndices(cellIndex, cellIndices);
@@ -519,7 +531,7 @@ inline void GeomMeshCommon<Space>::GetCellVertices(IndexType cellIndex, Vector* 
 }
 
 template <typename Space>
-inline void GeomMeshCommon<Space>::GetCellVertices(const IndexType* cellIncidentNodes, Vector* points) const
+void GeomMeshCommon<Space>::GetCellVertices(const IndexType* cellIncidentNodes, Vector* points) const
 {
   for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
   {
@@ -683,7 +695,7 @@ void GeomMeshCommon<Space>::AddToAABBTree(IndexType cellIndex)
 }
 
 template <typename Space>
-inline bool GeomMeshCommon<Space>::IsCellInAABBTree(IndexType cellIndex) const
+bool GeomMeshCommon<Space>::IsCellInAABBTree(IndexType cellIndex) const
 {
   return !treeNodeCellIndices.empty() && treeNodeCellIndices[cellIndex] != IndexType(-1);
 }
