@@ -168,10 +168,6 @@ void VolumeMesh<Space2, FunctionSpace, System>::
     Vector cellVertices[Space::NodesPerCell];
     Scalar tmp[dimsCount];
 
-    const IndexType MaxContactCellsCount = 64;
-    IndexType contactCells[MaxContactCellsCount];
-
-
     for(int cellIndex = segmentBegin; cellIndex < segmentEnd; ++cellIndex)
     {
       /*
@@ -276,21 +272,13 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             }
             else
             {
-              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, edgeNormal, time,
+              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, time,
                 GhostCellFunctionGetter<VolumeMeshT>::Solution);
 
-              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, edgeNormal, time,
+              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, time,
                 GhostCellFunctionGetter<VolumeMeshT>::MediumParams);
 
               flux.setZero();
-
-              IndexType contactCellsCount = 0;
-
-              if (collisionWidth < std::numeric_limits<Scalar>::epsilon())
-              {
-                ContactFinder< VolumeMeshT > contactFinder(this, cellIndex);
-                contactFinder.Find(contactCells, &contactCellsCount);
-              }
 
               // quadrature integration of numerical flux
               for (IndexType pointIndex = 0; pointIndex < quadraturePointsForBorder.size(); ++pointIndex)
@@ -304,12 +292,20 @@ void VolumeMesh<Space2, FunctionSpace, System>::
                 std::copy(tmp, tmp + dimsCount, interiorSolution.values);
 
                 MediumParameters exteriorParams;
-                IndexType collidedCellIndex;
+                std::fill(exteriorParams.params, exteriorParams.params + MediumParameters::ParamsCount, 0);
+                IndexType collidedCellIndex = IndexType(-1);
 
                 if (collisionWidth > std::numeric_limits<Scalar>::epsilon())
                   collidedCellIndex = paramsGetter(globalPoint, exteriorParams.params);
                 else
-                  collidedCellIndex = paramsGetter(globalPoint, contactCells, contactCellsCount, exteriorParams.params);
+                {
+                  if (collisionsInfo.collisionNodes[cellIndex].count > 0)
+                  {
+                    collidedCellIndex = paramsGetter(globalPoint,
+                      collisionsInfo.pool.data() + collisionsInfo.collisionNodes[cellIndex].offset,
+                      collisionsInfo.collisionNodes[cellIndex].count, exteriorParams.params);
+                  }
+                }
 
                 typename System::ValueType exteriorSolution;
 

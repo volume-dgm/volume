@@ -22,7 +22,7 @@ for p in range(processesCount):
 
 		globalStepTime += stepTimes
 
-		print 'Process ', p, 'Quality ', float(advancePhase) / stepTimes, ' Sync ', sync / stepTimes 
+		print 'Process ', p, 'Quality ', float(advancePhase + destruction) / stepTimes, ' Sync ', sync / stepTimes 
 		print 'Destruction:', destruction / stepTimes, '  Other ', (1 - (advancePhase + sync + destruction) / stepTimes) 
 
 print ''

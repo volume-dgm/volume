@@ -2,7 +2,7 @@ template<typename Space, typename FunctionSpace>
 ElasticVolumeMeshCommon<Space, FunctionSpace>::
   ElasticVolumeMeshCommon(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount):
   DifferentialSystem<Scalar>(solver->GetPhasesCount(), hierarchyLevelsCount), volumeMesh(solver->GetPhasesCount(), hierarchyLevelsCount),
-  nodeGroupManager(200)
+  nodeGroupManager(99) // TODO
 {
   this->solver = solver;
   this->tolerance = tolerance;
@@ -36,6 +36,8 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::LoadState(const std::vector<
         volumeMesh.cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] = Scalar(0.0);
       }
     }
+
+    if (volumeMesh.cellMediumParameters[cellIndex].fixed) continue;
 
     Scalar totalCellValues[functionsCount * dimsCount];
     std::fill(totalCellValues, totalCellValues + functionsCount * dimsCount, Scalar(0.0));
@@ -116,7 +118,6 @@ int ElasticVolumeMeshCommon<Space, FunctionSpace>::GetMaxDimentionsCount() const
   }
 }
 
-
 template<typename Space, typename FunctionSpace>
 void  ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrCoords(Scalar& time, 
   Scalar* currCoords, Scalar* oldCoords, const SolverState& solverState)
@@ -153,6 +154,16 @@ void  ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrCoords(Scalar& time,
 }
 
 template<typename Space, typename FunctionSpace>
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::UpdateAABBTree(IndexType globalStepIndex)
+{
+  if (globalStepIndex % updateCollisionInfoPeriod == 0)
+  {
+    volumeMesh.UpdateAABBTree();
+    volumeMesh.UpdateCollisionsInfo();
+  }
+}
+
+template<typename Space, typename FunctionSpace>
 void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time, const Scalar* newCoords, const SolverState& solverState)
 {
   volumeMesh.SetCurrCoords(time, newCoords, solverState);
@@ -166,9 +177,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time, c
     {
       volumeMesh.nodes[nodeIndex].pos = nodePositions[nodeIndex];
     }
-
     UnfoldMesh(minGridHeight, unfoldIterationsCount);
-    volumeMesh.UpdateAABBTree();
   }
 }
 
@@ -189,7 +198,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time,
     }
 
     UnfoldMesh(minGridHeight, unfoldIterationsCount);
-    volumeMesh.UpdateAABBTree();
+    UpdateAABBTree(globalStepIndex);
   }
 }
 
@@ -206,7 +215,9 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time, c
     {
       volumeMesh.nodes[nodeIndex].pos = nodePositions[nodeIndex];
     }
-    volumeMesh.UpdateAABBTree();
+
+    UnfoldMesh(minGridHeight, unfoldIterationsCount);
+    UpdateAABBTree(globalStepIndex);
   }
 }
 
@@ -223,15 +234,18 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
 
     for(int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); cellIndex++)
     {
-      IndexType cellIndices[Space::NodesPerCell];
-      volumeMesh.GetFixedCellIndices(cellIndex, cellIndices);
-
-      for(IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
+      if (!volumeMesh.cellMediumParameters[cellIndex].fixed)
       {
-        Vector v = InterpolateElasticRef(cellIndex, nodeNumber, VolumeMeshTypeCommon::CellNode).GetVelocity();
-        //Vector v = InterpolateElastic(cellIndex, volumeMesh.nodes[cellIndices[nodeNumber]].pos).GetVelocity();
+        IndexType cellIndices[Space::NodesPerCell];
+        volumeMesh.GetFixedCellIndices(cellIndex, cellIndices);
 
-        nodeVelocities[cellIndices[nodeNumber]] += v;
+        for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
+        {
+          Vector v = InterpolateElasticRef(cellIndex, nodeNumber, VolumeMeshTypeCommon::CellNode).GetVelocity();
+          // Vector v = InterpolateElastic(cellIndex, volumeMesh.nodes[cellIndices[nodeNumber]].pos).GetVelocity();
+
+          nodeVelocities[cellIndices[nodeNumber]] += v;
+        }
       }
     }
 
@@ -588,20 +602,32 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
 }
 
 template<typename Space, typename FunctionSpace>
-void ElasticVolumeMeshCommon<Space, FunctionSpace>::MakeRhoCorrection()
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::MakeRhoCorrection(const Scalar minTimeStep)
 {
   for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
   {
+    if (volumeMesh.isCellAvailable[cellIndex] && !volumeMesh.cellMediumParameters[cellIndex].fixed)
+    {
+      Scalar minHeight = volumeMesh.GetMinHeight(cellIndex);
+      Scalar currTimeStep = minHeight / volumeMesh.cellMediumParameters[cellIndex].GetPSpeed();
+
+      if (currTimeStep < minTimeStep)
+      {
+        volumeMesh.cellMediumParameters[cellIndex].invRho *= sqrt(currTimeStep / minTimeStep);
+      }
+    }
+    /*
     Scalar currentVolume = volumeMesh.GetVolume(cellIndex);
     Scalar initialMass = volumeMesh.cellMediumParameters[cellIndex].initialVolume * volumeMesh.cellMediumParameters[cellIndex].initialRho;
     volumeMesh.cellMediumParameters[cellIndex].invRho = std::max(currentVolume / initialMass, Scalar(1.0) / volumeMesh.cellMediumParameters[cellIndex].initialRho);
+    */
   }
 }
 
 template<typename Space, typename FunctionSpace>
 void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
 {
-  //MakeRhoCorrection();
+  // MakeRhoCorrection();
 
   for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
   {
@@ -609,11 +635,13 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
     if (volumeMesh.isCellAvailable[cellIndex] && 
       !volumeMesh.cellMediumParameters[cellIndex].fixed &&
       (volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || 
-      volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
+      // volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
       (allowPlasticity && plasticDeforms[cellIndex] > erosion.maxPlasticDeformation) ||
-      lowDensity))
+      lowDensity ||
+      !erosion.boxOfInterest.Includes(volumeMesh.GetCellAABB(cellIndex))))
     {
       volumeMesh.cellSolutions[cellIndex].SetToZero();
+
       /*
       const IndexType MaxContactCellsCount = 1024;
       IndexType contactCells[MaxContactCellsCount];
@@ -638,8 +666,8 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
             // TODO: also splash potential energy of this cell between neighbours
           }
         }
-      }
-      */
+      } */
+      
       volumeMesh.RemoveCellFromAABBTree(cellIndex);
       volumeMesh.isCellAvailable[cellIndex] = false;
 
@@ -711,4 +739,10 @@ template<typename Space, typename FunctionSpace>
 typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetTimeStepPrediction()
 {
   return volumeMesh.GetTimeStepPrediction();
+}
+
+template<typename Space, typename FunctionSpace>
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetGlobalStepIndex(IndexType globalStepIndex)
+{
+  this->globalStepIndex = globalStepIndex;
 }

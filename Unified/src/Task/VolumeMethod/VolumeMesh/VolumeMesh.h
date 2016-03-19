@@ -21,6 +21,7 @@ class VolumeMeshCommon: public DifferentialSystem<typename Space::Scalar>, publi
 public:
   SPACE_TYPEDEFS
 
+  typedef System                                     SystemT;
   const static int dimsCount = System::dimsCount;
   const static int functionsCount = FunctionSpace::functionsCount;
   typedef typename System::MediumParameters          MediumParameters;
@@ -70,6 +71,8 @@ public:
         cellNodeBasisFunctionValues[functionIndex].push_back(functionSpace->GetBasisFunctionValue(::Cell<Space>::GetNode(nodeNumber), functionIndex));
       }
     }
+
+    allowDynamicCollisions = false;
   }
 
   virtual ~VolumeMeshCommon()
@@ -202,7 +205,40 @@ public:
   std::vector<Scalar> quadratureWeights;
   std::vector<Vector> quadraturePoints;
 
+  struct CollisionsInfo
+  {
+    void Initialize(IndexType cellsCount)
+    {
+      CollisionNode emptyElem;
+      collisionNodes.resize(cellsCount, emptyElem);
+      poolSize = 0;
+    }
+
+    void Clear()
+    {
+      CollisionNode emptyElem;
+      std::fill(collisionNodes.begin(), collisionNodes.end(), emptyElem);
+      poolSize = 0;
+    }
+
+    struct CollisionNode
+    {
+      CollisionNode(): offset(0), count(0)
+      {
+      }
+      IndexType offset;
+      IndexType count;
+    };
+
+    std::vector<IndexType> pool;
+    std::vector<CollisionNode> collisionNodes;
+    IndexType poolSize;
+  } collisionsInfo;
+
+  void UpdateCollisionsInfo();
+
 protected:
+  
   std::vector<Scalar> cellMaxWaveSpeeds;
 
   std::vector<CellSolution>       halfStepCellSolutions;
@@ -284,6 +320,8 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellVertices;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetFixedCellIndices;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetRefCellSolution;
+
+  using VolumeMeshCommon<Space, FunctionSpace, System>::collisionsInfo;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetCellEdgeNodes;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GeomMeshT::GetEdgeExternalNormal;
@@ -416,6 +454,7 @@ public:
   typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXDimFunc MatrixXDimFunc;
   typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXFunc MatrixXFunc;
 
+  using VolumeMeshCommon<Space, FunctionSpace, System>::collisionsInfo;
   using VolumeMeshCommon<Space, FunctionSpace, System>::additionalCellInfos;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMassCenter;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellVertices;

@@ -908,4 +908,72 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::BuildAABBTree(const Vector&
       aabbTree.SetUserData(treeNodeCellIndices[cellIndex], cellIndex);
     }
   }
+
+  if (allowDynamicCollisions)
+  {
+    collisionsInfo.Initialize(cells.size());
+  }
+
+  UpdateCollisionsInfo();
 }
+
+template<typename Space, typename FunctionSpace, typename System>
+void VolumeMeshCommon<Space, FunctionSpace, System>::UpdateCollisionsInfo()
+{
+  if (!allowDynamicCollisions) return;
+
+  collisionsInfo.Clear();
+
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+  {
+    if (!isCellAvailable[cellIndex] || cellMediumParameters[cellIndex].fixed) continue;
+
+    bool isCellContacted = false;
+    for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+    {
+      if (GetCorrespondingCellIndex(cellIndex, faceNumber) == IndexType(-1) &&
+        GetCorrespondingFaceNumber(cellIndex, faceNumber) == IndexType(-1))
+      {
+        IndexType interactionType = GetInteractionType(cellIndex, faceNumber);
+        if (interactionType != IndexType(-1))
+        {
+          IndexType dynamicContactType = system.GetBoundaryDynamicContactType(interactionType);
+          if (dynamicContactType != IndexType(-1))
+          {
+            isCellContacted = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (isCellContacted)
+    {
+      ContactFinder< VolumeMeshCommon<Space, FunctionSpace, System> > contactFinder(this, cellIndex);
+      IndexType collidedCellsCount = 0;
+
+      const IndexType MaxCollidedCellsCount = 999;
+      IndexType collidedCellsPool[MaxCollidedCellsCount];
+      contactFinder.Find(collidedCellsPool, &collidedCellsCount);
+
+      assert(collidedCellsCount <= MaxCollidedCellsCount);
+
+      if (collidedCellsCount + collisionsInfo.poolSize > collisionsInfo.pool.size())
+      {
+        collisionsInfo.pool.resize(collidedCellsCount + collisionsInfo.poolSize);
+      }
+
+      collisionsInfo.collisionNodes[cellIndex].count = collidedCellsCount;
+      collisionsInfo.collisionNodes[cellIndex].offset = collisionsInfo.poolSize;
+      collisionsInfo.poolSize += collidedCellsCount;
+
+      if (collidedCellsCount > 0)
+      {
+        std::copy(collidedCellsPool,
+          collidedCellsPool + collidedCellsCount,
+          collisionsInfo.pool.data() + collisionsInfo.collisionNodes[cellIndex].offset);
+      }
+    }
+  }
+}
+

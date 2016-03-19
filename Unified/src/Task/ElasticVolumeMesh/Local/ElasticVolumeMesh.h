@@ -53,6 +53,8 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   bool allowContinuousDestruction;
   bool allowDiscreteDestruction;
 
+  IndexType updateCollisionInfoPeriod;
+
   void Initialize(bool allowMovement,
     Scalar collisionWidth,
     IndexType unfoldIterationsCount, Scalar minGridHeight,
@@ -120,13 +122,19 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   bool ProcessPlasticity(const Scalar k, Elastic& elastic, bool updateElastic = false);
 
-  void MakeRhoCorrection();
+  void MakeRhoCorrection(Scalar minTimeStep = 2e-5);
+
+  void SetGlobalStepIndex(IndexType globalStepIndex);
 
 protected:
   void ComputeElasticMults()
   {
     ComputeElasticMults(Overload<Space>());
   }
+
+  IndexType globalStepIndex;
+
+  void UpdateAABBTree(IndexType globalStepIndex);
 
   NodeGroupManager<Space, VolumeMeshType> nodeGroupManager;
 

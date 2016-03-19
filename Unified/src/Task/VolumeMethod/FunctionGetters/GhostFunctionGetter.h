@@ -59,11 +59,9 @@ struct GhostCellFunctionGetter
   GhostCellFunctionGetter(
     MeshType* mesh,
     IndexType cellIndex,
-    const Vector& edgeNormal,
     Scalar currTime,
     GetterType getterType):
       cellIndex(cellIndex),
-      edgeNormal(edgeNormal),
       mesh(mesh),
       currTime(currTime),
       getterType(getterType)
@@ -73,7 +71,6 @@ struct GhostCellFunctionGetter
 
   IndexType cellIndex;
   IndexType cellIndices[Space::NodesPerCell];
-  Vector edgeNormal;
   MeshType* mesh;
   Scalar currTime;
   GetterType getterType;
@@ -86,10 +83,8 @@ struct GhostCellFunctionGetter
       case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
     }
 
-    Vector globalPoint = testPoint + edgeNormal * mesh->collisionWidth;
-
-    CollisionProcessorT collisionProcessor(this, globalPoint, values);
-    mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(globalPoint, globalPoint), collisionProcessor);
+    CollisionProcessorT collisionProcessor(this, testPoint, values);
+    mesh->aabbTree.template FindCollisions<CollisionProcessorT>(AABB(testPoint, testPoint), collisionProcessor);
 
     return collisionProcessor.collidedCellIndex;
   }
@@ -102,13 +97,11 @@ struct GhostCellFunctionGetter
       case MediumParams: std::fill(values, values + MediumParameters::ParamsCount, 0); break; // lambda, mju, invRho 
     }
 
-    Vector globalPoint = testPoint + edgeNormal * mesh->collisionWidth;
-
-    IndexType collidedCellIndex(-1);
+    IndexType collidedCellIndex = IndexType(-1);
     for (IndexType cellNumber = 0; cellNumber < contactCellsCount; ++cellNumber)
     {
       IndexType neighbourCellIndex = contactCells[cellNumber];
-      if (TryGhostCell(globalPoint, neighbourCellIndex, values))
+      if (TryGhostCell(testPoint, neighbourCellIndex, values))
       {
         collidedCellIndex = neighbourCellIndex;
         break;
@@ -141,14 +134,16 @@ struct GhostCellFunctionGetter
     //point is inside a colliding cell, counting it as a contact
     if (PointInCell<Scalar>(neighbourCellVertices, testPoint))
     {
-      ValueType neighbourSolution = mesh->GetCellSolution(neighbourCellIndex, testPoint);
       switch (getterType)
       {
-        case Solution:
+        case Solution: 
+        {
+          ValueType neighbourSolution = mesh->GetCellSolution(neighbourCellIndex, testPoint);
           for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
           {
             values[valueIndex] = neighbourSolution.values[valueIndex];
           }
+        }
         break;
         case MediumParams:
           for (IndexType paramIndex = 0; paramIndex < MediumParameters::ParamsCount; ++paramIndex)

@@ -206,8 +206,6 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
     #endif
 
     Vector cellVertices[Space::NodesPerCell];
-    const IndexType MaxContactCellsCount = 1024;
-    IndexType contactCells[MaxContactCellsCount];
 
     double beginPhase = MPI_Wtime();
     for (int cellIndex = segmentBegin; cellIndex < segmentEnd; ++cellIndex)
@@ -308,23 +306,15 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
             else
             {
               // dynamic collision
-              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, faceNormal, time,
+              GhostCellFunctionGetter<VolumeMeshT> functionGetter(this, cellIndex, time,
                 GhostCellFunctionGetter<VolumeMeshT>::Solution);
 
               // functionSpace->template Decompose< GhostCellFunctionGetter<VolumeMeshT>, dimsCount >(functionGetter, ghostValues.data());
 
-              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, faceNormal, time,
+              GhostCellFunctionGetter<VolumeMeshT> paramsGetter(this, cellIndex, time,
                 GhostCellFunctionGetter<VolumeMeshT>::MediumParams);
 
               flux.setZero();
-
-              IndexType contactCellsCount = 0;
-
-              if (collisionWidth < std::numeric_limits<Scalar>::epsilon())
-              {
-                ContactFinder< VolumeMeshT > contactFinder(this, cellIndex);
-                contactFinder.Find(contactCells, &contactCellsCount);
-              }
 
               // quadrature integration of numerical flux
               for (IndexType pointIndex = 0; pointIndex < quadraturePointsForBorder.size(); ++pointIndex)
@@ -340,27 +330,19 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
                 std::copy(tmp, tmp + dimsCount, interiorSolution.values);
 
                 MediumParameters exteriorParams;
-                IndexType collidedCellIndex;
+                std::fill(exteriorParams.params, exteriorParams.params + MediumParameters::ParamsCount, 0);
+                IndexType collidedCellIndex = IndexType(-1);
 
                 if (collisionWidth > std::numeric_limits<Scalar>::epsilon())
-                  collidedCellIndex = paramsGetter(globalPoint, exteriorParams.params);
+                  collidedCellIndex = paramsGetter(globalPoint + faceNormal * collisionWidth, exteriorParams.params);
                 else
-                  collidedCellIndex = paramsGetter(globalPoint, contactCells, contactCellsCount, exteriorParams.params);
-
-                if (contactCellsCount > 1000)
                 {
-                  MeshVtkWriter< Space, typename VolumeMeshCommon<Space, FunctionSpace, System>::IntTypeCellInfo > meshWriter;
-                  std::vector<int> v(cells.size(), 0);
-                  for (int i = 0; i < contactCellsCount; ++i)
-                    v[contactCells[i]] = 1;
-                  v[cellIndex] = 2;
-
-                  std::ostringstream testFileName;
-                  testFileName << "out/test[" << 
-                    solverState.globalStepIndex
-                    << "].vtk";
-
-                  meshWriter.Write(testFileName.str(), nodes, cells, v);
+                  if (collisionsInfo.collisionNodes[cellIndex].count > 0)
+                  {
+                    collidedCellIndex = paramsGetter(globalPoint + faceNormal * collisionWidth,
+                      collisionsInfo.pool.data() + collisionsInfo.collisionNodes[cellIndex].offset,
+                      collisionsInfo.collisionNodes[cellIndex].count, exteriorParams.params);
+                  }
                 }
 
                 typename System::ValueType exteriorSolution; //GetRefCellSolution(ghostValues.data(), ghostRefPoint);

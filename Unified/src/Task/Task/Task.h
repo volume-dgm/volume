@@ -40,7 +40,7 @@
 
 
 #define PROFILING
-// #define SINGLE_THREAD
+//#define SINGLE_THREAD
 #define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
@@ -397,6 +397,8 @@ void Task<Space, order>::Run()
     distributedElasticMeshes[domainNumber]->allowContinuousDestruction = settings.solver.allowContinuousDestruction;
     distributedElasticMeshes[domainNumber]->allowDiscreteDestruction   = settings.solver.allowDiscreteDestruction;
 
+    distributedElasticMeshes[domainNumber]->updateCollisionInfoPeriod = settings.solver.updateCollisionInfoPeriod;
+
     distributedElasticMeshes[domainNumber]->erosion = settings.solver.erosion;
     distributedElasticMeshes[domainNumber]->dynamicContactBox = settings.solver.dynamicContactBox;
   }
@@ -548,6 +550,7 @@ void Task<Space, order>::Run()
       {
         for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
         {
+          distributedElasticMeshes[domainNumber]->SetGlobalStepIndex(solverState.globalStepIndex);
           distributedElasticMeshes[domainNumber]->solver->AdvanceStep(solverState);
         }
         currTime = distributedElasticMeshes[0]->solver->GetCurrTime();

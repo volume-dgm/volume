@@ -17,7 +17,8 @@ struct SolverSettings
     velocityDimensionlessMult(1.0), tensionDimensionlessMult(1.0),
     allowMovement(false), allowPlasticity(false), 
     allowDiscreteDestruction(false), allowContinuousDestruction(false),
-    integrator("Euler"), precision("double"), polynomialsOrder(1), hierarchyLevelsCount(1), damping(0.0)
+    integrator("Euler"), precision("double"), polynomialsOrder(1), hierarchyLevelsCount(1), damping(0.0),
+    updateCollisionInfoPeriod(1)
   {
   }
 
@@ -28,7 +29,7 @@ struct SolverSettings
   Scalar tensionErrorMult;
   Scalar velocityErrorMult;
   Scalar positionErrorMult;
-
+  
   Scalar velocityDimensionlessMult;
   Scalar tensionDimensionlessMult;
 
@@ -43,6 +44,8 @@ struct SolverSettings
   IndexType hierarchyLevelsCount;
   Scalar damping;
 
+  IndexType updateCollisionInfoPeriod;
+
   struct Erosion
   {
     Erosion() : cellAspectRatio(std::numeric_limits<Scalar>::max() / 2),
@@ -50,7 +53,9 @@ struct SolverSettings
       maxPlasticDeformation(1.0),
       rhoReduction(std::numeric_limits<Scalar>::max() / 2)
     {
+      boxOfInterest.Set(-std::numeric_limits<Scalar>::max() / 2 * Vector::one(), std::numeric_limits<Scalar>::max() / 2 * Vector::one());
     }
+    AABB   boxOfInterest;
     Scalar cellAspectRatio;
     Scalar minHeightRatio;
     Scalar maxPlasticDeformation;
@@ -144,6 +149,11 @@ void SolverSettings<Space>::Parse(TiXmlElement *solverElement)
     std::cerr << "allowMovement is true, however positionErrorMult is not specified";
   }
 
+  if (ParseUnsigned(solverElement, "updateCollisionInfoPeriod", &updateCollisionInfoPeriod) != TIXML_SUCCESS)
+  {
+    std::cerr << "There is no updateCollisionInfoPeriod attribute";
+  }
+
   ParseScalar(solverElement, "velocityDimensionlessMult", &velocityDimensionlessMult);  
   ParseScalar(solverElement, "tensionDimensionlessMult", &tensionDimensionlessMult);
   ParseScalar(solverElement, "damping", &damping);
@@ -155,6 +165,27 @@ void SolverSettings<Space>::Parse(TiXmlElement *solverElement)
     ParseScalar(erosionElement, "minHeightRatio",  &erosion.minHeightRatio);
     ParseScalar(erosionElement, "maxPlasticDeformation", &erosion.maxPlasticDeformation);
     ParseScalar(erosionElement, "rhoReduction", &erosion.rhoReduction);
+
+    TiXmlElement* boxOfInterestElement = erosionElement->FirstChildElement("BoxOfInterest");
+    if (boxOfInterestElement)
+    {
+      ParseVector(boxOfInterestElement, "boxPoint1", &erosion.boxOfInterest.boxPoint1);
+      ParseVector(boxOfInterestElement, "boxPoint2", &erosion.boxOfInterest.boxPoint2);
+    }
+    TiXmlElement* frameOfInterestElement = erosionElement->FirstChildElement("FrameOfInterest");
+    if (frameOfInterestElement)
+    {
+      Vector center = Vector::zeroVector();
+      Vector size = Vector::one();
+      Scalar margin = 0;
+
+      ParseVector(frameOfInterestElement, "center", &center);
+      ParseVector(frameOfInterestElement, "size",   &size);
+      ParseScalar(frameOfInterestElement, "margin", &margin);
+
+      erosion.boxOfInterest.boxPoint1 = center - size / Scalar(2.0) - Vector::one() * margin;
+      erosion.boxOfInterest.boxPoint2 = center + size / Scalar(2.0) + Vector::one() * margin;
+    }
   }
 
   TiXmlElement* dynamicContactBoxElement = solverElement->FirstChildElement("DynamicContactBox");
