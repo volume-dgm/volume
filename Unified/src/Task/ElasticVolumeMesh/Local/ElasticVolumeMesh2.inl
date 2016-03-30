@@ -212,16 +212,6 @@ struct ContinuousDestructionCorrector
     std::copy(elastic.values, elastic.values + mesh->volumeMesh.dimsCount, values);
   }
 
-  void operator()(const Vector& refPoint, Scalar* values) const
-  {
-
-  }
-
-  bool ForBasisPointsOnly() const
-  {
-    return true;
-  }
-
   MeshType* mesh;
   IndexType cellIndex;
 };

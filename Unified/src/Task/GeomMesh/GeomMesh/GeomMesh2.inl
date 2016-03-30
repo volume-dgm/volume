@@ -16,6 +16,23 @@ void GeomMesh<Space2>::BuildAdditionalTopology(
   BuildCellAdditionalTopology(internalContactTypes);
   BuildContactsInfo(contactEdges, contactEdgesCount, contactTypesCount);
   BuildBoundariesInfo(boundaryEdges, boundaryEdgesCount, boundaryTypesCount);
+
+  if (internalContactTypes)
+  {
+    for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+    {
+      for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+      {
+        IndexType correspondingCellIndex = GetCorrespondingCellIndex(cellIndex, faceNumber);
+        if (correspondingCellIndex != IndexType(-1))
+        {
+          IndexType interactionType = std::max(internalContactTypes[cellIndex], internalContactTypes[correspondingCellIndex]);
+          additionalCellInfos[cellIndex].neighbouringEdges[faceNumber].interactionType = std::max(interactionType,
+            additionalCellInfos[cellIndex].neighbouringEdges[faceNumber].interactionType);
+        }
+      }
+    }
+  }
 }
 
 GeomMesh<Space2>::EdgeLocationPair

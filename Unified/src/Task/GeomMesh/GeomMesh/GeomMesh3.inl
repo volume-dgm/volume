@@ -3086,6 +3086,23 @@ void GeomMesh<Space3>::BuildAdditionalTopology(
   BuildCellAdditionalTopology(internalContactTypes);
   BuildContactsInfo(contactFaces, contactFacesCount, contactTypesCount);
   BuildBoundariesInfo(boundaryFaces, boundaryFacesCount, boundaryTypesCount);
+
+  if (internalContactTypes)
+  {
+    for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
+    {
+      for (IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
+      {
+        IndexType correspondingCellIndex = GetCorrespondingCellIndex(cellIndex, faceNumber);
+        if (correspondingCellIndex != IndexType(-1))
+        {
+          IndexType interactionType = std::max(internalContactTypes[cellIndex], internalContactTypes[correspondingCellIndex]);
+          additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].interactionType = std::max(interactionType,
+            additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].interactionType);
+        }
+      }
+    }
+  }
 }
 
 void GeomMesh<Space3>::GetCellFaceVertices(IndexType cellIndex, IndexType faceNumber, Vector* faceVertices) const

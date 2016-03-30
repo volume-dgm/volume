@@ -445,22 +445,12 @@ struct DampingCorrector
     this->cellIndex = cellIndex;
   }
 
-  void operator()(const Vector& refPoint, Scalar* values) const
+  void operator()(IndexType basisPointIndex, Scalar* values) const
   {
-    Elastic elastic = mesh->InterpolateElasticRef(cellIndex, refPoint);
+    Elastic elastic = mesh->InterpolateElasticRef(cellIndex, basisPointIndex, MeshType::VolumeMeshTypeCommon::Basis);
     Vector  velocity = elastic.GetVelocity();
     elastic.SetVelocity(velocity * mesh->GetDamping());
     std::copy(elastic.values, elastic.values + mesh->dimsCount, values);
-  }
-
-  void operator()(IndexType basisPointIndex, Scalar* values) const
-  {
-
-  }
-
-  bool ForBasisPointsOnly() const
-  {
-    return false;
   }
 
   MeshType* const mesh;
@@ -538,15 +528,6 @@ struct PlasticityCorrector
       mesh->ProcessPlasticity(k, elastic, true);
     }
     std::copy(elastic.values, elastic.values + mesh->dimsCount, values);
-  }
-
-  void operator()(const Vector& refPoint, Scalar* values) const
-  {
-  }
-
-  bool ForBasisPointsOnly() const
-  {
-    return true;
   }
 
   MeshType* const mesh;
@@ -634,7 +615,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion()
     if (volumeMesh.isCellAvailable[cellIndex] && 
       !volumeMesh.cellMediumParameters[cellIndex].fixed &&
       (volumeMesh.GetAspectRatio(cellIndex) > erosion.cellAspectRatio || 
-      // volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
+       volumeMesh.GetMinHeight(cellIndex) < erosion.minHeightRatio * minHeightInMesh ||
       (allowPlasticity && plasticDeforms[cellIndex] > erosion.maxPlasticDeformation) ||
       lowDensity ||
       !erosion.boxOfInterest.Includes(volumeMesh.GetCellAABB(cellIndex))))

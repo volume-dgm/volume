@@ -31,16 +31,6 @@ public:
     }
   }
 
-  void operator()(IndexType basisPointIndex, Scalar* values)
-  {
-
-  }
-
-  bool ForBasisPointsOnly() const
-  {
-    return false;
-  }
-
 private:
   typename System::SourceFunctorT* functor;
   Scalar time;

@@ -5,12 +5,49 @@
 #include "../../../Maths/QuadraturePrecomputer.h"
 #include <assert.h>
 
+template <typename Space, typename Decomposer, typename Function, typename FuncArgType>
+struct GetterCommon
+{
+  GetterCommon(Decomposer* decomposer, Function& func) : decomposer(decomposer), func(func)
+  {}
+  Decomposer* decomposer;
+  Function& func;
+};
+
+template <typename Space, typename Decomposer, typename Function, typename FuncArgType>
+struct Getter;
+
+template <typename Space, typename Decomposer, typename Function>
+struct Getter<Space, Decomposer, Function, typename Space::IndexType> : public GetterCommon < Space, Decomposer, Function, typename Space::IndexType>
+{
+  SPACE_TYPEDEFS
+  Getter(Decomposer* decomposer, Function& func) : GetterCommon(decomposer, func)
+  {}
+  void operator()(IndexType basisPointIndex, Scalar* values)
+  {
+    func(basisPointIndex, values);
+  }
+};
+
+template <typename Space, typename Decomposer, typename Function>
+struct Getter< Space, Decomposer, Function, typename Space::Vector> : public GetterCommon < Space, Decomposer, Function, typename Space::Vector>
+{
+  SPACE_TYPEDEFS
+  Getter(Decomposer* decomposer, Function& func) : GetterCommon(decomposer, func)
+  {}
+  void operator()(IndexType basisPointIndex, Scalar* values)
+  {
+    func(decomposer->GetBasisPoints()[basisPointIndex], values);
+  }
+};
+
 template<typename Space, typename FunctionSpaceT>
 struct QuadratureDecomposer : public FunctionSpaceT
 {
   SPACE_TYPEDEFS
 
   typedef FunctionSpaceT FunctionSpace;
+  typedef QuadratureDecomposer<Space, FunctionSpace> DecomposerType;
 
   using FunctionSpace::functionsCount;
   using FunctionSpace::order;
@@ -52,18 +89,44 @@ struct QuadratureDecomposer : public FunctionSpaceT
   }
 
   template<typename Function, int ValuesCount>
+  void DecomposePrecomputed(Function& func, Scalar* coords)
+  {
+    DecomposeBase<Function, ValuesCount, IndexType>(func, coords);
+  }
+
+  template<typename Function, int ValuesCount>
   void Decompose(Function& func, Scalar* coords)
+  {
+    DecomposeBase<Function, ValuesCount, Vector>(func, coords);
+  }
+
+  const std::vector<Vector>& GetBasisPoints() const
+  {
+    return points;
+  }
+
+private:
+  // for quadrature integration
+  std::vector<Scalar> weights;
+  std::vector<Vector> points;
+
+  std::vector<Scalar> basisFunctionValues;
+
+  Scalar cellVolumeIntegrals[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
+  Scalar cellVolumeIntegralsInv[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
+
+  template<typename Function, int ValuesCount, typename FuncArgType>
+  void DecomposeBase(Function& func, Scalar* coords)
   {
     Scalar correlations[functionsCount * ValuesCount]; // correlations == inner products
     std::fill_n(correlations, ValuesCount * functionsCount, 0);
 
+    Scalar values[ValuesCount];
+    Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+
     for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
     {
-      Scalar values[ValuesCount];
-      if (func.ForBasisPointsOnly())
-        func(pointIndex, values);
-      else
-        func(points[pointIndex], values);
+      getter(pointIndex, values);
 
       for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
       {
@@ -82,25 +145,6 @@ struct QuadratureDecomposer : public FunctionSpaceT
           coords[valueIndex * functionsCount + i] +=
           correlations[valueIndex * functionsCount + j] * cellVolumeIntegralsInv[j * functionsCount + i];
   }
-
-  /*Scalar GetBasisFunctionValue(Vector point, IndexType functionIndex) const
-  {
-    return space.GetBasisFunctionValue(point, functionIndex);
-  }*/
-
-  std::vector<Vector> GetBasisPoints() const
-  {
-    return points;
-  }
-
-  // for quadrature integration
-  std::vector<Scalar> weights;
-  std::vector<Vector> points;
-
-  std::vector<Scalar> basisFunctionValues;
-
-  Scalar cellVolumeIntegrals[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
-  Scalar cellVolumeIntegralsInv[FunctionSpaceT::functionsCount * FunctionSpaceT::functionsCount];
 };
 
 template<typename Space, typename PolynomialSpaceT>
@@ -109,6 +153,7 @@ struct NodalDecomposer : public PolynomialSpaceT
   SPACE_TYPEDEFS
 
   typedef PolynomialSpaceT PolynomialSpace;
+  typedef NodalDecomposer<Space, PolynomialSpace> DecomposerType;
 
   using PolynomialSpace::functionsCount;
   using PolynomialSpace::order;
@@ -125,25 +170,37 @@ struct NodalDecomposer : public PolynomialSpaceT
   template<typename Function, int ValuesCount>
   void Decompose(Function& func, Scalar* coords)
   {
-    for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
-    {
-      Scalar values[ValuesCount];
-      if (func.ForBasisPointsOnly())
-        func(functionIndex, values);
-      else
-        func(basisPoints[functionIndex], values);
+    DecomposeBase<Function, ValuesCount, Vector>(func, coords);
+  }
 
-      for(IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+  template<typename Function, int ValuesCount>
+  void DecomposePrecomputed(Function& func, Scalar* coords)
+  {
+    DecomposeBase<Function, ValuesCount, IndexType>(func, coords);
+  }
+
+  const std::vector<Vector>& GetBasisPoints() const
+  {
+    return basisPoints;
+  }
+
+private:
+  std::vector<Vector> basisPoints;
+
+  template<typename Function, int ValuesCount, typename FuncArgType>
+  void DecomposeBase(Function& func, Scalar* coords)
+  {
+    Scalar values[ValuesCount];
+    Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+
+    for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    {
+      getter(functionIndex, values);
+
+      for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
       {
         coords[valueIndex * functionsCount + functionIndex] = values[valueIndex];
       }
     }
   }
-
-  std::vector<Vector> GetBasisPoints() const
-  {
-    return basisPoints;
-  }
-
-  std::vector<Vector> basisPoints;
 };

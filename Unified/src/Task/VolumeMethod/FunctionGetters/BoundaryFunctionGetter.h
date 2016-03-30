@@ -27,25 +27,16 @@ public:
 
   void operator()(const Vector& refPoint, Scalar* values)
   {
-    Vector globalPoint = volumeMesh->RefToGlobalVolumeCoords(refPoint, ghostPoints);
     if (functor)
     {
       ValueType valueType = volumeMesh->GetRefCellSolution(cellIndex, refPoint);
       functor->SetCurrentVelocity(valueType.GetVelocity());
+      Vector globalPoint = volumeMesh->RefToGlobalVolumeCoords(refPoint, ghostPoints);
       functor->operator()(globalPoint, externalNormal, time, values);
     } else
     {
       std::fill_n(values, MeshType::dimsCount, Scalar(0.0));
     }
-  }
-
-  void operator()(IndexType basisPointIndex, Scalar* values)
-  {
-  }
-
-  bool ForBasisPointsOnly() const
-  {
-    return false;
   }
 
   void BuildExternalNormal(IndexType cellIndex, IndexType boundaryFaceNumber)

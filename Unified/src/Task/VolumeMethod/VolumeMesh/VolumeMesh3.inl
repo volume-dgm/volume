@@ -292,6 +292,7 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
               typedef BoundaryFunctionGetter< VolumeMesh<Space, FunctionSpace, System> > FunctorWrapper;
               FunctorWrapper wrapper(functor, time, this, cellIndex, faceNumber);
 
+              // TODO: replace it with integration over face
               functionSpace->template Decompose< FunctorWrapper, dimsCount >(wrapper, boundaryInfoValues.data());
               faceFlux.noalias() += Scalar(2.0) * xExteriorMatrix * faceTransformMatrixInv * boundaryInfoValues * outgoingFlux.srcFaces[faceNumber].surfaceIntegral;
             }
