@@ -105,7 +105,8 @@
 
   <!-- <Detectors 
     fileName="out/detectors[<domain>]<detector>.csv" 
-    locationsFileName="meshes/detectorsLocations.loc" /> -->
+    locationsFileName="meshes/detectorsLocations.loc" 
+    samplesPeriod="1" /> -->
 
   <Schedule domainsCount="1">
     <NodeSchedule node="0" domains="-1" /> <!-- negative domains value means all domains are assigned to this node -->
