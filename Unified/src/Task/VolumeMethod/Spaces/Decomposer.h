@@ -22,11 +22,11 @@ template <typename Space, typename Decomposer, typename Function>
 struct Getter<Space, Decomposer, Function, typename Space::IndexType> : public GetterCommon < Space, Decomposer, Function, typename Space::IndexType>
 {
   SPACE_TYPEDEFS
-  Getter(Decomposer* decomposer, Function& func) : GetterCommon(decomposer, func)
+  Getter(Decomposer* decomposer, Function& func) : GetterCommon<Space, Decomposer, Function, typename Space::IndexType>(decomposer, func)
   {}
   void operator()(IndexType basisPointIndex, Scalar* values)
   {
-    func(basisPointIndex, values);
+    this->func(basisPointIndex, values);
   }
 };
 
@@ -34,11 +34,11 @@ template <typename Space, typename Decomposer, typename Function>
 struct Getter< Space, Decomposer, Function, typename Space::Vector> : public GetterCommon < Space, Decomposer, Function, typename Space::Vector>
 {
   SPACE_TYPEDEFS
-  Getter(Decomposer* decomposer, Function& func) : GetterCommon(decomposer, func)
+  Getter(Decomposer* decomposer, Function& func) : GetterCommon <Space, Decomposer, Function, typename Space::Vector> (decomposer, func)
   {}
   void operator()(IndexType basisPointIndex, Scalar* values)
   {
-    func(decomposer->GetBasisPoints()[basisPointIndex], values);
+    this->func(this->decomposer->GetBasisPoints()[basisPointIndex], values);
   }
 };
 
@@ -151,7 +151,7 @@ private:
     std::fill_n(correlations, ValuesCount * functionsCount, 0);
 
     Scalar values[ValuesCount];
-    Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+    ::Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
 
     for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
     {
@@ -273,7 +273,7 @@ private:
   void DecomposeBase(Function& func, Scalar* coords)
   {
     Scalar values[ValuesCount];
-    Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+    ::Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
 
     for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
     {
