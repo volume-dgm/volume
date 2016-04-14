@@ -756,7 +756,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
     for (IndexType dimIndex = 0; dimIndex < Space::Dimension; dimIndex++)
     {
       velocityGradient[velocityComponentIndex] +=
-        refDerivatives[dimIndex] * velocityGradient[velocityComponentIndex][dimIndex];
+        refDerivatives[dimIndex] * refVelocityGradient[velocityComponentIndex][dimIndex];
     }
   }
 
@@ -771,7 +771,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
   }
   for (int i = 0; i < Space::Dimension; ++i)
   {
-    strainRateTensor[i][i] -= Scalar(1.0) / Scalar(3.0) * velocityGradient[i][i];
+    strainRateTensor[i][i] -= Scalar(1.0) / Scalar(Space::Dimension) * velocityGradient[i][i];
   }
 
   /*Scalar effectiveStrain = 0;
