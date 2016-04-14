@@ -3,14 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Task", "TriTask\TriTask.vcxproj", "{2E59DD03-9C51-4F40-86C9-D6DFEB840265}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Task", "Task\Task.vcxproj", "{2E59DD03-9C51-4F40-86C9-D6DFEB840265}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshBuilder", "MeshBuilder2\MeshBuilder2.vcxproj", "{0FDDFDD9-9031-4BE7-9DBB-72001C477287}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshBuilder", "MeshBuilder\MeshBuilder.vcxproj", "{0FDDFDD9-9031-4BE7-9DBB-72001C477287}"
 	ProjectSection(ProjectDependencies) = postProject
 		{20D94662-8914-4B08-A8FB-C3DDB307BB50} = {20D94662-8914-4B08-A8FB-C3DDB307BB50}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ResultCombiner", "ResultCombiner2\ResultCombiner2.vcxproj", "{15DEF949-489C-4DB2-8D36-8A9994BC8C6C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ResultCombiner", "ResultCombiner\ResultCombiner.vcxproj", "{15DEF949-489C-4DB2-8D36-8A9994BC8C6C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Metis", "Metis\Metis.vcxproj", "{20D94662-8914-4B08-A8FB-C3DDB307BB50}"
 EndProject

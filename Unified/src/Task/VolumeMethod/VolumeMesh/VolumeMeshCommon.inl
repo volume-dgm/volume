@@ -25,8 +25,7 @@ template <typename Space, typename FunctionSpace, typename System>
 typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   GetRefCellSolution(IndexType cellIndex, IndexType pointIndex, PointType pointType, bool halfStepSolution) const
 {
-  typename System::ValueType result;
-  result.SetZeroValues();
+  typename System::ValueType result(Scalar(0.0));
 
   for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
   {
@@ -37,9 +36,6 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
       case Basis: 
         basisFunctionValue = basisPointFunctionValues[functionIndex][pointIndex]; 
        break;
-      case Quadrature: 
-        basisFunctionValue = quadraturePointFunctionValues[functionIndex][pointIndex]; 
-      break;
       case CellNode:
         basisFunctionValue = cellNodeBasisFunctionValues[functionIndex][pointIndex];
       break;
@@ -762,17 +758,17 @@ template<typename Space, typename FunctionSpace, typename System>
 typename Space::Vector VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalImpulse() const
 {
   Vector totalImpulse = Vector::zero();
-  Vector cellVertices[Space::NodesPerCell];
-  Vector intVel;
+
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
   {
-    intVel = Vector::zero();
-    for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+    auto velocityFunc = [&](IndexType basisPointIndex)
     {
-      intVel += GetRefCellSolution(cellIndex, quadraturePoints[pointIndex]).GetVelocity() * quadratureWeights[pointIndex];
-    }
-    GetCellVertices(cellIndex, cellVertices);
-    totalImpulse += GetCellDeformJacobian(cellVertices) * intVel / cellMediumParameters[cellIndex].invRho;
+      return GetRefCellSolution(cellIndex, basisPointIndex, Basis).GetVelocity();
+    };
+
+    Vector intVel = functionSpace->GetCellAveragePrecomputed<decltype(velocityFunc), Vector>(velocityFunc);
+
+    totalImpulse += GetVolume(cellIndex) * intVel / cellMediumParameters[cellIndex].invRho;
   }
   return totalImpulse;
 }
@@ -780,29 +776,31 @@ typename Space::Vector VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalI
 template<typename Space, typename FunctionSpace, typename System>
 void VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy(IndexType cellIndex, Scalar& kineticEnergy, Scalar& potentialEnergy) const
 {
-  kineticEnergy = potentialEnergy = 0;
-
-  Vector cellVertices[Space::NodesPerCell];
-  GetCellVertices(cellIndex, cellVertices);
-  Scalar jacobian = GetCellDeformJacobian(cellVertices);
-
   const Scalar lambda = cellMediumParameters[cellIndex].lambda;
-  const Scalar mu = cellMediumParameters[cellIndex].mju;
+  const Scalar mu     = cellMediumParameters[cellIndex].mju;
+  const Scalar rho    = 1 / cellMediumParameters[cellIndex].invRho;
   const Tensor identityTensor = Tensor(1);
 
-  for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
+  Scalar cellVolume = GetVolume(cellIndex);
+
+  auto kineticEnergyFunc = [&](IndexType basisPointIndex)
   {
-    typename System::ValueType cellSolution = GetRefCellSolution(cellIndex, quadraturePoints[pointIndex]);
-    kineticEnergy += Scalar(0.5) * jacobian * cellSolution.GetVelocity().SquareLen() *
-      quadratureWeights[pointIndex] / cellMediumParameters[cellIndex].invRho;
+    typename System::ValueType cellSolution = GetRefCellSolution(cellIndex, basisPointIndex, Basis);
+    return Scalar(0.5) * cellSolution.GetVelocity().SquareLen() * rho;
+  };
 
+  auto potentialEnergyFunc = [&](IndexType basisPointIndex)
+  {
+    typename System::ValueType cellSolution = GetRefCellSolution(cellIndex, basisPointIndex, Basis);
     Tensor t = cellSolution.GetTension();
-
     Scalar s = lambda / (Space::Dimension * lambda + 2 * mu);
 
     // from Chelnokov phd thesis
-    potentialEnergy += jacobian * Scalar(0.25) / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor))) * quadratureWeights[pointIndex];
-  }
+    return Scalar(0.25) / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor)));
+  };
+
+  kineticEnergy   = functionSpace->GetCellAveragePrecomputed<decltype(kineticEnergyFunc),   Scalar>(kineticEnergyFunc)   * cellVolume;
+  potentialEnergy = functionSpace->GetCellAveragePrecomputed<decltype(potentialEnergyFunc), Scalar>(potentialEnergyFunc) * cellVolume;
 }
 
 template<typename Space, typename FunctionSpace, typename System>

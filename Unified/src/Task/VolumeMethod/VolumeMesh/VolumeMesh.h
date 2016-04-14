@@ -46,12 +46,9 @@ public:
   {
     functionSpace = new FunctionSpace;
 
-    // *2 because of we compute integrals from product of two functions of order-th degree
+    // *2 because of we compute integrals from product of two functions of order N-th degree
     QuadraturePrecomputer::BuildQuadrature<typename Space::BorderSpace>(2 * FunctionSpace::order,
       quadratureWeightsForBorder, quadraturePointsForBorder);
-
-    QuadraturePrecomputer::BuildQuadrature<Space>(2 * FunctionSpace::order,
-      quadratureWeights, quadraturePoints);
 
     for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
     {
@@ -59,11 +56,6 @@ public:
       for (IndexType pointIndex = 0; pointIndex < basisPoints.size(); ++pointIndex)
       {
         basisPointFunctionValues[functionIndex].push_back(functionSpace->GetBasisFunctionValue(basisPoints[pointIndex], functionIndex));
-      }
-
-      for (IndexType pointIndex = 0; pointIndex < quadraturePoints.size(); ++pointIndex)
-      {
-        quadraturePointFunctionValues[functionIndex].push_back(functionSpace->GetBasisFunctionValue(quadraturePoints[pointIndex], functionIndex));
       }
 
       for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
@@ -142,7 +134,7 @@ public:
   using GeomMesh<Space>::GetCellAABB;
   using GeomMesh<Space>::GetVolume;
 
-  enum PointType {Basis, Quadrature, CellNode};
+  enum PointType {Basis, CellNode};
 
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepCellSolution = false) const;
   typename System::ValueType GetRefCellSolution(IndexType cellIndex, IndexType pointIndex, PointType pointType, bool halfStepCellSolution = false) const;
@@ -201,9 +193,6 @@ public:
   // for quadtature integration
   std::vector<Scalar> quadratureWeightsForBorder;
   std::vector<typename BorderSpace::Vector> quadraturePointsForBorder;
-
-  std::vector<Scalar> quadratureWeights;
-  std::vector<Vector> quadraturePoints;
 
   struct CollisionsInfo
   {
@@ -267,8 +256,6 @@ protected:
 
   /* precomputed basis values for each basis decomposer`s point */
   std::vector<Scalar> basisPointFunctionValues[functionsCount];
-  /* precomputed basis values for each quadrature point */
-  std::vector<Scalar> quadraturePointFunctionValues[functionsCount];
   std::vector<Scalar> cellNodeBasisFunctionValues[functionsCount];
 
   /*

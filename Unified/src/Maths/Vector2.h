@@ -31,6 +31,9 @@ struct Vector2
   template <typename U>
   Vector2<T>(const Vector2<U>& other): x(T(other.x)), y(T(other.y)) { }
 
+  inline Vector2(const T& value): x(value), y(value)
+  {}
+
   inline bool LoadFromString(const std::string& s)
   {
     std::stringstream stream(s);

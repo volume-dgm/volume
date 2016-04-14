@@ -30,6 +30,9 @@ struct Vector3
   inline Vector3() {}
   inline Vector3(const T& x, const T& y, const T& z): x(x), y(y), z(z) { }
 
+  inline Vector3(const T& value) : x(value), y(value), z(value)
+  {}
+
   template <typename U>
   Vector3(const Vector3<U>& other): x(T(other.x)), y(T(other.y)), z(T(other.z)) { }
 

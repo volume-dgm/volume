@@ -26,6 +26,14 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
     using ValueTypeCommon::SetTension;
     using ValueTypeCommon::values;
 
+    ValueType() : ValueTypeCommon()
+    {
+    }
+
+    ValueType(Scalar initialValue) : ValueTypeCommon(initialValue)
+    {
+    }
+
     void SetTension(Scalar xx, Scalar yy, Scalar xy);
     Scalar GetPressure() const;
     Scalar GetDeviatorSquare() const;
@@ -64,6 +72,14 @@ struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
 
   struct ValueType: public ValueTypeCommon
   {
+    ValueType() : ValueTypeCommon()
+    {
+    }
+
+    ValueType(Scalar initialValue) : ValueTypeCommon(initialValue)
+    {
+    }
+
     using ValueTypeCommon::SetTension;
     using ValueTypeCommon::values;
     void SetTension(Scalar xx, Scalar yy, Scalar zz, Scalar xy, Scalar yz, Scalar xz);

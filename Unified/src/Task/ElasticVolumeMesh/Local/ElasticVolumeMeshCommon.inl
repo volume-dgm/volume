@@ -551,50 +551,25 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
       const Scalar k0 = volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
       const Scalar  a = volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
 
-      /*for (IndexType pointIndex = 0; pointIndex < volumeMesh.quadraturePoints.size(); ++pointIndex)
+      auto func = [&](Vector refPoint)
       {
+        Scalar pointDeformRate = 0;
         const bool brittle = volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
         if (!brittle)
         {
-          Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, pointIndex, VolumeMeshTypeCommon::Quadrature);
-          // Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, volumeMesh.quadraturePoints[pointIndex]);
+          Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, refPoint);
           const Scalar pressure = elastic.GetPressure();
           const Scalar k = k0 + a * pressure;
 
           if (ProcessPlasticity(k, elastic, false))
           {
-            plasticDeformRate += GetDeformRate(cellIndex, volumeMesh.quadraturePoints[pointIndex]) *
-              volumeMesh.quadratureWeights[pointIndex] *
-              jacobian;
+            Scalar pointDeformRate = GetDeformRate(cellIndex, refPoint);
           }
         }
-      }
-      plasticDeforms[cellIndex] += plasticDeformRate * dt / volumeMesh.GetVolume(cellIndex);
-      */      
-      /*auto deformFunc = [&](Vector point, Scalar *pointDeformRate) -> void
-      {
-        *pointDeformRate = GetDeformRate(cellIndex, point);
+        return pointDeformRate;
       };
-      volumeMesh.functionSpace->GetCellAverage<decltype(deformFunc), 1>(func, &plasticDeformRate);*/ //works the same
-      plasticDeformRate = volumeMesh.functionSpace->GetCellAverage(
-        [&](Vector refPoint, Scalar *pointDeformRate) -> void
-        {
-          *pointDeformRate = 0;
-          const bool brittle = volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
-          if (!brittle)
-          {
-            Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, refPoint);
-            //Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, pointIndex, VolumeMeshTypeCommon::Quadrature);
-            const Scalar pressure = elastic.GetPressure();
-            const Scalar k = k0 + a * pressure;
 
-            if (ProcessPlasticity(k, elastic, false))
-            {
-              *pointDeformRate = GetDeformRate(cellIndex, refPoint);
-              //*pointDeformRate = GetDeformRate(cellIndex, pointIndex);
-            }
-          }
-        });
+      plasticDeformRate = volumeMesh.functionSpace->GetCellAverage<decltype(func), Scalar>(func);
 
       plasticDeforms[cellIndex] += plasticDeformRate * dt; //* jacobian / volumeMesh.GetVolume(cellIndex) -- possibly needed, but i'm not sure
 

@@ -6,7 +6,7 @@
 #include "../Cell.h"
 #include <assert.h>
 
-template <typename Space, typename Decomposer, typename Function, typename FuncArgType>
+template <typename Space, typename Decomposer, typename Function, typename ValueType, typename FuncArgType>
 struct GetterCommon
 {
   GetterCommon(Decomposer* decomposer, Function& func) : decomposer(decomposer), func(func)
@@ -15,14 +15,52 @@ struct GetterCommon
   Function& func;
 };
 
-template <typename Space, typename Decomposer, typename Function, typename FuncArgType>
+template <typename Space, typename Decomposer, typename Function, typename ValueType, typename FuncArgType>
 struct Getter;
 
-template <typename Space, typename Decomposer, typename Function>
-struct Getter<Space, Decomposer, Function, typename Space::IndexType> : public GetterCommon < Space, Decomposer, Function, typename Space::IndexType>
+template <typename Space, typename Decomposer, typename Function,typename ValueType>
+struct Getter<Space, Decomposer, Function, ValueType, typename Space::IndexType> : public GetterCommon < Space, Decomposer, Function, ValueType, typename Space::IndexType>
 {
   SPACE_TYPEDEFS
-  Getter(Decomposer* decomposer, Function& func) : GetterCommon<Space, Decomposer, Function, typename Space::IndexType>(decomposer, func)
+  Getter(Decomposer* decomposer, Function& func) : GetterCommon<Space, Decomposer, Function, ValueType, typename Space::IndexType>(decomposer, func)
+  {}
+  ValueType operator()(IndexType basisPointIndex)
+  {
+    return this->func(basisPointIndex);
+  }
+};
+
+template <typename Space, typename Decomposer, typename Function, typename ValueType>
+struct Getter< Space, Decomposer, Function, ValueType, typename Space::Vector> : public GetterCommon < Space, Decomposer, Function, ValueType, typename Space::Vector>
+{
+  SPACE_TYPEDEFS
+  Getter(Decomposer* decomposer, Function& func) : GetterCommon <Space, Decomposer, Function, ValueType, typename Space::Vector> (decomposer, func)
+  {}
+  ValueType operator()(IndexType basisPointIndex)
+  {
+    return this->func(this->decomposer->GetBasisPoints()[basisPointIndex]);
+  }
+};
+
+
+
+template <typename Space, typename Decomposer, typename Function, typename FuncArgType>
+struct DecomposeGetterCommon
+{
+  DecomposeGetterCommon(Decomposer* decomposer, Function& func) : decomposer(decomposer), func(func)
+  {}
+  Decomposer* decomposer;
+  Function& func;
+};
+
+template <typename Space, typename Decomposer, typename Function, typename FuncArgType>
+struct DecomposeGetter;
+
+template <typename Space, typename Decomposer, typename Function>
+struct DecomposeGetter<Space, Decomposer, Function, typename Space::IndexType> : public DecomposeGetterCommon < Space, Decomposer, Function, typename Space::IndexType>
+{
+  SPACE_TYPEDEFS
+    DecomposeGetter(Decomposer* decomposer, Function& func) : DecomposeGetterCommon<Space, Decomposer, Function, typename Space::IndexType>(decomposer, func)
   {}
   void operator()(IndexType basisPointIndex, Scalar* values)
   {
@@ -31,10 +69,10 @@ struct Getter<Space, Decomposer, Function, typename Space::IndexType> : public G
 };
 
 template <typename Space, typename Decomposer, typename Function>
-struct Getter< Space, Decomposer, Function, typename Space::Vector> : public GetterCommon < Space, Decomposer, Function, typename Space::Vector>
+struct DecomposeGetter< Space, Decomposer, Function, typename Space::Vector> : public DecomposeGetterCommon < Space, Decomposer, Function, typename Space::Vector>
 {
   SPACE_TYPEDEFS
-  Getter(Decomposer* decomposer, Function& func) : GetterCommon <Space, Decomposer, Function, typename Space::Vector> (decomposer, func)
+    DecomposeGetter (Decomposer* decomposer, Function& func) : DecomposeGetterCommon <Space, Decomposer, Function, typename Space::Vector>(decomposer, func)
   {}
   void operator()(IndexType basisPointIndex, Scalar* values)
   {
@@ -101,32 +139,16 @@ struct QuadratureDecomposer : public FunctionSpaceT
     DecomposeBase<Function, ValuesCount, Vector>(func, coords);
   }
 
-  template<typename Function, int ValuesCount>
-  void GetCellAverage(Function &func, Scalar *coords)
+  template<typename Function, typename ValueType>
+  ValueType GetCellAverage(Function &func)
   {
-    GetCellAverageBase<Function, ValuesCount, Vector>(func, coords);
+    return GetCellAverageBase<Function, ValueType, Vector>(func);
   }
 
-  template<typename Function>
-  Scalar GetCellAverage(Function &func)
+  template<typename Function, typename ValueType>
+  ValueType GetCellAveragePrecomputed(Function &func)
   {
-    Scalar cellAverage;
-    GetCellAverageBase<Function, 1, Vector>(func, &cellAverage);
-    return cellAverage;
-  }
-
-  template<typename Function, int ValuesCount>
-  void GetCellAveragePrecomputed(Function &func, Scalar *coords)
-  {
-    GetCellAverageBase<Function, ValuesCount, IndexType>(func, coords);
-  }
-
-  template<typename Function>
-  Scalar GetCellAveragePrecomputed(Function &func)
-  {
-    Scalar cellAverage;
-    GetCellAverageBase<Function, 1, IndexType>(func, &cellAverage);
-    return cellAverage;
+    return GetCellAverageBase<Function, ValueType, IndexType>(func);
   }
 
   const std::vector<Vector>& GetBasisPoints() const
@@ -151,7 +173,7 @@ private:
     std::fill_n(correlations, ValuesCount * functionsCount, 0);
 
     Scalar values[ValuesCount];
-    ::Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+    ::DecomposeGetter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
 
     for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
     {
@@ -175,24 +197,18 @@ private:
           correlations[valueIndex * functionsCount + j] * cellVolumeIntegralsInv[j * functionsCount + i];
   }
 
-  template<typename Function, int ValuesCount, typename FuncArgType>
-  void GetCellAverageBase(Function& func, Scalar* integratedValues)
+  template<typename Function, typename ValueType, typename FuncArgType>
+  ValueType GetCellAverageBase(Function& func)
   {
-    for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
-    {
-      integratedValues[valueIndex] = 0;
-    }
-    Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+    ValueType integratedValue(0);
+    ::Getter<Space, DecomposerType, Function, ValueType, FuncArgType> getter(this, func);
 
     for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
     {
-      Scalar values[ValuesCount];
-      getter(pointIndex, values);
-      for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
-      {
-        integratedValues[valueIndex] += values[valueIndex] * wights[pointIndex] / ::Cell<Space>::GetRefCellVolume();
-      }
+      ValueType value = getter(pointIndex);
+      integratedValue += value * weights[pointIndex] / ::Cell<Space>::GetRefCellVolume();
     }
+    return integratedValue;
   }
 };
 
@@ -232,32 +248,16 @@ struct NodalDecomposer : public PolynomialSpaceT
     DecomposeBase<Function, ValuesCount, IndexType>(func, coords);
   }
 
-  template<typename Function, int ValuesCount>
-  void GetCellAverage(Function &func, Scalar *coords)
+  template<typename Function, typename ValueType>
+  ValueType GetCellAverage(Function &func)
   {
-    GetCellAverageBase<Function, ValuesCount, Vector>(func, coords);
+    return GetCellAverageBase<Function, ValueType, Vector>(func);
   }
 
-  template<typename Function>
-  Scalar GetCellAverage(Function &func)
+  template<typename Function, typename ValueType>
+  ValueType GetCellAveragePrecomputed(Function &func)
   {
-    Scalar cellAverage;
-    GetCellAverageBase<Function, 1, Vector>(func, &cellAverage);
-    return cellAverage;
-  }
-
-  template<typename Function, int ValuesCount>
-  void GetCellAveragePrecomputed(Function &func, Scalar *coords)
-  {
-    GetCellAverageBase<Function, ValuesCount, IndexType>(func, coords);
-  }
-
-  template<typename Function>
-  Scalar GetCellAveragePrecomputed(Function &func)
-  {
-    Scalar cellAverage;
-    GetCellAverageBase<Function, 1, IndexType>(func, &cellAverage);
-    return cellAverage;
+    return GetCellAverageBase<Function, ValueType, IndexType>(func);
   }
 
   const std::vector<Vector>& GetBasisPoints() const
@@ -273,7 +273,7 @@ private:
   void DecomposeBase(Function& func, Scalar* coords)
   {
     Scalar values[ValuesCount];
-    ::Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+    ::DecomposeGetter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
 
     for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
     {
@@ -286,20 +286,17 @@ private:
     }
   }
 
-  template<typename Function, int ValuesCount, typename FuncArgType>
-  void GetCellAverageBase(Function& func, Scalar* integratedValues)
+  template<typename Function, typename ValueType, typename FuncArgType>
+  ValueType GetCellAverageBase(Function& func)
   {
-    Scalar decomposedCoords[ValuesCount * functionsCount];
-    DecomposeBase<Function, ValuesCount, FuncArgType>(func, decomposedCoords);
+    ValueType integratedValue(0);
+    ::Getter<Space, DecomposerType, Function, ValueType, FuncArgType> getter(this, func);
 
-    for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+    for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
     {
-      integratedValues[valueIndex] = 0;
-      for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
-      {
-        integratedValues[valueIndex] += 
-          decomposedCoords[valueIndex * functionsCount + functionIndex] * precomputedCellIntegrals[functionIndex] / ::Cell<Space>::GetRefCellVolume();
-      }
+      ValueType value = getter(functionIndex);
+      integratedValue += value * precomputedCellIntegrals[functionIndex] / ::Cell<Space>::GetRefCellVolume();
     }
+    return integratedValue;
   }
 };

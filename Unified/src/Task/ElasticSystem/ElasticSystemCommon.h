@@ -43,6 +43,15 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   {
     Scalar values[ElasticSystemBase<Space>::dimsCount];
 
+    ValueTypeCommon()
+    {
+    }
+
+    ValueTypeCommon(Scalar initialValue)
+    {
+      std::fill_n(values, ElasticSystemBase<Space>::dimsCount, initialValue);
+    }
+
     ValueTypeCommon& operator=(const ValueTypeCommon& other)
     {
       std::copy(other.values, other.values + ElasticSystemBase<Space>::dimsCount, values);
