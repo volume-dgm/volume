@@ -390,8 +390,8 @@ public:
   Vector RefToGlobalVolumeCoords(Vector refCoords, Vector cellVertices[Space::NodesPerCell]) const; // ξ -> x
 
   Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
-  Vector    GetRefXDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy) * J
-  Vector    GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy) * J
+  Vector    GetRefXDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy) * J
+  Vector    GetRefYDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy) * J
 
   void GetRefDerivatives(Vector cellVertices[Space::NodesPerCell], Vector* refDerivatives) const;
 
@@ -527,9 +527,9 @@ public:
   typename System::ValueType GetFaceAverageSolution(IndexType cellIndex, IndexType faceNumber) const;
 
   Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
-  Vector    GetRefXDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy, dξ/dz) * J
-  Vector    GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy, dη/dz) * J
-  Vector    GetRefZDerivatives(Vector cellVertices[Space::NodesPerCell]) const; //(dζ/dx, dζ/dy, dζ/dz) * J
+  Vector    GetRefXDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy, dξ/dz) * J
+  Vector    GetRefYDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy, dη/dz) * J
+  Vector    GetRefZDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dζ/dx, dζ/dy, dζ/dz) * J
   void      GetRefDerivatives(Vector cellVertices[Space::NodesPerCell], Vector* refDerivatives) const;
 
 

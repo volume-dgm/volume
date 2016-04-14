@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount= "2">
+
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/Salome_IceCrush2dMesh" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "meshes/IceCrush2d[<domain>]" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+
+  <Mesh fileName="meshes/IceCrush2d[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.00000"> 
+    <MediumParams>
+      <PerSubmesh fileName= "meshes/IceCrush2d[<domain>].params">
+
+        <Submesh index="1" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> 
+        <Submesh index="0" E="5e+9" G="1.87e+9" rho= "900" k= "2.2e+6" alpha="0" brittle="false" internalContactType= "0"
+          maxPlasticDeform="0.0003" powderShearMult="0.1"/> <!-- E,G[Pa] rho[kg/m^3] k[Pa] maxPlaticDeform[dimentionless]  параметры льда, k - предел пластичности, powderShearMult in [0,1]
+          maxPlasticDeform -  -->
+      </PerSubmesh> 
+    </MediumParams>
+
+    <Boundaries>
+      <Free interactionType= "0" dynamicContactInteractionType= "1">
+        <ExternalForce>
+          <!-- <HydraulicPressureFunctor fluidRho="1000" g="0 -9.81" fluidSurfacePoint="0 0.4"/> -->
+        </ExternalForce>
+      </Free>
+
+      <Fixed interactionType= "1"> 
+        <ExternalVelocity>
+          <ConstFunctor value= "0.0 0.1"/>
+        </ExternalVelocity>
+      </Fixed>
+
+       <Fixed interactionType= "2"> 
+        <ExternalVelocity>
+          <ConstFunctor value= "0.0 -0.1"/>
+        </ExternalVelocity>
+      </Fixed>
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "0" maxLongitudinalStress="1.1e+6"/> <!-- maxLongitudinalStress - максимальное растягивающее напряжение, критерий разрушения-->
+      <Glide interactionType= "1" />
+    </Contacts>
+  </Mesh>
+
+  <Detectors 
+    fileName="out/detectors[<domain>]<detector>.csv" 
+    samplesPeriod="10"
+    locationsFileName="meshes/IceCrush2dDetectorPositions.loc" />
+
+  <Snapshot>
+    <Period frames="3000" />
+    <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <Box    boxPoint1 = "-0.01 -0.01" boxPoint2 = "0.16 0.16" />
+
+      <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
+      <Resolution resolution="500 500" />
+    </Data>
+     <!-- <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" /> -->
+     <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" />
+     <Boundaries fileName="out/boundaties_full[<domain>]<step>.vtk" />
+     <CellInfos fileName="out/cellinfo_full[<domain>]<step>.vtk" />
+  </Snapshot>
+
+
+  <Schedule domainsCount="1">
+    <NodeSchedule node="0" domains="-1" /> 
+  </Schedule>
+
+  <Task destinationTime = "10e-0">
+    <IniState>
+      <BoxState boxPoint1 = "-10.0 -10.0" boxPoint2 = "10.0 10.0" velocity = "0.0 0.0" />
+    </IniState>
+
+    <SourceTerms> 
+      <!-- <ConstantAcceleration acceleration="0 -9.81"/>  -->
+    </SourceTerms>
+  </Task>
+
+  <Solver polynomialsOrder= "1" precision="double" integrator="RK4" 
+        tolerance="1e-1" maxScale="1e-3" maxTimeStep="5e-5" hierarchyLevelsCount="1"
+        allowMovement="true" allowPlasticity="true" 
+        allowContinuousDestruction="true" allowDiscreteDestruction="false"
+        tensionErrorMult="1e2" velocityErrorMult="1e-0" positionErrorMult="1e-5"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
+        <Erosion cellAspectRatio="6" minHeightRatio="0.0" rhoReduction="4" maxPlasticDeformation="0.03"/>
+  </Solver>
+
+</Settings>

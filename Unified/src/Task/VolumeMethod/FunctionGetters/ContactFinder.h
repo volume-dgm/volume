@@ -15,8 +15,8 @@ struct ContactProcessor
   const static int dimsCount = MeshType::dimsCount;
 
   ContactProcessor(ContactFinder* contactFinder,
-    IndexType cellIndex, IndexType* contactedCells, IndexType* contactedCellsCount):
-    contactFinder(contactFinder), cellIndex(cellIndex), contactedCells(contactedCells), contactedCellsCount(contactedCellsCount)
+    IndexType cellIndex, IndexType* contactedCells, IndexType* contactedCellsCount, IndexType maxContactCellsCount):
+    contactFinder(contactFinder), cellIndex(cellIndex), contactedCells(contactedCells), contactedCellsCount(contactedCellsCount), maxContactCellsCount(maxContactCellsCount)
   {
     (*contactedCellsCount) = 0;
   }
@@ -26,7 +26,8 @@ struct ContactProcessor
     IndexType neighbourCellIndex = contactFinder->mesh->aabbTree.GetUserData(nodeIndex);
     if (contactFinder->TryCell(cellIndex, neighbourCellIndex))
     {
-      if (contactedCellsCount)
+      assert(!(contactedCellsCount && *contactedCellsCount + 1 >= maxContactCellsCount)); //max number of contacts per cell exceeded, usually means something went terribly wrong
+      if (contactedCellsCount && *contactedCellsCount + 1 < maxContactCellsCount)
       {
         if (contactedCells)
           contactedCells[*contactedCellsCount] = neighbourCellIndex;
@@ -40,6 +41,7 @@ struct ContactProcessor
   IndexType cellIndex;
   IndexType* contactedCells; // pointer to array of colliding cells
   IndexType* contactedCellsCount;
+  IndexType maxContactCellsCount;
 };
 
 
@@ -72,10 +74,10 @@ struct ContactFinder
   IndexType cellIndices[Space::NodesPerCell];
   Vector cellVertices[Space::NodesPerCell];
 
-  void Find(IndexType* collidedCells, IndexType* collidedCellsCount)
+  void Find(IndexType* collidedCells, IndexType* collidedCellsCount, IndexType maxCollidedCellsCount)
   {
     AABB aabb = mesh->GetCellAABB(cellIndex);
-    ContactProcessorT contactProcessor(this, cellIndex, collidedCells, collidedCellsCount);
+    ContactProcessorT contactProcessor(this, cellIndex, collidedCells, collidedCellsCount, maxCollidedCellsCount);
     mesh->aabbTree.template FindCollisions<ContactProcessorT>(aabb, contactProcessor);
   }
 

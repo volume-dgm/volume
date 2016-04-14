@@ -3,6 +3,7 @@
 #include "../../../Maths/Spaces.h"
 #include "../../../Maths/MatrixMaths.h"
 #include "../../../Maths/QuadraturePrecomputer.h"
+#include "../Cell.h"
 #include <assert.h>
 
 template <typename Space, typename Decomposer, typename Function, typename FuncArgType>
@@ -100,6 +101,34 @@ struct QuadratureDecomposer : public FunctionSpaceT
     DecomposeBase<Function, ValuesCount, Vector>(func, coords);
   }
 
+  template<typename Function, int ValuesCount>
+  void GetCellAverage(Function &func, Scalar *coords)
+  {
+    GetCellAverageBase<Function, ValuesCount, Vector>(func, coords);
+  }
+
+  template<typename Function>
+  Scalar GetCellAverage(Function &func)
+  {
+    Scalar cellAverage;
+    GetCellAverageBase<Function, 1, Vector>(func, &cellAverage);
+    return cellAverage;
+  }
+
+  template<typename Function, int ValuesCount>
+  void GetCellAveragePrecomputed(Function &func, Scalar *coords)
+  {
+    GetCellAverageBase<Function, ValuesCount, IndexType>(func, coords);
+  }
+
+  template<typename Function>
+  Scalar GetCellAveragePrecomputed(Function &func)
+  {
+    Scalar cellAverage;
+    GetCellAverageBase<Function, 1, IndexType>(func, &cellAverage);
+    return cellAverage;
+  }
+
   const std::vector<Vector>& GetBasisPoints() const
   {
     return points;
@@ -145,6 +174,26 @@ private:
           coords[valueIndex * functionsCount + i] +=
           correlations[valueIndex * functionsCount + j] * cellVolumeIntegralsInv[j * functionsCount + i];
   }
+
+  template<typename Function, int ValuesCount, typename FuncArgType>
+  void GetCellAverageBase(Function& func, Scalar* integratedValues)
+  {
+    for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+    {
+      integratedValues[valueIndex] = 0;
+    }
+    Getter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
+
+    for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+    {
+      Scalar values[ValuesCount];
+      getter(pointIndex, values);
+      for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+      {
+        integratedValues[valueIndex] += values[valueIndex] * wights[pointIndex] / ::Cell<Space>::GetRefCellVolume();
+      }
+    }
+  }
 };
 
 template<typename Space, typename PolynomialSpaceT>
@@ -161,9 +210,13 @@ struct NodalDecomposer : public PolynomialSpaceT
   NodalDecomposer()
   {
     basisPoints.reserve(functionsCount);
+    precomputedCellIntegrals.reserve(functionsCount);
     for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
     {
       basisPoints.push_back(this->GetBasisPoint(functionIndex));
+
+      Polynomial<Scalar, IndexType, Space::Dimension> function = this->GetBasisPolynomial(functionIndex);
+      precomputedCellIntegrals.push_back(function.ComputeSubspaceIntegral(Space::Dimension));
     }
   }
 
@@ -179,6 +232,34 @@ struct NodalDecomposer : public PolynomialSpaceT
     DecomposeBase<Function, ValuesCount, IndexType>(func, coords);
   }
 
+  template<typename Function, int ValuesCount>
+  void GetCellAverage(Function &func, Scalar *coords)
+  {
+    GetCellAverageBase<Function, ValuesCount, Vector>(func, coords);
+  }
+
+  template<typename Function>
+  Scalar GetCellAverage(Function &func)
+  {
+    Scalar cellAverage;
+    GetCellAverageBase<Function, 1, Vector>(func, &cellAverage);
+    return cellAverage;
+  }
+
+  template<typename Function, int ValuesCount>
+  void GetCellAveragePrecomputed(Function &func, Scalar *coords)
+  {
+    GetCellAverageBase<Function, ValuesCount, IndexType>(func, coords);
+  }
+
+  template<typename Function>
+  Scalar GetCellAveragePrecomputed(Function &func)
+  {
+    Scalar cellAverage;
+    GetCellAverageBase<Function, 1, IndexType>(func, &cellAverage);
+    return cellAverage;
+  }
+
   const std::vector<Vector>& GetBasisPoints() const
   {
     return basisPoints;
@@ -186,6 +267,7 @@ struct NodalDecomposer : public PolynomialSpaceT
 
 private:
   std::vector<Vector> basisPoints;
+  std::vector<Scalar> precomputedCellIntegrals;
 
   template<typename Function, int ValuesCount, typename FuncArgType>
   void DecomposeBase(Function& func, Scalar* coords)
@@ -200,6 +282,23 @@ private:
       for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
       {
         coords[valueIndex * functionsCount + functionIndex] = values[valueIndex];
+      }
+    }
+  }
+
+  template<typename Function, int ValuesCount, typename FuncArgType>
+  void GetCellAverageBase(Function& func, Scalar* integratedValues)
+  {
+    Scalar decomposedCoords[ValuesCount * functionsCount];
+    DecomposeBase<Function, ValuesCount, FuncArgType>(func, decomposedCoords);
+
+    for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+    {
+      integratedValues[valueIndex] = 0;
+      for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+      {
+        integratedValues[valueIndex] += 
+          decomposedCoords[valueIndex * functionsCount + functionIndex] * precomputedCellIntegrals[functionIndex] / ::Cell<Space>::GetRefCellVolume();
       }
     }
   }

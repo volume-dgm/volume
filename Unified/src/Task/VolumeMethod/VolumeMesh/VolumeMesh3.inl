@@ -421,9 +421,9 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
           timeDerivatives.noalias() += (faceDeformJacobian * invJacobian) * (faceTransformMatrix * faceFlux);
         }
 
-        Vector refXDerivatives = GetRefXDerivatives(cellVertices) * invJacobian;
-        Vector refYDerivatives = GetRefYDerivatives(cellVertices) * invJacobian;
-        Vector refZDerivatives = GetRefZDerivatives(cellVertices) * invJacobian;
+        Vector refXDerivatives = GetRefXDerivativesMulJacobian(cellVertices) * invJacobian;
+        Vector refYDerivatives = GetRefYDerivativesMulJacobian(cellVertices) * invJacobian;
+        Vector refZDerivatives = GetRefZDerivativesMulJacobian(cellVertices) * invJacobian;
 
         xMixedMatrix.noalias() = xMatrix * refXDerivatives.x + yMatrix * refXDerivatives.y + zMatrix * refXDerivatives.z;
         yMixedMatrix.noalias() = xMatrix * refYDerivatives.x + yMatrix * refYDerivatives.y + zMatrix * refYDerivatives.z;
@@ -575,9 +575,9 @@ typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
   GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const //x -> ?
 {
   Scalar invJacobian = Scalar(1.0) / GetCellDeformJacobian(cellVertices);
-  Vector refXDerivatives = GetRefXDerivatives(cellVertices);
-  Vector refYDerivatives = GetRefYDerivatives(cellVertices);
-  Vector refZDerivatives = GetRefZDerivatives(cellVertices);
+  Vector refXDerivatives = GetRefXDerivativesMulJacobian(cellVertices);
+  Vector refYDerivatives = GetRefYDerivativesMulJacobian(cellVertices);
+  Vector refZDerivatives = GetRefZDerivativesMulJacobian(cellVertices);
   
   return invJacobian * Vector(
     cellVertices[0].x * (cellVertices[3].y * cellVertices[2].z - cellVertices[2].y * cellVertices[3].z) +
@@ -621,7 +621,7 @@ typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
 
 template<typename FunctionSpace, typename System>
 typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
-  GetRefXDerivatives(Vector cellVertices[Space::NodesPerCell]) const //(dξ/dx, dξ/dy, dξ/dz) * J
+  GetRefXDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const //(dξ/dx, dξ/dy, dξ/dz) * J
 {
     return Vector(
       cellVertices[0].y * (cellVertices[2].z - cellVertices[3].z) + 
@@ -637,7 +637,7 @@ typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
 
 template<typename FunctionSpace, typename System>
 typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
-  GetRefYDerivatives(Vector cellVertices[Space::NodesPerCell]) const //(dη/dx, dη/dy, dη/dz) * J
+  GetRefYDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const //(dη/dx, dη/dy, dη/dz) * J
 {
     return Vector(
       cellVertices[0].y * (cellVertices[3].z - cellVertices[1].z) + 
@@ -653,7 +653,7 @@ typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
 
 template<typename FunctionSpace, typename System>
 typename Space3::Vector VolumeMesh<Space3, FunctionSpace, System>::
-  GetRefZDerivatives(Vector cellVertices[Space::NodesPerCell]) const //(dζ/dx, dζ/dy, dζ/dz) * J
+  GetRefZDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const //(dζ/dx, dζ/dy, dζ/dz) * J
 {
     return Vector(
       cellVertices[0].y * (cellVertices[1].z - cellVertices[2].z) + 
@@ -672,9 +672,10 @@ void  VolumeMesh<Space3, FunctionSpace, System>::GetRefDerivatives(
   Vector cellVertices[Space::NodesPerCell],
   Vector* refDerivatives) const
 {
-  refDerivatives[0] = GetRefXDerivatives(cellVertices);
-  refDerivatives[1] = GetRefYDerivatives(cellVertices);
-  refDerivatives[2] = GetRefZDerivatives(cellVertices);
+  Scalar invJacobian = Scalar(1.0) / fabs(GetCellDeformJacobian(cellVertices));
+  refDerivatives[0] = GetRefXDerivativesMulJacobian(cellVertices) * invJacobian;
+  refDerivatives[1] = GetRefYDerivativesMulJacobian(cellVertices) * invJacobian;
+  refDerivatives[2] = GetRefZDerivativesMulJacobian(cellVertices) * invJacobian;
 }
 
 template<typename FunctionSpace, typename System>

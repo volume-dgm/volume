@@ -950,11 +950,11 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::UpdateCollisionsInfo()
     if (isCellContacted)
     {
       ContactFinder< VolumeMeshCommon<Space, FunctionSpace, System> > contactFinder(this, cellIndex);
-      IndexType collidedCellsCount = 0;
 
       const IndexType MaxCollidedCellsCount = 999;
+      IndexType collidedCellsCount = 0;
       IndexType collidedCellsPool[MaxCollidedCellsCount];
-      contactFinder.Find(collidedCellsPool, &collidedCellsCount);
+      contactFinder.Find(collidedCellsPool, &collidedCellsCount, MaxCollidedCellsCount); //second arguments has a pointer
 
       assert(collidedCellsCount <= MaxCollidedCellsCount);
 

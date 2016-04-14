@@ -39,6 +39,8 @@ struct Space2: public SpaceBase
   typedef Tensor2<Scalar>               Tensor;
   typedef Space1                        BorderSpace;
 
+  typedef Vector2 < Vector2<Scalar>>    AsymmetricTensor;
+
   typedef Scalar                        Angle;
   typedef Scalar                        DiagTensor;
 };
@@ -65,6 +67,9 @@ struct Space3: public SpaceBase
   typedef Tensor3<Scalar>               Tensor;
   typedef Vector3<Scalar>               Angle;
   typedef Vector3<Scalar>               DiagTensor;
+
+  typedef Vector3 < Vector3<Scalar> >   AsymmetricTensor;
+
   typedef Space2                        BorderSpace;
 };
 

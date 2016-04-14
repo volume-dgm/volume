@@ -551,7 +551,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
       const Scalar k0 = volumeMesh.cellMediumParameters[cellIndex].plasticity.k0;
       const Scalar  a = volumeMesh.cellMediumParameters[cellIndex].plasticity.a;
 
-      for (IndexType pointIndex = 0; pointIndex < volumeMesh.quadraturePoints.size(); ++pointIndex)
+      /*for (IndexType pointIndex = 0; pointIndex < volumeMesh.quadraturePoints.size(); ++pointIndex)
       {
         const bool brittle = volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
         if (!brittle)
@@ -570,6 +570,33 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
         }
       }
       plasticDeforms[cellIndex] += plasticDeformRate * dt / volumeMesh.GetVolume(cellIndex);
+      */      
+      /*auto deformFunc = [&](Vector point, Scalar *pointDeformRate) -> void
+      {
+        *pointDeformRate = GetDeformRate(cellIndex, point);
+      };
+      volumeMesh.functionSpace->GetCellAverage<decltype(deformFunc), 1>(func, &plasticDeformRate);*/ //works the same
+      plasticDeformRate = volumeMesh.functionSpace->GetCellAverage(
+        [&](Vector refPoint, Scalar *pointDeformRate) -> void
+        {
+          *pointDeformRate = 0;
+          const bool brittle = volumeMesh.cellMediumParameters[cellIndex].plasticity.brittle;
+          if (!brittle)
+          {
+            Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, refPoint);
+            //Elastic elastic = volumeMesh.GetRefCellSolution(cellIndex, pointIndex, VolumeMeshTypeCommon::Quadrature);
+            const Scalar pressure = elastic.GetPressure();
+            const Scalar k = k0 + a * pressure;
+
+            if (ProcessPlasticity(k, elastic, false))
+            {
+              *pointDeformRate = GetDeformRate(cellIndex, refPoint);
+              //*pointDeformRate = GetDeformRate(cellIndex, pointIndex);
+            }
+          }
+        });
+
+      plasticDeforms[cellIndex] += plasticDeformRate * dt; //* jacobian / volumeMesh.GetVolume(cellIndex) -- possibly needed, but i'm not sure
 
       if (plasticDeforms[cellIndex] > volumeMesh.cellMediumParameters[cellIndex].plasticity.maxPlasticDeform)
       {
@@ -685,7 +712,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
   Vector refDerivatives[Space::Dimension];
   volumeMesh.GetRefDerivatives(cellVertices, refDerivatives);
 
-  for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+  /*for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
   {
     for (IndexType functionIndex = 0; functionIndex < FunctionSpace::functionsCount; ++functionIndex)
     {
@@ -700,9 +727,54 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
         }
       }
     }
+  }*/
+  Vector basisFunctionGradients[functionsCount];
+  for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
+  {
+    for (IndexType functionIndex = 0; functionIndex < FunctionSpace::functionsCount; ++functionIndex)
+    {
+      basisFunctionGradients[functionIndex][dimIndex] = precomputedBasisFunctions.basisDerivativeFunctions[functionIndex][dimIndex].GetValue(&(refCoords.x));
+    }
+  } 
+
+  Space::AsymmetricTensor refVelocityGradient;
+
+  for (IndexType velocityComponentIndex = 0; velocityComponentIndex < Space::Dimension; ++velocityComponentIndex)
+  {
+    refVelocityGradient[velocityComponentIndex] = Vector::zero();
+    for (IndexType functionIndex = 0; functionIndex < FunctionSpace::functionsCount; ++functionIndex)
+    {
+      refVelocityGradient[velocityComponentIndex] += 
+        basisFunctionGradients[functionIndex] * volumeMesh.cellSolutions[cellIndex].basisVectors[functionIndex].GetVelocity()[velocityComponentIndex];
+    }
   }
 
-  Scalar effectiveStrain = 0;
+  Space::AsymmetricTensor velocityGradient;
+  for (IndexType velocityComponentIndex = 0; velocityComponentIndex < Space::Dimension; ++velocityComponentIndex)
+  {
+    velocityGradient[velocityComponentIndex] = Vector::zero();
+    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; dimIndex++)
+    {
+      velocityGradient[velocityComponentIndex] +=
+        refDerivatives[dimIndex] * velocityGradient[velocityComponentIndex][dimIndex];
+    }
+  }
+
+  Space::AsymmetricTensor strainRateTensor;
+  for (int i = 0; i < Space::Dimension; ++i)
+  {
+    for (int j = i; j < Space::Dimension; ++j)
+    {
+      strainRateTensor[i][j] =
+        (velocityGradient[i][j] + velocityGradient[j][i]) * Scalar(0.5);
+    }
+  }
+  for (int i = 0; i < Space::Dimension; ++i)
+  {
+    strainRateTensor[i][i] -= Scalar(1.0) / Scalar(3.0) * velocityGradient[i][i];
+  }
+
+  /*Scalar effectiveStrain = 0;
 
   for (int i = 0; i < Space::Dimension; ++i)
   {
@@ -712,7 +784,18 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
     }
   }
 
-  return pow(Scalar(2.0 / 3) * effectiveStrain, Scalar(0.5));
+  return pow(Scalar(2.0 / 3) * effectiveStrain, Scalar(0.5));*/
+  Scalar effectiveStrain = 0;
+
+  for (int i = 0; i < Space::Dimension; ++i)
+  {
+    for (int j = i; j < Space::Dimension; ++j)
+    {
+      effectiveStrain += Sqr(strainRateTensor[i][j]);
+    }
+  }
+
+  return sqrt(effectiveStrain);
 }
 
 template<typename Space, typename FunctionSpace>

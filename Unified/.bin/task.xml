@@ -12,7 +12,8 @@
 <!-- <Settings fileName="configs/ice_crush.xml"/> -->
 <!-- <Settings fileName="configs/TestCube3D_settings.xml"/> -->
 <!-- <Settings fileName="configs/discontinuity_box_3d.xml"/> -->
-<Settings fileName="configs/icefield_side_settings.xml"/>
+<!-- <Settings fileName="configs/icefield_side_settings.xml"/> -->
+<Settings fileName="configs/IceCrush2d.xml"/>
 <!-- <Settings fileName="configs/icefield_3D_settings.xml"/> -->
 <!-- <Settings fileName="configs/icefield_3Dsc1new_settings.xml"/> -->
 <!-- <Settings fileName="configs/icefield_3Dsc2new_settings.xml"/> -->

@@ -1561,7 +1561,7 @@ void Task<Space, order>::SetThreadsCount()
   #endif
 
   int size, rank;
-  int nthreads, tid;
+  int nthreads , tid;
   MPI_Status status;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
