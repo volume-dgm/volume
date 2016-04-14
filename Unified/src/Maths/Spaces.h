@@ -74,7 +74,7 @@ struct Space3: public SpaceBase
 };
 
 template<typename Space>
-struct Overload{};
+struct Overload {};
 
 #define SPACE_TYPEDEFS \
   typedef typename Space::Vector        Vector; \
@@ -90,7 +90,8 @@ struct Overload{};
   typedef typename Space::IntAABB       IntAABB; \
   typedef typename Space::Vector2T      Vector2; \
   typedef typename Space::Vector3T      Vector3; \
-  typedef typename Space::BorderSpace   BorderSpace;
+  typedef typename Space::BorderSpace   BorderSpace; \
+  typedef typename Space::AsymmetricTensor AsymmetricTensor; 
 
 #define SPACE2_TYPEDEFS \
   typedef Space2::Vector        Vector; \
@@ -106,7 +107,8 @@ struct Overload{};
   typedef Space2::IntAABB       IntAABB; \
   typedef Space2::Vector2T      Vector2; \
   typedef Space2::Vector3T      Vector3; \
-  typedef Space2::BorderSpace   BorderSpace;
+  typedef Space2::BorderSpace   BorderSpace; \
+  typedef Space2::AsymmetricTensor AsymmetricTensor; 
 
 #define SPACE3_TYPEDEFS \
   typedef Space3::Vector        Vector; \
@@ -122,4 +124,5 @@ struct Overload{};
   typedef Space3::IntAABB       IntAABB; \
   typedef Space3::Vector2T      Vector2; \
   typedef Space3::Vector3T      Vector3; \
-  typedef Space3::BorderSpace   BorderSpace;
+  typedef Space3::BorderSpace   BorderSpace; \
+  typedef Space3::AsymmetricTensor AsymmetricTensor; 

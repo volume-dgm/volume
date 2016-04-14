@@ -766,7 +766,7 @@ typename Space::Vector VolumeMeshCommon<Space, FunctionSpace, System>::GetTotalI
       return GetRefCellSolution(cellIndex, basisPointIndex, Basis).GetVelocity();
     };
 
-    Vector intVel = functionSpace->GetCellAveragePrecomputed<decltype(velocityFunc), Vector>(velocityFunc);
+    Vector intVel = functionSpace->template GetCellAveragePrecomputed<decltype(velocityFunc), Vector>(velocityFunc);
 
     totalImpulse += GetVolume(cellIndex) * intVel / cellMediumParameters[cellIndex].invRho;
   }
@@ -799,8 +799,8 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy(IndexType cel
     return Scalar(0.25) / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor)));
   };
 
-  kineticEnergy   = functionSpace->GetCellAveragePrecomputed<decltype(kineticEnergyFunc),   Scalar>(kineticEnergyFunc)   * cellVolume;
-  potentialEnergy = functionSpace->GetCellAveragePrecomputed<decltype(potentialEnergyFunc), Scalar>(potentialEnergyFunc) * cellVolume;
+  kineticEnergy   = functionSpace->template GetCellAveragePrecomputed<decltype(kineticEnergyFunc),   Scalar>(kineticEnergyFunc)   * cellVolume;
+  potentialEnergy = functionSpace->template GetCellAveragePrecomputed<decltype(potentialEnergyFunc), Scalar>(potentialEnergyFunc) * cellVolume;
 }
 
 template<typename Space, typename FunctionSpace, typename System>

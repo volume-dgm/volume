@@ -569,7 +569,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
         return pointDeformRate;
       };
 
-      plasticDeformRate = volumeMesh.functionSpace->GetCellAverage<decltype(func), Scalar>(func);
+      plasticDeformRate = volumeMesh.functionSpace->template GetCellAverage<decltype(func), Scalar>(func);
 
       plasticDeforms[cellIndex] += plasticDeformRate * dt; //* jacobian / volumeMesh.GetVolume(cellIndex) -- possibly needed, but i'm not sure
 
@@ -712,7 +712,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
     }
   } 
 
-  Space::AsymmetricTensor refVelocityGradient;
+  AsymmetricTensor refVelocityGradient;
 
   for (IndexType velocityComponentIndex = 0; velocityComponentIndex < Space::Dimension; ++velocityComponentIndex)
   {
@@ -724,7 +724,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
     }
   }
 
-  Space::AsymmetricTensor velocityGradient;
+  AsymmetricTensor velocityGradient;
   for (IndexType velocityComponentIndex = 0; velocityComponentIndex < Space::Dimension; ++velocityComponentIndex)
   {
     velocityGradient[velocityComponentIndex] = Vector::zero();
@@ -735,7 +735,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
     }
   }
 
-  Space::AsymmetricTensor strainRateTensor;
+  AsymmetricTensor strainRateTensor;
   for (int i = 0; i < Space::Dimension; ++i)
   {
     for (int j = i; j < Space::Dimension; ++j)
