@@ -372,6 +372,7 @@ public:
     IndexType *internalContactTypes);
 
   typename System::ValueType GetEdgeAverageSolution(IndexType cellIndex, IndexType edgeNumber) const;
+  typename System::ValueType GetFaceAverageSolution(IndexType cellIndex, IndexType edgeNumber) const;
 
   Vector GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const; // x -> ξ
   Vector RefToGlobalVolumeCoords(Vector refCoords, Vector cellVertices[Space::NodesPerCell]) const; // ξ -> x

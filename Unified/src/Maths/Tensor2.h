@@ -82,6 +82,29 @@ public:
                                    res.data[1][1]);
   }
 
+  void GetEigenValues(T* eigenValues) const
+  {
+    T maxTangentStress = T(0.5) * (sqrt(Sqr(xx - yy) + 4 * Sqr(xy)));
+
+    eigenValues[0] = T(0.5) * (xx + yy) + maxTangentStress;
+    eigenValues[1] = T(0.5) * (xx + yy) - maxTangentStress;
+  }
+
+  void GetEigenValues(T* eigenValues, Vector2<T>* eigenVectors) const
+  {
+    GetEigenValues(eigenValues);
+    for (int i = 0; i < 2; ++i)
+      eigenVectors[i] = Vector2<T>(eigenValues[i] - yy, xy).GetNorm();
+
+    for (int i = 0; i < 2; ++i)
+    {
+      if (eigenVectors[i].SquareLen() < T(1e-8))
+      {
+        eigenVectors[i] = eigenVectors[1 - i].GetPerpendicular();
+      }
+    }
+  }
+
   T& operator[](const int i)
   {
     return *(&(xx) + i);

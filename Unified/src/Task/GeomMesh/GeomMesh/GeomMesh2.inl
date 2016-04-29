@@ -297,6 +297,11 @@ Space2::Vector GeomMesh<Space2>::GetEdgeExternalNormal(IndexType cellIndex, Inde
   return -edge.GetPerpendicular().GetNorm();
 }
 
+Space2::Vector GeomMesh<Space2>::GetFaceExternalNormal(IndexType cellIndex, IndexType faceNumber) const
+{
+  return GetEdgeExternalNormal(cellIndex, faceNumber);
+}
+
 GeomMesh<Space2>::EdgeLocationPair GeomMesh<Space2>::BuildEdgeLocation(const EdgePairIndices& edgePairIndices)
 {
   EdgeLocationPair edgeLocationPair;

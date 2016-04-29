@@ -88,7 +88,9 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   Scalar GetErrorValue(Scalar time, const Scalar* coords0, const Scalar* coords1, const SolverState&, const Scalar* mults);
 
+  void FindDestructions(std::vector<bool>* isCellBroken);
   virtual void UnfoldMesh(Scalar minHeight, IndexType iterationsCount) = 0;
+  virtual void HandleContinuousDestruction() = 0;
 
   void HandleDamping();
   void SetDamping(Scalar damping);
@@ -284,6 +286,7 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::allowContinuousDestruction;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::allowDiscreteDestruction;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions;
 
   ElasticVolumeMesh(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount);
 
@@ -357,6 +360,7 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::HandleMaterialErosion;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::allowContinuousDestruction;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::allowDiscreteDestruction;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions;
 
   ElasticVolumeMesh(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount);
 
@@ -369,9 +373,6 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
 
   void FindDestructions(FacePairIndices* contactEdges, IndexType* contactFacesCount, IndexType contactTypesCount,
     std::vector<bool>* isContactBroken, std::vector<bool>* isCellBroken);
-
-
-  void FindDestructions(std::vector<bool>* isCellBroken);
 
   void HandleContinuousDestruction();
 

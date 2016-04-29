@@ -13,9 +13,9 @@
 #include <stdio.h>
 #include <algorithm>
 
-typedef Space2 DefaultSpace;
+//typedef Space3 DefaultSpace;
 
- // #define SPACE_FROM_SETTINGS
+#define SPACE_FROM_SETTINGS
 
 template <typename Space>
 class ResultCombinerTask

@@ -524,6 +524,13 @@ typename System::ValueType VolumeMesh<Space2, FunctionSpace, System>::
 }
 
 template<typename FunctionSpace, typename System>
+typename System::ValueType VolumeMesh<Space2, FunctionSpace, System>::
+GetFaceAverageSolution(IndexType cellIndex, IndexType faceNumber) const
+{
+  return GetEdgeAverageSolution(cellIndex, faceNumber);
+}
+
+template<typename FunctionSpace, typename System>
 bool VolumeMesh<Space2, FunctionSpace, System>::IsCellRegular(IndexType cellIndex) const
 {
   bool regularCell = true;

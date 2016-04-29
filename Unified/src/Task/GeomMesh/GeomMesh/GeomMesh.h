@@ -37,6 +37,7 @@ struct GeomMesh<Space2>: public GeomMeshCommon<Space2>
 
   void GetGhostCellVertices(IndexType cellIndex, IndexType boundaryEdgeNumber, Vector* ghostCellVertices) const;
   Vector GetEdgeExternalNormal(IndexType cellIndex, IndexType edgeNumber) const;
+  Vector GetFaceExternalNormal(IndexType cellIndex, IndexType faceNumber) const; // it`s for convenience
 
   void GetCellFaceNodes(IndexType cellIndex, IndexType faceNumber, IndexType* faceNodes) const; // it`s for convenience
 

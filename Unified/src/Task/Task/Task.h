@@ -56,8 +56,8 @@ public:
   const static int dimsCount = ElasticSystemType::dimsCount;
 
   // typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, LagrangeSpace<Space, order> > > FunctionSpace;
-  //typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, PolynomialSpace<Space, order> > > FunctionSpace;
-  typedef PolynomialPrecomputer<Space, NodalDecomposer <Space, LagrangeSpace<Space, order> > > FunctionSpace;
+  typedef PolynomialPrecomputer<Space, QuadratureDecomposer<Space, PolynomialSpace<Space, order> > > FunctionSpace;
+ // typedef PolynomialPrecomputer<Space, NodalDecomposer <Space, LagrangeSpace<Space, order> > > FunctionSpace;
   // typedef DubinerPrecomputer<Space, QuadratureDecomposer<Space, DubinerSpace<Space, order> > > FunctionSpace;
 
   Task();
@@ -137,25 +137,6 @@ private:
       maxSnapshotSize = std::max(maxSnapshotSize, snapshotsSizes[snapshotIndex].GetVolume());
     }
     return maxSnapshotSize;
-  }
-
-  void FindDestructions(Overload<Space2>, IndexType domainNumber)
-  {
-    distributedElasticMeshes[domainNumber]->FindDestructions(meshes[domainNumber]->contactEdges.data(), 
-      meshes[domainNumber]->contactEdgesCount.data(), 
-      meshes[domainNumber]->contactTypesCount, 
-      &isContactBroken[domainNumber],
-      &distributedElasticMeshes[domainNumber]->isCellBroken);
-  }
-  void FindDestructions(Overload<Space3>, IndexType domainNumber)
-  {
-   /* distributedElasticMeshes[domainNumber]->FindDestructions(meshes[domainNumber]->contactFaces.data(), 
-      meshes[domainNumber]->contactFacesCount.data(), 
-      meshes[domainNumber]->contactTypesCount, 
-      &isContactBroken[domainNumber],
-      &distributedElasticMeshes[domainNumber]->isCellBroken);*/
-      
-    distributedElasticMeshes[domainNumber]->FindDestructions(&distributedElasticMeshes[domainNumber]->isCellBroken);
   }
 
   VectorFunctor<Space>* CreateBoundaryFunctor(std::vector<typename MeshSettings<Space>::BoundarySection::VectorFunctor> &functors)
@@ -801,7 +782,7 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
 template<typename Space, unsigned int order>
 void Task<Space, order>::FindDestructions(IndexType domainNumber)
 {
-  FindDestructions(Overload<Space>(), domainNumber);
+  distributedElasticMeshes[domainNumber]->FindDestructions(&distributedElasticMeshes[domainNumber]->isCellBroken);
 }
 
 template<typename Space, unsigned int order>
@@ -1561,7 +1542,7 @@ void Task<Space, order>::SetThreadsCount()
   #endif
 
   int size, rank;
-  int nthreads , tid;
+  int nthreads, tid;
   MPI_Status status;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

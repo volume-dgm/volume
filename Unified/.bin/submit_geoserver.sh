@@ -4,4 +4,4 @@
 #PBS -q batch
 
 cd $PBS_O_WORKDIR
-OMP_THREADS_NUM=$PBS_NUM_PPN ./task > task.log
+OMP_NUM_THREADS=$PBS_NUM_PPN ./task > task.log
