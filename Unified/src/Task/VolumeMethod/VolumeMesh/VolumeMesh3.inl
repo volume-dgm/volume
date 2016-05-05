@@ -693,20 +693,18 @@ bool VolumeMesh<Space3, FunctionSpace, System>::IsCellRegular(IndexType cellInde
 template<typename FunctionSpace, typename System>
 typename System::ValueType VolumeMesh<Space3, FunctionSpace, System>::GetFaceAverageSolution(IndexType cellIndex, IndexType faceNumber) const
 {
-  typename System::ValueType result;
-  result.SetZeroValues();
+  typename System::ValueType result(Scalar(0.0));
 
-  Scalar refFaceArea = ::Cell<Space3>::GetFaceRefArea(faceNumber);
-
-  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
-    for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
     {
       Scalar basisFunctionCoefficient =
         cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
 
-      result.values[valueIndex] += basisFunctionCoefficient * faceAverages[faceNumber].surfaceIntegral[functionIndex] / refFaceArea;
+      result.values[valueIndex] += basisFunctionCoefficient * faceAverages[faceNumber].surfaceIntegral[functionIndex] * Scalar(2.0);
     }
   }
+
   return result;
 }

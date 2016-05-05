@@ -4,13 +4,12 @@ template <typename Space, typename FunctionSpace, typename System>
 typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   GetRefCellSolution(IndexType cellIndex, Vector refCoords, bool halfStepSolution) const
 { 
-  typename System::ValueType result;
-  result.SetZeroValues();
+  typename System::ValueType result(Scalar(0.0));
 
-  for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
     Scalar basisFunctionValue = functionSpace->GetBasisFunctionValue(refCoords, functionIndex);
-    for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
     {
       Scalar basisFunctionCoefficient =
         (halfStepSolution ? halfStepCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] :
@@ -27,7 +26,7 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
 {
   typename System::ValueType result(Scalar(0.0));
 
-  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
     Scalar basisFunctionValue = 0;
 
@@ -43,7 +42,7 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
         assert(0);
     }
 
-    for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
     {
       Scalar basisFunctionCoefficient =
         (halfStepSolution ? halfStepCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] :
@@ -52,7 +51,7 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
     }
   }
   return result;
-} 
+}
 
 template <typename Space, typename FunctionSpace, typename System>
 typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::

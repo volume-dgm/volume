@@ -234,8 +234,7 @@ struct PolynomialPrecomputer<Space2, Decomposer>: public Decomposer
     typename Polynomial<Scalar, IndexType, 1>::Pows pows;
 
     Polynomial<Scalar, IndexType, 1> intToEdge[1];
-    pows.pows[0] = 1;
-    intToEdge[0].AddTerm(pows, 1);
+    intToEdge[0] = Polynomial<Scalar, IndexType, 1>("x");
 
     Polynomial<Scalar, IndexType, 1> intToRef[2];
 
@@ -248,8 +247,7 @@ struct PolynomialPrecomputer<Space2, Decomposer>: public Decomposer
 
     intToFunc = function.Substitute(intToRef);
 
-    Scalar integrationResult = (intToFunc).ComputeSubspaceIntegral(1);
-    //if(fabs(res - integrationResult) > 1e-3) printf("flux poo");
+    Scalar integrationResult = intToFunc.ComputeSubspaceIntegral(1);
     return integrationResult;
   }
 };
@@ -544,7 +542,7 @@ struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
 
     intToFunc = function.Substitute(intToRef);
 
-    Scalar integrationResult = (intToFunc).ComputeSubspaceIntegral(2);
+    Scalar integrationResult = intToFunc.ComputeSubspaceIntegral(2);
     return integrationResult;
   }
 };

@@ -115,7 +115,7 @@ void VolumeMesh<Space2, FunctionSpace, System>::BuildMatrices()
   {
     cellVolumeAverageIntegrals[functionIndex] = functionSpace->ComputeCellVolumeIntegral(functionIndex);
 
-    for(IndexType edgeNumber = 0; edgeNumber < 3; edgeNumber++)
+    for(IndexType edgeNumber = 0; edgeNumber < Space::EdgesPerCell; edgeNumber++)
     {
       edgeAverages[edgeNumber].surfaceIntegral[functionIndex] =
         functionSpace->ComputeEdgeFlux(edgeNumber, functionIndex);
@@ -507,8 +507,7 @@ template<typename FunctionSpace, typename System>
 typename System::ValueType VolumeMesh<Space2, FunctionSpace, System>::
   GetEdgeAverageSolution(IndexType cellIndex, IndexType edgeNumber) const
 {
-  typename System::ValueType result;
-  result.SetZeroValues();
+  typename System::ValueType result(Scalar(0.0));
 
   for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
   {
@@ -517,9 +516,10 @@ typename System::ValueType VolumeMesh<Space2, FunctionSpace, System>::
       Scalar basisFunctionCoefficient = 
         cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
 
-      result.values[valueIndex] += basisFunctionCoefficient * edgeAverages[edgeNumber].surfaceIntegral[functionIndex] / ::Cell<Space2>::GetEdgeRefLen(edgeNumber);
+      result.values[valueIndex] += basisFunctionCoefficient * edgeAverages[edgeNumber].surfaceIntegral[functionIndex];
     }
   }
+
   return result;
 }
 

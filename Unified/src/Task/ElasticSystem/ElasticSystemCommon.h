@@ -61,7 +61,7 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
     ValueTypeCommon& operator+=(const ValueTypeCommon& other)
     {
       for (IndexType i = 0; i < ElasticSystemBase<Space>::dimsCount; ++i)
-        values[i] += other[i];
+        values[i] += other.values[i];
       return *this;
     }
 

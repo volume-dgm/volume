@@ -40,7 +40,7 @@
 
 
 #define PROFILING
-//#define SINGLE_THREAD
+// #define SINGLE_THREAD
 #define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>

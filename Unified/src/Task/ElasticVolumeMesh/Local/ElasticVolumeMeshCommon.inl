@@ -840,8 +840,8 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions(std::vector
             continue;
           }
 
-          //Elastic elastic = volumeMesh.GetFaceAverageSolution(cellIndex, faceNumber);
-          Elastic elastic = volumeMesh.GetCellAverageSolution(cellIndex);
+          Elastic elastic = volumeMesh.GetFaceAverageSolution(cellIndex, faceNumber);
+          //Elastic elastic = volumeMesh.GetCellAverageSolution(cellIndex);
 
           Scalar principalStresses[Space::Dimension];
           elastic.GetTension().GetEigenValues(principalStresses);
@@ -903,7 +903,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions(std::vector
             if (volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber) != IndexType(-1) &&
               volumeMesh.GetCorrespondingFaceNumber(cellIndex, faceNumber) != IndexType(-1))
             {
-              incidentCellsCount++;
+              ++incidentCellsCount;
             }
           }
 
