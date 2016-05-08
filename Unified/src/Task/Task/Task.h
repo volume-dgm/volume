@@ -352,6 +352,7 @@ void Task<Space, order>::Run()
   network->setReceiveListener(this);
   settings.Parse("task.xml");
 
+  printf("Starting task with config %s in %dd space", settings.settingsFileName.c_str(), settings.configDimsCount);
   assert(settings.configDimsCount == Space::Dimension);
   LoadNodesSchedule();
 
@@ -988,13 +989,14 @@ void Task<Space, order>::LoadGeom(IndexType domainNumber)
 template<typename Space, unsigned int order>
 void Task<Space, order>::LoadMeshes()
 {
+  assert(Space::Dimension == settings.configDimsCount);
+
   meshes.resize(GetCurrentNodeDomainsCount());
   syncData.resize(GetCurrentNodeDomainsCount());
   isContactBroken.resize(GetCurrentNodeDomainsCount());
 
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
-    printf("Loading geom: node %d; domain %d\n", (int)GetNodeId(), (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber]);
 
     meshes[domainNumber] = new DistributedMeshIO<Space>(GetDomainsCount());
     char domainString[256];
@@ -1002,7 +1004,16 @@ void Task<Space, order>::LoadMeshes()
 
     std::string meshName = AddExtensionToFileName(settings.mesh.meshFileName, ".mesh");
     ReplaceSubstring(meshName, "<domain>", domainString);
+
+    printf("Loading %s geom: node %d; domain %d from file %s\n",
+      (settings.configDimsCount == 2) ? "2d" : "3d",
+      (int)GetNodeId(),
+      (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber],
+      meshName.c_str());
+
     meshes[domainNumber]->Load(meshName);
+
+
 
     IndexType meshCellsCount = meshes[domainNumber]->GetCellsCount();
     cellMediumParams.resize(meshCellsCount);
@@ -1542,7 +1553,7 @@ void Task<Space, order>::SetThreadsCount()
   #endif
 
   int size, rank;
-  int nthreads, tid;
+  int nthreads;// , tid;
   MPI_Status status;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -1563,10 +1574,10 @@ void Task<Space, order>::SetThreadsCount()
     MPI_Recv(&nthreads, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
     omp_set_num_threads(nthreads);
   }
-  #pragma omp parallel private(tid,nthreads)
+  #pragma omp parallel private(/*tid,*/nthreads)
   {
     nthreads = omp_get_num_threads();
-    tid = omp_get_thread_num();
+    //tid = omp_get_thread_num();
   }
 }
 

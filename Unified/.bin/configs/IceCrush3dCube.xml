@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings dimsCount= "2">
+<Settings dimsCount= "3">
 
   <MeshBuilder>
-    <SalomeFile fileName= "salome/Salome_IceCrush2dMesh" />
+    <SalomeFile fileName= "salome/Salome_IceCrush3dCube" />
     <Partition algorithm="METIS_PartMeshNodal" /> 
-    <OutFile fileName= "meshes/IceCrush2d[<domain>]" />
+    <OutFile fileName= "meshes/IceCrush3dCube[<domain>]" />
   </MeshBuilder>
 
   <ResultCombiner>
     <Snapshots count="300000" />
   </ResultCombiner>
 
-  <Mesh fileName="meshes/IceCrush2d[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.00000"> 
+  <Mesh fileName="meshes/IceCrush3dCube[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.00000"> 
     <MediumParams>
-      <PerSubmesh fileName= "meshes/IceCrush2d[<domain>].params">
+      <PerSubmesh fileName= "meshes/IceCrush3dCube[<domain>].params">
 
-        <Submesh index="1" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> 
+        <!-- <Submesh index="1" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> -->
         <Submesh index="0" E="5e+9" G="1.87e+9" rho= "900" k= "2.2e+6" alpha="0" brittle="false" internalContactType= "0"
-          maxPlasticDeform="0.001" powderShearMult="0.01"/> <!-- E,G[Pa] rho[kg/m^3] k[Pa] maxPlaticDeform[dimentionless]  параметры льда, k - предел пластичности, powderShearMult in [0,1]
+          maxPlasticDeform="0.001" powderShearMult="0.1"/> <!-- E,G[Pa] rho[kg/m^3] k[Pa] maxPlaticDeform[dimentionless]  параметры льда, k - предел пластичности, powderShearMult in [0,1]
           maxPlasticDeform -  -->
       </PerSubmesh> 
     </MediumParams>
@@ -31,13 +31,13 @@
 
       <Fixed interactionType= "1"> 
         <ExternalVelocity>
-          <ConstFunctor value= "0.0 0.01"/>
+          <ConstFunctor value= "0.0 0.1 0.0"/>
         </ExternalVelocity>
       </Fixed>
 
        <Fixed interactionType= "2"> 
         <ExternalVelocity>
-          <ConstFunctor value= "0.0 -0.01"/>
+          <ConstFunctor value= "0.0 -0.1 0.0"/>
         </ExternalVelocity>
       </Fixed>
     </Boundaries>
@@ -48,18 +48,18 @@
     </Contacts>
   </Mesh>
 
-  <Detectors 
+  <!-- <Detectors 
     fileName="out/detectors[<domain>]<detector>.csv" 
     samplesPeriod="100"
-    locationsFileName="meshes/IceCrush2dDetectorPositions.loc" />
+    locationsFileName="meshes/IceCrush2dDetectorPositions.loc" /> -->
 
   <Snapshot>
-    <Period frames="5000" />
+    <Period frames="1000" />
     <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
-      <Box    boxPoint1 = "-0.01 -0.01" boxPoint2 = "0.16 0.16" />
+      <Box    boxPoint1 = "-0.01 -0.01 -0.01" boxPoint2 = "0.16 0.16 0.16" />
 
       <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
-      <Resolution resolution="500 500" />
+      <Resolution resolution="50 50 50" />
     </Data>
      <!-- <Mesh     fileName="out/mesh_full[<domain>]<step>.vtk" /> -->
      <Contacts fileName="out/contacts_full[<domain>]<step>.vtk" />
@@ -74,7 +74,7 @@
 
   <Task destinationTime = "0.8">
     <IniState>
-      <BoxState boxPoint1 = "-10.0 -10.0" boxPoint2 = "10.0 10.0" velocity = "0.0 0.0" />
+      <BoxState boxPoint1 = "-10.0 -10.0 -10.0" boxPoint2 = "10.0 10.0 10.0" velocity = "0.0 0.0" />
     </IniState>
 
     <SourceTerms> 

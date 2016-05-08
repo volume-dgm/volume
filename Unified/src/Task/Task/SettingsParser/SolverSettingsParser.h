@@ -81,77 +81,77 @@ void SolverSettings<Space>::Parse(TiXmlElement *solverElement)
 {
   if (ParseString(solverElement, "integrator", &integrator) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no integrator attribute";
+    std::cerr << "There is no required \"integrator\" attribute in Solver section\n";
   }
   
   if (ParseUnsigned(solverElement, "hierarchyLevelsCount", &hierarchyLevelsCount) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no hierarchyLevelsCount attribute";
+    std::cerr << "There is no required \"hierarchyLevelsCount\" attribute in Solver section\n";
   }
 
   if (ParseString(solverElement, "precision", &precision) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no precision attribute";
+    std::cerr << "There is no required \"precision\" attribute in Solver section\n";
   }
 
   if (ParseUnsigned(solverElement, "polynomialsOrder", &polynomialsOrder) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no polynomialsOrder attribute";
+    std::cerr << "There is no required \"polynomialsOrder\" attribute in Solver section\n";
   }
 
   if (ParseScalar(solverElement, "tolerance", &tolerance) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no tolerance attribute";
+    std::cerr << "There is no required \"tolerance\" attribute in Solver section\n";
   }
 
   if (ParseScalar(solverElement, "maxScale", &maxScale) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no maxScale attribute";
+    std::cerr << "There is no required \"maxScale\" attribute in Solver section\n";
   }
 
   if (ParseScalar(solverElement, "maxTimeStep", &maxTimeStep) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no maxTimeStep attribute";
+    std::cerr << "There is no required \"maxTimeStep\" attribute in Solver section\n";
   }
 
   if (ParseBool(solverElement, "allowMovement", &allowMovement) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no allowMovement attribute";
+    std::cerr << "There is no required \"allowMovement\" attribute in Solver section\n";
   }
 
   if (ParseBool(solverElement, "allowPlasticity", &allowPlasticity) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no allowPlasticity attribute";
+    std::cerr << "There is no required \"allowPlasticity\" attribute in Solver section\n";
   }
       
   if (ParseBool(solverElement, "allowContinuousDestruction", &allowContinuousDestruction) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no allowContinuousDestruction attribute";
+    std::cerr << "There is no required \"allowContinuousDestruction\" attribute in Solver section\n";
   }
 
   if (ParseBool(solverElement, "allowDiscreteDestruction", &allowDiscreteDestruction) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no allowDiscreteDestruction attribute";
+    std::cerr << "There is no required \"allowDiscreteDestruction\" attribute in Solver section\n";
   }
 
   if (ParseScalar(solverElement, "tensionErrorMult", &tensionErrorMult) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no tensionErrorMult attribute";
+    std::cerr << "There is no required \"tensionErrorMult\" attribute in Solver section\n";
   }
 
   if (ParseScalar(solverElement, "velocityErrorMult", &velocityErrorMult) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no velocityErrorMult attribute";
+    std::cerr << "There is no required \"velocityErrorMult\" attribute in Solver section\n";
   }
 
   if (ParseScalar(solverElement, "positionErrorMult", &positionErrorMult) != TIXML_SUCCESS && allowMovement)
   {
-    std::cerr << "allowMovement is true, however positionErrorMult is not specified";
+    std::cerr << "\"allowMovement\" is true, however \"positionErrorMult\" is not specified\n";
   }
 
   if (ParseUnsigned(solverElement, "updateCollisionInfoPeriod", &updateCollisionInfoPeriod) != TIXML_SUCCESS)
   {
-    std::cerr << "There is no updateCollisionInfoPeriod attribute";
+    std::cerr << "There is no \"updateCollisionInfoPeriod\" attribute in Solver section, using default value = 1\n";
   }
 
   ParseScalar(solverElement, "velocityDimensionlessMult", &velocityDimensionlessMult);  

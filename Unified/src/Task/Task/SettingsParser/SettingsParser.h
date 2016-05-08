@@ -72,6 +72,7 @@ struct Settings : public BasicSettings
   ResultCombinerSettings  <Space>   resultCombiner;
   std::vector< SnapshotSettings<Space> > snapshots;
 
+  std::string settingsFileName;
   void Parse(const char* fileName);
 
 private:
@@ -113,7 +114,7 @@ void BasicSettings::ParseSettingsFile(const char* fileName)
 template<typename Space>
 void Settings<Space>::Parse(const char* fileName)
 {
-  std::string settingsFileName = ParseSettingsFileName(fileName);
+  this->settingsFileName = ParseSettingsFileName(fileName);
   Settings<Space>::ParseSettingsFile(settingsFileName.c_str());
 }
 

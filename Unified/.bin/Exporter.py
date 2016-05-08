@@ -27,7 +27,9 @@ def find_selected_meshes():
         selected = salome.sg.getSelected(i)
         selobjID = salome.myStudy.FindObjectID(selected)
         selobj = selobjID.GetObject()
-        if selobj.__class__ == SMESH._objref_SMESH_Mesh:
+        print "selected class: "
+        print selobj.__class__
+        if selobj.__class__ == SMESH._objref_SMESH_Mesh or selobj.__class__ == salome.smesh.smeshBuilder.meshProxy:
             # mName = selobjID.GetName().replace(" ","_")
             foundMesh = True
             mesh = smesh.Mesh(selobj)
@@ -180,6 +182,7 @@ if len(meshes) > 0:
         outFile.write('\n')
         for typeIndex in range(len(edgesOfBoundaryTypeCount)):
             outFile.write('%d ' % edgesOfBoundaryTypeCount[typeIndex])
+            print "Boundary edges of type %(type)d: %(count)d " % {'type' : typeIndex, 'count' : edgesOfBoundaryTypeCount[typeIndex]}
 
 
         totalDetectorsCount = 0
