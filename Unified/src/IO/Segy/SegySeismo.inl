@@ -261,11 +261,11 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
             header_data.job_id = 1;
             header_data.line_num = 1;
             header_data.reel_num = 1;
-            header_data.num_of_traces_per_record = num_of_receivers;
+            header_data.num_of_traces_per_record = static_cast<uint16>(num_of_receivers);
             header_data.num_of_auxiliary_traces_per_record = 0;
             header_data.data_sample_format = 5;
             header_data.reel_num = 1;
-            header_data.samples_per_trace = num_of_times;
+            header_data.samples_per_trace = static_cast<uint16>(num_of_times);
             header_data.samples_per_trace_reel = header_data.samples_per_trace;
             for (int i = 0; i < 17; i++)
                 header_data.other[i] = 0;
@@ -351,7 +351,7 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
                 {
                     seismogramms[dims*path_index + k].trace_header_data[i].trace_seq_num_line = i;
                     seismogramms[dims*path_index + k].trace_header_data[i].trace_seq_num_reel = i;
-                    seismogramms[dims*path_index + k].trace_header_data[i].trace_id_code = i;
+                    seismogramms[dims*path_index + k].trace_header_data[i].trace_id_code = static_cast<uint16>(i);
                     seismogramms[dims*path_index + k].trace_header_data[i].receiver_x = uint32(rec_x[i]); // because of precision equals 1m %)
                     seismogramms[dims*path_index + k].trace_header_data[i].receiver_y = uint32(rec_y[i]);
                     seismogramms[dims*path_index + k].trace_header_data[i].source_x = uint32(source_x);
