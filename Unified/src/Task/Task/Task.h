@@ -352,7 +352,7 @@ void Task<Space, order>::Run()
   network->setReceiveListener(this);
   settings.Parse("task.xml");
 
-  printf("Starting task with config %s in %dd space", settings.settingsFileName.c_str(), settings.configDimsCount);
+  printf("Starting task with config %s in %dd space\n", settings.settingsFileName.c_str(), settings.configDimsCount);
   assert(settings.configDimsCount == Space::Dimension);
   LoadNodesSchedule();
 
