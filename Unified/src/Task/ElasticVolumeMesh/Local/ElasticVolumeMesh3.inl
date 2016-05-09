@@ -92,16 +92,16 @@ void ElasticVolumeMesh<Space3, FunctionSpace>::
           const Vector& mainNormal = principalNormals[maxStressIndex];
 
           // minimun cos of angle between normal to crack and edge tangent
-          Scalar maxSinOfAngle = 0;
+          Scalar maxCosOfAngle = 0;
           IndexType bestFaceNumber = IndexType(-1);
 
           for (IndexType face = 0; face < Space3::FacesPerCell; face++)
           {
             Vector faceNormal = volumeMesh.GetFaceExternalNormal(cellIndex, face).GetNorm();
 
-            if (maxSinOfAngle < fabs(mainNormal * faceNormal))
+            if (maxCosOfAngle < fabs(mainNormal * faceNormal))
             {
-              maxSinOfAngle = fabs(mainNormal * faceNormal);
+              maxCosOfAngle = fabs(mainNormal * faceNormal);
               bestFaceNumber = face;
             }
           }

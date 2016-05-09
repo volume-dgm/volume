@@ -810,7 +810,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions(std::vector
 
       for (int cellIndex = segmentBegin; cellIndex < segmentEnd; ++cellIndex)
       {
-        Scalar maxSinOfAngle = 0;
+        Scalar maxCosOfAngle = 0;
         IndexType bestFaceNumber = IndexType(-1);
         IndexType dynamicBoundaryTypes[Space::FacesPerCell];
 
@@ -880,9 +880,9 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions(std::vector
             const Vector& mainNormal = principalNormals[maxStressIndex];
             Vector faceNormal = volumeMesh.GetFaceExternalNormal(cellIndex, faceNumber).GetNorm();
 
-            if (maxSinOfAngle < fabs(mainNormal * faceNormal))
+            if (maxCosOfAngle < fabs(mainNormal * faceNormal))
             {
-              maxSinOfAngle = fabs(mainNormal * faceNormal);
+              maxCosOfAngle = fabs(mainNormal * faceNormal);
               bestFaceNumber = faceNumber;
             }
           }
