@@ -539,7 +539,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
 {
   if (allowContinuousDestruction)
   {
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); ++cellIndex)
     {
       Scalar plasticDeformRate = 0;
@@ -563,7 +563,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity(Scalar dt)
 
           if (ProcessPlasticity(k, elastic, false))
           {
-            Scalar pointDeformRate = GetDeformRate(cellIndex, refPoint);
+            pointDeformRate = GetDeformRate(cellIndex, refPoint);
           }
         }
         return pointDeformRate;
