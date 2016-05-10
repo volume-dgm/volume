@@ -90,7 +90,9 @@
     </Contacts>
   </Mesh>
 
-  <Snapshot>
+
+  
+  <Snapshot>  <!-- Saving every time = 0.25e-1 seconds -->
     <!-- <Period frames="1" /> -->
     <Period time="0.25e-1"/>
     <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true">
@@ -102,6 +104,21 @@
     <Boundaries fileName="out/boundaries[<domain>]<step>.vtk" faceTypesToDraw="0"/>
     <CellInfos fileName="out/cellinfo[<domain>]<step>.vtk" />
   </Snapshot>
+
+  <Snapshot> <!-- Saving every frames=5 frames from frame startFrame to frame finishFrame --> 
+    <!-- <Period frames="1" /> -->
+    <Period frames="5"/>
+    <Interval startFrame="1000" finishFrame="2000" />
+    <Data fileName = "out/snapshot_fine[<domain>]<step>.vti"  writeVelocity="true">
+      <Box    boxPoint1 = "-0.51 -0.51 -0.51" boxPoint2 = "0.51 0.51 0.51" />
+      <Resolution resolution="128 128 128"/>
+    </Data>
+    <Mesh     fileName="out/mesh_fine[<domain>]<step>.vtk" />
+    <Contacts fileName="out/contacts_fine[<domain>]<step>.vtk" faceTypesToDraw="0 1 2 3" />
+    <Boundaries fileName="out/boundaries_fine[<domain>]<step>.vtk" faceTypesToDraw="0"/>
+    <CellInfos fileName="out/cellinfo_fine[<domain>]<step>.vtk" />
+  </Snapshot>
+
 
   <!-- <Detectors 
     fileName="out/detectors[<domain>]<detector>.csv" 
