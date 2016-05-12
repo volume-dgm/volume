@@ -61,7 +61,7 @@
   <Snapshot>
     <Period frames="1000" />
     <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
-      <Box    boxPoint1 = "-4.2 -0.15 -0.25" boxPoint2 = "4.2 0.55 0.25" />
+      <Box    boxPoint1 = "-2.2 -0.15 -0.25" boxPoint2 = "2.2 0.55 0.25" />
 
       <!-- Either resolution or origin+spacing should be set to define snapshot grid-->
       <Resolution resolution="70 20 20" />
