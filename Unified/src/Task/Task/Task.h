@@ -459,11 +459,11 @@ void Task<Space, order>::Run()
         {
           IndexType currentStepIndex = (solverState.globalStepIndex / MaxHierarchyLevel);
           if ((currTime >= lastSnapshotTimes[snapshotIndex] + settings.snapshots[snapshotIndex].timePeriod && 
-               currTime > settings.snapshots[snapshotIndex].startTime &&
-               currTime < settings.snapshots[snapshotIndex].finishTime) || 
+               currTime >= settings.snapshots[snapshotIndex].startTime &&
+               currTime <= settings.snapshots[snapshotIndex].finishTime) || 
               (currentStepIndex % settings.snapshots[snapshotIndex].framePeriod == 0 && 
-               currentStepIndex > settings.snapshots[snapshotIndex].startFrame && 
-               currentStepIndex < settings.snapshots[snapshotIndex].finishFrame))
+               currentStepIndex >= settings.snapshots[snapshotIndex].startFrame && 
+               currentStepIndex <= settings.snapshots[snapshotIndex].finishFrame))
           {
             lastSnapshotTimes[snapshotIndex] = currTime;
             SaveVtkSnapshot(currTime, snapshotIndex, solverState.globalStepIndex);
