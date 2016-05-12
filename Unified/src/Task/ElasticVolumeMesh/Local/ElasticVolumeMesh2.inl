@@ -184,7 +184,7 @@ struct ContinuousDestructionCorrector
 
       if (mesh->ProcessPlasticity(k, elastic, false))
       {
-        mesh->DestroyCellMaterial(cellIndex, mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
+        mesh->DestroyCell(cellIndex, mesh->volumeMesh.cellMediumParameters[cellIndex].plasticity.powderShearMult);
       }
     }
 

@@ -96,7 +96,7 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   void SetDamping(Scalar damping);
   Scalar GetDamping() const;
 
-  void DestroyCellMaterial(IndexType cellIndex, Scalar alpha);
+  void DestroyCell (IndexType cellIndex, Scalar powderShearMult);
   ElasticSystemType* GetSystem();
   void MoveSceneToSnapshotRegion();
 
@@ -278,7 +278,7 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::velocityDimensionlessMult;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetAverageCellElastic;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetSystem;
-  using ElasticVolumeMeshCommon<Space, FunctionSpace>::DestroyCellMaterial;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::DestroyCell;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::dimsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::functionsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::erosion;
@@ -353,7 +353,7 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::velocityDimensionlessMult;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetAverageCellElastic;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::GetSystem;
-  using ElasticVolumeMeshCommon<Space, FunctionSpace>::DestroyCellMaterial;
+  using ElasticVolumeMeshCommon<Space, FunctionSpace>::DestroyCell;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::dimsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::functionsCount;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::HandlePlasticity;
@@ -447,6 +447,8 @@ void ApplyCorrector(MeshType* const mesh)
     Scalar cellValues[mesh->functionsCount * mesh->dimsCount];
     
     mesh->volumeMesh.functionSpace->template DecomposePrecomputed< Corrector, MeshType::dimsCount >(corrector, cellValues);
+    //mesh->volumeMesh.functionSpace->template Decompose< Corrector, MeshType::dimsCount >(corrector, cellValues);
+
 
     for (IndexType functionIndex = 0; functionIndex < mesh->functionsCount; functionIndex++)
     {

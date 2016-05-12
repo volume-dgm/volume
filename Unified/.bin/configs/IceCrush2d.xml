@@ -17,7 +17,7 @@
 
         <Submesh index="1" E="1.5e+100" G="5e+90" rho= "1500" fixed="true" internalContactType= "1" /> 
         <Submesh index="0" E="5e+9" G="1.87e+9" rho= "900" k= "2.2e+6" alpha="0" brittle="false" internalContactType= "0"
-          maxPlasticDeform="0.001" powderShearMult="0.01"/> <!-- E,G[Pa] rho[kg/m^3] k[Pa] maxPlaticDeform[dimentionless]  параметры льда, k - предел пластичности, powderShearMult in [0,1]
+          maxPlasticDeform="0.01" powderShearMult="0.01"/> <!-- E,G[Pa] rho[kg/m^3] k[Pa] maxPlaticDeform[dimentionless]  параметры льда, k - предел пластичности, powderShearMult in [0,1]
           maxPlasticDeform -  -->
       </PerSubmesh> 
     </MediumParams>
@@ -31,13 +31,13 @@
 
       <Fixed interactionType= "1"> 
         <ExternalVelocity>
-          <ConstFunctor value= "0.0 0.01"/>
+          <ConstFunctor value= "0.0 0.1"/>
         </ExternalVelocity>
       </Fixed>
 
        <Fixed interactionType= "2"> 
         <ExternalVelocity>
-          <ConstFunctor value= "0.0 -0.01"/>
+          <ConstFunctor value= "0.0 -0.1"/>
         </ExternalVelocity>
       </Fixed>
     </Boundaries>
@@ -50,11 +50,11 @@
 
   <Detectors 
     fileName="out/detectors[<domain>]<detector>.csv" 
-    samplesPeriod="100"
+    samplesPeriod="10"
     locationsFileName="meshes/IceCrush2dDetectorPositions.loc" />
 
   <Snapshot>
-    <Period frames="5000" />
+    <Period frames="500" />
     <Data fileName = "out/snapshot[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
       <Box    boxPoint1 = "-0.01 -0.01" boxPoint2 = "0.16 0.16" />
 
@@ -72,7 +72,7 @@
     <NodeSchedule node="0" domains="-1" /> 
   </Schedule>
 
-  <Task destinationTime = "0.8">
+  <Task destinationTime = "0.005">
     <IniState>
       <BoxState boxPoint1 = "-10.0 -10.0" boxPoint2 = "10.0 10.0" velocity = "0.0 0.0" />
     </IniState>
