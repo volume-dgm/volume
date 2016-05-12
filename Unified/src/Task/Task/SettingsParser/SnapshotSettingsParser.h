@@ -9,7 +9,11 @@ struct SnapshotSettings
 
   SnapshotSettings(): 
     timePeriod(std::numeric_limits<Scalar>::infinity()),
-    framePeriod(IndexType(-1))
+    framePeriod(IndexType(-1)),
+    startTime(Scalar(0.0)),
+    finishTime(std::numeric_limits<Scalar>::infinity()),
+    startFrame(0),
+    finishFrame(IndexType(-1))
   {}
 
   struct Data
@@ -115,7 +119,13 @@ struct SnapshotSettings
   } cellInfos;
 
   Scalar timePeriod;
+  Scalar startTime;
+  Scalar finishTime;
+
   IndexType framePeriod;
+  IndexType startFrame;
+  IndexType finishFrame;
+
 
   void Parse(TiXmlElement* snapshotElement);
 };
@@ -151,6 +161,16 @@ void SnapshotSettings<Space>::Parse(TiXmlElement *snapshotElement)
   {
     std::cerr << "There is no period attribute";
     throw;
+  }
+
+  TiXmlElement *intervalElement = snapshotElement->FirstChildElement("Interval");
+  if(intervalElement)
+  {
+    ParseScalar(intervalElement, "startTime", &startTime);
+    ParseScalar(intervalElement, "finishTime", &finishTime);
+
+    ParseUnsigned(intervalElement, "startFrame", &startFrame);
+    ParseUnsigned(intervalElement, "finishFrame", &finishFrame);
   }
 
   TiXmlElement* dataElement = snapshotElement->FirstChildElement("Data");
