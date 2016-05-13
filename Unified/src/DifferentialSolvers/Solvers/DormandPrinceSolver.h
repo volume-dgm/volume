@@ -1,7 +1,5 @@
 #pragma once
 #include "../DifferentialSolver.h"
-#include <math.h>
-#include <assert.h>
 
 template<typename Scalar>
 class DormandPrinceSolver : public DifferentialSolver<Scalar>
@@ -15,11 +13,11 @@ public:
 
   DormandPrinceSolver() {}
 
-  void SetSystem(DifferentialSystem<Scalar>* system)
+  void SetSystem(DifferentialSystem<Scalar>* system) override
   {
     this->system  = system;
-    initialCoords = (system->GetHierarchyLevelsCount() > 1) ? new Scalar[system->GetMaxDimentionsCount()] : 0;
-    oldCoords     = (system->GetHierarchyLevelsCount() > 1) ? new Scalar[system->GetMaxDimentionsCount()] : 0;
+    initialCoords = (system->GetHierarchyLevelsCount() > 1) ? new Scalar[system->GetMaxDimentionsCount()] : nullptr;
+    oldCoords     = (system->GetHierarchyLevelsCount() > 1) ? new Scalar[system->GetMaxDimentionsCount()] : nullptr;
 
     currCoords  = new Scalar[system->GetMaxDimentionsCount()];
     nextCoords1 = new Scalar[system->GetMaxDimentionsCount()];
@@ -58,12 +56,12 @@ public:
     delete [] k7;
   }
 
-  int GetPhasesCount()
+  int GetPhasesCount() const override
   {
     return 7;
   }
 
-  void InitStep(Scalar timeStep, Scalar tolerance, bool updateInitialCoords)
+  void InitStep(Scalar timeStep, Scalar tolerance, bool updateInitialCoords) override
   {
     DifferentialSolver<Scalar>::InitStep(timeStep, tolerance, updateInitialCoords);
     if (updateInitialCoords)
@@ -72,7 +70,7 @@ public:
     }
   }
 
-  void InitStep(const SolverState& solverState)
+  void InitStep(const SolverState& solverState) override
   {
     if (system->GetHierarchyLevelsCount() > 1)
     {
@@ -80,7 +78,7 @@ public:
     }
   }
 
-  bool AdvancePhase(const SolverState& solverState)
+  bool AdvancePhase(const SolverState& solverState) override
   {
     Scalar currStep = timeStep * (1 << solverState.hierarchyLevel);
     switch (solverState.phaseIndex)
@@ -200,7 +198,7 @@ public:
     return true;
   } 
 
-  void AdvanceStep(const SolverState& solverState)
+  void AdvanceStep(const SolverState& solverState) override
   {
     if (solverState.IsPreInitial())
     {
@@ -216,18 +214,18 @@ public:
     }
   }
 
-  void RevertStep(Scalar currTime)
+  void RevertStep(Scalar currTime) override
   {
     this->currTime = currTime;
     system->SetCurrCoords(currTime, system->GetHierarchyLevelsCount() > 1 ? initialCoords : currCoords);
   }
 
-  Scalar GetLastStepError()
+  Scalar GetLastStepError() const override
   {
     return stepError;
   }
 
-  Scalar GetTimeStepPrediction()
+  Scalar GetTimeStepPrediction() const override
   {
     return predictedStep;
   }

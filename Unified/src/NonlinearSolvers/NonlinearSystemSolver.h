@@ -7,7 +7,7 @@ template <typename Scalar, typename IndexType>
 struct NonlinearSystemSolver
 {
 public:
-  NonlinearSystemSolver(): func(0), evalsCount(0)
+  NonlinearSystemSolver(): func(nullptr), evalsCount(0)
   {
   }
 
@@ -20,7 +20,7 @@ public:
     dimsCount = func->GetDimentionsCount(solverState);
     if (initialGuess != solution)
     {
-      for(IndexType coordIndex = 0; coordIndex < dimsCount; coordIndex++)
+      for(IndexType coordIndex = 0; coordIndex < dimsCount; ++coordIndex)
       {
         solution[coordIndex] = initialGuess[coordIndex];
       }

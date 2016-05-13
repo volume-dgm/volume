@@ -86,12 +86,12 @@ public:
     boxPoint1 -= size * (mult - T(1.0)) * T(0.5);
     boxPoint2 += size * (mult - T(1.0)) * T(0.5);
   }
-  const T Square()
+  T Square() const
   {
     Vector3<T> size = boxPoint2 - boxPoint1;
     return (size.x * size.y + size.x * size.z + size.y * size.z) * T(2.0);
   }
-  const T Volume() const
+  T Volume() const
   {
     Vector3<T> size = boxPoint2 - boxPoint1;
     return size.x * size.y * size.z;

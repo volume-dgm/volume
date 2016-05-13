@@ -11,7 +11,6 @@
 #include <fstream>
 #include <vector>
 #include <stdio.h>
-#include <algorithm>
 
 //typedef Space3 DefaultSpace;
 

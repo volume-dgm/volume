@@ -32,7 +32,7 @@ struct ContactProcessor
         if (contactedCells)
           contactedCells[*contactedCellsCount] = neighbourCellIndex;
 
-        (*contactedCellsCount)++;
+        ++(*contactedCellsCount);
       }
     }
   }

@@ -1,3 +1,5 @@
+#include "../VolumeMethod/FunctionGetters/BoundaryFunctionGetter.h"
+
 template <typename Space>
 void ElasticSystemCommon<Space>::ValueTypeCommon::SetZeroValues()
 {
@@ -14,18 +16,6 @@ template <>
 Space3::Vector ElasticSystemCommon<Space3>::ValueTypeCommon::GetVelocity() const
 {
   return Space3::Vector(values[6], values[7], values[8]);
-}
-
-template <>
-Space2::Tensor ElasticSystemCommon<Space2>::ValueTypeCommon::GetTension() const
-{
-  return Tensor(values[0], values[2], values[1]);
-}
-
-template <>
-Space3::Tensor ElasticSystemCommon<Space3>::ValueTypeCommon::GetTension() const
-{
-  return Tensor(values[0], values[3], values[5], values[1], values[4], values[2]);
 }
 
 template <>
@@ -868,13 +858,13 @@ BoundaryInfoFunctor<Space>*
 {
   int infoIndex = boundaryDescriptions[interactionType].infoIndex;
 
-  BoundaryFunctionGetter<Space>* getter = 0;
+  BoundaryFunctionGetter<Space>* getter = nullptr;
 
   switch(boundaryDescriptions[interactionType].type)
   {
     case BoundaryConditions::Absorb:
     {
-      return 0;
+      return nullptr;
     }break;
     case BoundaryConditions::Free:
     {
@@ -888,18 +878,18 @@ BoundaryInfoFunctor<Space>*
     }break;
     case BoundaryConditions::Symmetry:
     {
-      return 0;
+      return nullptr;
     }break;
     case BoundaryConditions::AntiSymmetry:
     {
-      return 0;
+      return nullptr;
     }break;
     default:
       assert(0);
     break;
   }
   assert(0); //unknown interation type
-  return 0;
+  return nullptr;
 }
 
 template<typename Space>
@@ -916,7 +906,7 @@ void ElasticSystemCommon<Space>::SetFreeBoundary(IndexType interactionType, Scal
   FreeBoundaryInfo<Space> freeInfo;
 
   if (externalForceFunctor)
-    freeInfo.boundaryFunctor = externalForceFunctor ? new FreeBoundaryInfoFunctor(externalForceFunctor, tensionDimensionlessMult) : 0;
+    freeInfo.boundaryFunctor = externalForceFunctor ? new FreeBoundaryInfoFunctor(externalForceFunctor, tensionDimensionlessMult) : nullptr;
   freeInfo.dynamicContactInteractionType = dynamicContactInteractionType;
   freeBoundaryInfos.push_back(freeInfo);
 }
@@ -932,7 +922,7 @@ void ElasticSystemCommon<Space>::SetFixedBoundary(IndexType interactionType, Sca
   SetBoundaryDescription(interactionType, newBoundary);
   
   FixedBoundaryInfo<Space> fixedInfo;
-  fixedInfo.boundaryFunctor = externalVelocityFunctor ? new FixedBoundaryInfoFunctor(externalVelocityFunctor, velocityDimensionlessMult) : 0;
+  fixedInfo.boundaryFunctor = externalVelocityFunctor ? new FixedBoundaryInfoFunctor(externalVelocityFunctor, velocityDimensionlessMult) : nullptr;
 
   fixedBoundaryInfos.push_back(fixedInfo);
 }

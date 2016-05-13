@@ -17,7 +17,7 @@ public:
 
   virtual void GetCurrDerivatives(Scalar* derivatives, const SolverState& solverState = SolverState()) = 0;
   virtual Scalar GetErrorValue(Scalar time, const Scalar* coords0, const Scalar* coords1, 
-    const SolverState& solverState = SolverState(), const Scalar* mults = 0) = 0;
+    const SolverState& solverState = SolverState(), const Scalar* mults = nullptr) = 0;
 
   virtual void GetCurrCoords(Scalar& time, Scalar* currCoords, Scalar* oldCoords, const SolverState& solverState)
   {

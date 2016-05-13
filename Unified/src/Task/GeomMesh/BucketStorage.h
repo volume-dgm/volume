@@ -1,7 +1,5 @@
 #pragma once
-#include <algorithm>
 #include <assert.h>
-#include <omp.h>
 
 template <typename IndexType>
 class BucketStorage
@@ -10,7 +8,7 @@ public:
   typedef const IndexType* ElementIterator;
 
   BucketStorage():
-    bucketsCount(0)
+    bucketsCount(0), isCached(false)
   {
   }
 
@@ -40,7 +38,7 @@ public:
     std::fill(rangeEnds.begin(),   rangeEnds.end(),   0);
 
     #pragma omp parallel for
-    for (int elementIndex = 0; elementIndex < (int)storageSize; ++elementIndex)
+    for (int elementIndex = 0; elementIndex < int(storageSize); ++elementIndex)
     {
       elementIndices[elementIndex] = elementIndex;
       elementLocations[elementIndices[elementIndex]] = elementIndex;
@@ -55,7 +53,7 @@ public:
   {
     isCached = true;
     #pragma omp parallel for
-    for (int bucketIndex = 0; bucketIndex < (int)bucketsCount; ++bucketIndex)
+    for (int bucketIndex = 0; bucketIndex < int(bucketsCount); ++bucketIndex)
     {
       for (IndexType elementLocation = rangeBegins[bucketIndex]; elementLocation < rangeEnds[bucketIndex]; ++elementLocation)
       {
@@ -75,13 +73,13 @@ public:
     while (currentBucket < newBucket)
     {
       MoveToNextBucket(elementIndex);
-      currentBucket++;
+      ++currentBucket;
     }
 
     while (currentBucket > newBucket)
     {
       MoveToPreviousBucket(elementIndex);
-      currentBucket--;
+      --currentBucket;
     }
   }
 
@@ -109,7 +107,7 @@ private:
       {
         break;
       }
-      bucketIndex++;
+      ++bucketIndex;
     }
     assert(bucketIndex < bucketsCount);
     return bucketIndex;
@@ -123,8 +121,8 @@ private:
     IndexType currentLocation = elementLocations[elementIndex];
     Swap(currentLocation, rangeEnds[currentBucket] - 1);
 
-    rangeBegins[currentBucket + 1]--;
-    rangeEnds[currentBucket]--;
+    --rangeBegins[currentBucket + 1];
+    --rangeEnds[currentBucket];
   }
 
   void MoveToPreviousBucket(IndexType elementIndex)
@@ -135,8 +133,8 @@ private:
     IndexType currentLocation = elementLocations[elementIndex];
     Swap(currentLocation, rangeBegins[currentBucket]);
 
-    rangeBegins[currentBucket]++;
-    rangeEnds[currentBucket - 1]++;
+    ++rangeBegins[currentBucket];
+    ++rangeEnds[currentBucket - 1];
   }
 
   void Swap(IndexType firstLocation, IndexType secondLocation)

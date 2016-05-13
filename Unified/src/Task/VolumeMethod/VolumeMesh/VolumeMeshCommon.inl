@@ -70,10 +70,10 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   typename System::ValueType result;
   result.SetZeroValues();
 
-  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
     Scalar basisFunctionValue = functionSpace->GetBasisFunctionValue(refCoords, functionIndex);
-    for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
     {
       Scalar basisFunctionCoefficient = coeffs[valueIndex * functionsCount + functionIndex];
       result.values[valueIndex] += basisFunctionCoefficient * basisFunctionValue;
@@ -89,10 +89,10 @@ typename System::MediumParameters VolumeMeshCommon<Space, FunctionSpace, System>
   typename System::MediumParameters result;
   std::fill(result.params, result.params + MediumParameters::ParamsCount, Scalar(0.0));
 
-  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
     Scalar basisFunctionValue = functionSpace->GetBasisFunctionValue(refCoords, functionIndex);
-    for (IndexType paramIndex = 0; paramIndex < MediumParameters::ParamsCount; paramIndex++)
+    for (IndexType paramIndex = 0; paramIndex < MediumParameters::ParamsCount; ++paramIndex)
     {
       Scalar basisFunctionCoefficient = coeffs[paramIndex * functionsCount + functionIndex];
       result.params[paramIndex] += basisFunctionCoefficient * basisFunctionValue;
@@ -112,14 +112,14 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
 }
 
 template <typename Space, typename FunctionSpace, typename System>
-inline int VolumeMeshCommon<Space, FunctionSpace, System>::
+int VolumeMeshCommon<Space, FunctionSpace, System>::
   GetDimentionsCount(const SolverState& solverState) const
 {
   return hierarchyDimentionsCount[solverState.Index()];
 }
 
 template <typename Space, typename FunctionSpace, typename System>
-inline int VolumeMeshCommon<Space, FunctionSpace, System>::
+int VolumeMeshCommon<Space, FunctionSpace, System>::
   GetMaxDimentionsCount() const
 {
   return dimsCount * functionsCount * cells.size();
@@ -130,11 +130,11 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::GetCurrCoords(Scalar& time,
 {
   time = this->time;
   #pragma omp parallel for
-  for (int cellIndex = 0; cellIndex < (int)cells.size(); ++cellIndex)
+  for (int cellIndex = 0; cellIndex < int(cells.size()); ++cellIndex)
   {
-    for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
     {
-      for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+      for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
       {
         currCoords[cellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex] = 
           cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
@@ -164,9 +164,9 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::GetCurrCoords(Scalar& time,
       if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState, &auxCell))
       {
         useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, true);
-        for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+        for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
         {
-          for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+          for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
           {
             currCoords[targetCellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex] = 
               (useHalfStepSolution ?
@@ -176,9 +176,9 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::GetCurrCoords(Scalar& time,
         }
 
         useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, false);
-        for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+        for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
         {
-          for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+          for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
           {
             oldCoords[targetCellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex] = 
               (useHalfStepSolution ?
@@ -187,7 +187,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::GetCurrCoords(Scalar& time,
           }
         }
 
-        targetCellIndex++;
+        ++targetCellIndex;
       }
     }
   }
@@ -229,9 +229,9 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::SetCurrCoords(Scalar time, 
   #pragma omp parallel for
   for (int cellIndex = 0; cellIndex < int(cells.size()); ++cellIndex)
   {
-    for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
     {
-      for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+      for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
       {
         cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] = 
           oldCoords[cellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex];
@@ -299,9 +299,9 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::SetCurrCoords(Scalar time, 
       if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState, &auxCell))
       {
         const bool useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, false);
-        for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+        for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
         {
-          for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+          for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
           {
             (useHalfStepSolution ? 
               halfStepCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] :
@@ -309,7 +309,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::SetCurrCoords(Scalar time, 
               newCoords[targetCellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex];
           }
         }
-        targetCellIndex++;
+        ++targetCellIndex;
       }
     }
   }
@@ -375,9 +375,9 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::SetCurrCoords(Scalar time,
       {
         const bool useHalfStepSolution = timeHierarchyLevelsManager.UseHalfStepSolution(cellIndex, solverState, auxCell, false);
 
-        for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+        for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
         {
-          for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+          for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
           {
             if (auxCell || solverState.hierarchyPhase == 1)
             {
@@ -400,7 +400,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::SetCurrCoords(Scalar time,
             }
           }
         }
-        targetCellIndex++;
+        ++targetCellIndex;
       }
     }
   }
@@ -413,9 +413,9 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::SetCurrCoords(Scalar time,
     {
       if (inBuffer[cellIndex])
       {
-        for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+        for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
         {
-          for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+          for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
           {
             cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] =
               bufferCellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
@@ -449,7 +449,7 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::
     IndexType offset = threadCellOffsets[stateIndex];
     IndexType targetCellIndex = offset + 0;
 
-    for(int cellIndex = segmentBegin; cellIndex < segmentEnd; cellIndex++)
+    for(int cellIndex = segmentBegin; cellIndex < segmentEnd; ++cellIndex)
     {
       bool auxCell;
       if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState, &auxCell))
@@ -457,10 +457,10 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::
         if (!auxCell && IsCellRegular(cellIndex))
         {
           Scalar cellError = Scalar(0.0);
-          for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+          for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
           {
             Scalar mult = (mults) ? mults[valueIndex] : Scalar(1.0);
-            for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+            for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
             {
               cellError += mult * fabs(
                 (coords0[targetCellIndex * functionsCount * dimsCount + valueIndex * functionsCount + functionIndex] -
@@ -478,7 +478,7 @@ typename Space::Scalar VolumeMeshCommon<Space, FunctionSpace, System>::
             }
           }
         }
-        targetCellIndex++;
+        ++targetCellIndex;
       }
     }
   }
@@ -605,10 +605,10 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
             // ***
             if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState))
             {
-              threadCellsCount[stateIndex]++;
+              ++threadCellsCount[stateIndex];
               if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
               {
-                threadWorkloads[stateIndex]++;
+                ++threadWorkloads[stateIndex];
               }
             }
           }
@@ -626,19 +626,19 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
             IndexType nextThreadStateIndex = (threadIndex + 1) * GetMaxHierarchyLevel() * GetHierarchyLevelsCount() * 2 + solverState.Index();
             while (threadWorkloads[stateIndex] > threadWorkloads[nextThreadStateIndex] + 1)
             {
-              threadSegmentEnds[stateIndex]--;
-              threadSegmentBegins[nextThreadStateIndex]--;
+              --threadSegmentEnds[stateIndex];
+              --threadSegmentBegins[nextThreadStateIndex];
 
               IndexType cellIndex = threadSegmentEnds[stateIndex];
               if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState))
               {
-                threadCellsCount[stateIndex]--;
-                threadCellsCount[nextThreadStateIndex]++;
+                --threadCellsCount[stateIndex];
+                ++threadCellsCount[nextThreadStateIndex];
 
                 if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
                 {
-                  threadWorkloads[stateIndex]--;
-                  threadWorkloads[nextThreadStateIndex]++;
+                  --threadWorkloads[stateIndex];
+                  ++threadWorkloads[nextThreadStateIndex];
                   balanced = true;
                 }
               }
@@ -648,18 +648,18 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
               IndexType cellIndex = threadSegmentEnds[stateIndex];
               if (timeHierarchyLevelsManager.NeedToUpdate(cellIndex, solverState))
               {
-                threadCellsCount[stateIndex]++;
-                threadCellsCount[nextThreadStateIndex]--;
+                ++threadCellsCount[stateIndex];
+                --threadCellsCount[nextThreadStateIndex];
 
                 if (!cellMediumParameters[cellIndex].fixed && isCellAvailable[cellIndex])
                 {
-                  threadWorkloads[stateIndex]++;
-                  threadWorkloads[nextThreadStateIndex]--;
+                  ++threadWorkloads[stateIndex];
+                  --threadWorkloads[nextThreadStateIndex];
                   balanced = true;
                 }
               }
-              threadSegmentEnds[stateIndex]++;
-              threadSegmentBegins[nextThreadStateIndex]++;
+              ++threadSegmentEnds[stateIndex];
+              ++threadSegmentBegins[nextThreadStateIndex];
             }
           }
         } while (balanced); 
@@ -740,9 +740,9 @@ typename System::ValueType VolumeMeshCommon<Space, FunctionSpace, System>::
   typename System::ValueType result;
   std::fill_n(result.values, dimsCount, Scalar(0.0));
 
-  for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+  for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
   {
-    for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+    for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
     {
       Scalar basisFunctionCoefficient =
         cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex];
@@ -884,7 +884,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::BuildAABBTree(const Vector&
 
   AABB dynamicContactBox(boxPoint1, boxPoint2);
 
-  for (IndexType cellIndex = 0; cellIndex < cells.size(); cellIndex++)
+  for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex)
   {
     // if (IsReadyForCollisionCell(cellIndex))
     Vector cellVertices[Space::NodesPerCell];

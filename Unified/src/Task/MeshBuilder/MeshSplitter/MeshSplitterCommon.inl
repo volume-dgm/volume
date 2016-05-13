@@ -257,8 +257,8 @@ void MeshSplitterCommon<Space>::BuildCellCorrespondingDomainPool(IndexType domai
         IndexType cellIndex = domainsInfos[domainIndex].cellsIndices.globalIndices[cellNumber];
         if (phase == 0)
         {
-          cellInfos[cellIndex].count++;
-          dataPoolSize++;
+          ++cellInfos[cellIndex].count;
+          ++dataPoolSize;
         } else
         {
           cellInfos[cellIndex].data[cellInfos[cellIndex].count++] = domainIndex;

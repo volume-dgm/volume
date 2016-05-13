@@ -5,11 +5,8 @@
 #include "AdditionalCellInfo.h"
 #include "../AABBTree.h"
 
-#include <iostream>
 #include <assert.h>
-#include <stdio.h>
 #include <vector>
-#include <algorithm>
 
 template <typename Space>
 struct GeomMeshCommon: public GeomMeshBase<Space>

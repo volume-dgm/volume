@@ -22,7 +22,7 @@ public:
 		timeElasped += delta;
 		return delta * frequency;
 	}
-	double GetAccumulatedTime()
+	double GetAccumulatedTime() const
 	{
 		return timeElasped * frequency;
 	}

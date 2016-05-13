@@ -8,8 +8,8 @@ template <typename Space>
 struct MeshIO: public MeshIOBase<Space>
 {
   SPACE_TYPEDEFS
-
   MeshIO();
+  virtual ~MeshIO() {}
   virtual void Save(const std::string& fileName, IO::FileType fileType = IO::Binary);
   virtual void Load(const std::string& fileName, IO::FileType fileType = IO::Binary);
 

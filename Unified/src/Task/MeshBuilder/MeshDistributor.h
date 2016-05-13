@@ -1,10 +1,10 @@
 #pragma once
 
 #include <vector>
-#include <numeric>
 #include "../GeomMesh/MeshIO/Local/MeshIO.h"
 #include "../../Maths/Spaces.h"
 #include <metisbin.h>
+#include <numeric>
 
 template <typename Space>
 class MeshDestributor
@@ -19,7 +19,7 @@ public:
   virtual ~MeshDestributor() {}
 
   virtual void Distribute(const MeshIO<Space>* const mesh, IndexType domainsCount, 
-    const std::vector<IndexType>& cellsComputationalCosts, const std::string& algorithmName, std::vector<IndexType>* const cellsColors) = 0;
+    const std::vector<IndexType>& cellsComputationalCosts, const std::string& algorithmName, std::vector<IndexType>* const cellsColors) const = 0;
 };
 
 template <typename Space>
@@ -30,19 +30,19 @@ public:
 
   void Distribute(const MeshIO<Space>* const mesh, IndexType domainsCount, 
     const std::vector<IndexType>& cellsComputationalCosts, 
-    const std::string& algorithmName, std::vector<IndexType>* const cellsColors)
+    const std::string& algorithmName, std::vector<IndexType>* const cellsColors) const override
   {
     cellsColors->resize(mesh->GetCellsCount(), 0);
     if (domainsCount == 1) return;
 
     int ne = mesh->GetCellsCount();
     int nn = mesh->vertices.size();
-    idx_t* eptr = (idx_t*)malloc((ne + 1) * sizeof(idx_t));
+    idx_t* eptr =static_cast<idx_t*>(malloc((ne + 1) * sizeof(idx_t)));
     for (IndexType cellIndex = 0; cellIndex < IndexType(ne + 1); ++cellIndex)
     {
       eptr[cellIndex] = Space::NodesPerCell * cellIndex;
     }
-    idx_t* eind = (idx_t*)malloc(sizeof(idx_t) * mesh->indices.size());
+    idx_t* eind = static_cast<idx_t*>(malloc(sizeof(idx_t) * mesh->indices.size()));
     std::copy(mesh->indices.begin(), mesh->indices.end(), eind);
 
     /* "ncommon" specifies the number of common nodes that two elements must have in 
@@ -51,12 +51,12 @@ public:
     idx_t nparts = domainsCount;
     idx_t objval = 0;
 
-    idx_t* epart = (idx_t*)malloc(ne * sizeof(idx_t));
-    idx_t* npart = (idx_t*)malloc(nn * sizeof(idx_t));
-    idx_t* vwgt  = (idx_t*)malloc(ne * sizeof(idx_t));
+    idx_t* epart = static_cast<idx_t*>(malloc(ne * sizeof(idx_t)));
+    idx_t* npart = static_cast<idx_t*>(malloc(nn * sizeof(idx_t)));
+    idx_t* vwgt  = static_cast<idx_t*>(malloc(ne * sizeof(idx_t)));
     for (IndexType cellIndex = 0; cellIndex < IndexType(ne); ++cellIndex)
     {
-      vwgt[cellIndex] = (idx_t)cellsComputationalCosts[cellIndex];
+      vwgt[cellIndex] = static_cast<idx_t>(cellsComputationalCosts[cellIndex]);
     }
     
     int status = 0;
@@ -68,9 +68,9 @@ public:
 
     // METIS_PartMeshDual is better
     if (algorithmName == "METIS_PartMeshDual")
-      status = ::METIS_PartMeshDual(&ne, &nn, eptr, eind, vwgt, NULL, &ncommon, &nparts, NULL, options, &objval, epart, npart);
+      status = ::METIS_PartMeshDual(&ne, &nn, eptr, eind, vwgt, nullptr, &ncommon, &nparts, nullptr, options, &objval, epart, npart);
     else if (algorithmName == "METIS_PartMeshNodal")
-      status = ::METIS_PartMeshNodal(&ne, &nn, eptr, eind, vwgt, NULL, &nparts, NULL, options, &objval, epart, npart);
+      status = ::METIS_PartMeshNodal(&ne, &nn, eptr, eind, vwgt, nullptr, &nparts, nullptr, options, &objval, epart, npart);
     else 
     {
       std::cerr << "Unknown partitioning algorithm\n";
@@ -102,10 +102,11 @@ template <>
 class SimpleRectDistributor<Space2>: public MeshDestributor<Space2>
 {
 public:
-  SPACE2_TYPEDEFS
+  using Space = Space2;
+  SPACE_TYPEDEFS
 
-  void Distribute(const MeshIO<Space2>* const mesh, IndexType domainsCount, const std::vector<IndexType>&,
-    std::vector<IndexType>* const cellsColors)
+  void Distribute(const MeshIO<Space>* const mesh, IndexType domainsCount, const std::vector<IndexType>&,
+    const std::string&, std::vector<IndexType>* const cellsColors) const override
   {
     AABB boundingBox;
     for (IndexType nodeIndex = 0; nodeIndex < mesh->vertices.size(); ++nodeIndex)

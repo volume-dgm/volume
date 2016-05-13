@@ -4,10 +4,8 @@
 #include <set>
 #include <string>
 #include <fstream>
-#include <limits>
 #include <sstream>
 #include <algorithm>
-#include <math.h>
 
 bool ReplaceSubstring(std::string& str, const std::string& from, const std::string& to)
 {
@@ -54,7 +52,7 @@ std::set<T> StringToSetOfInt(const std::string& s, char delim = ' ')
   std::vector<std::string> v = Split(s, delim);
   for (size_t i = 0; i < v.size(); ++i)
   {
-    T x = (T)std::stoi(v[i]);
+    T x = static_cast<T>(std::stoi(v[i]));
     res.insert(x);
   }
 

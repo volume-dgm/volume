@@ -1,5 +1,3 @@
-#include "../../../Maths/QuadraturePrecomputer.h"
-
 template<typename FunctionSpace, typename System>
 void VolumeMesh<Space2, FunctionSpace, System>::
   LoadGeom(Vector* vertexPositions, IndexType* cellIndices, IndexType verticesCount, IndexType cellsCount,
@@ -433,13 +431,13 @@ void VolumeMesh<Space2, FunctionSpace, System>::
             = -timeDerivatives(valueIndex, functionIndex);
         }
       }
-      targetCellIndex++;
+      ++targetCellIndex;
     }
   }
 }
 
 template<typename FunctionSpace, typename System>
-inline typename Space2::Scalar VolumeMesh<Space2, FunctionSpace, System>::
+typename Space2::Scalar VolumeMesh<Space2, FunctionSpace, System>::
   GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const
 {
   return (cellVertices[1].x - cellVertices[0].x) * (cellVertices[2].y - cellVertices[0].y) -
@@ -447,7 +445,7 @@ inline typename Space2::Scalar VolumeMesh<Space2, FunctionSpace, System>::
 }
 
 template<typename FunctionSpace, typename System>
-inline typename Space2::Vector VolumeMesh<Space2, FunctionSpace, System>::
+typename Space2::Vector VolumeMesh<Space2, FunctionSpace, System>::
   GetRefXDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const //(dξ/dx, dξ/dy, dξ/dz) * J
 {
     return Vector(
@@ -456,7 +454,7 @@ inline typename Space2::Vector VolumeMesh<Space2, FunctionSpace, System>::
 }
 
 template<typename FunctionSpace, typename System>
-inline typename Space2::Vector VolumeMesh<Space2, FunctionSpace, System>::
+typename Space2::Vector VolumeMesh<Space2, FunctionSpace, System>::
   GetRefYDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const //(dη/dx, dη/dy, dη/dz) * J
 {
     return Vector(

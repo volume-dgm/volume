@@ -63,7 +63,6 @@ struct Cell<Space2>
         pows.pows[0] = 0;
         coords[1].AddTerm(pows, 0);
         return;
-
         //return Vector(edgeCoord, 0);
       } break;
       case 1:
@@ -76,7 +75,7 @@ struct Cell<Space2>
         pows.pows[0] = 1;
         coords[1].AddTerm(pows, 1);
         return;
-  //      return Vector(Scalar(1.0) - edgeCoord, edgeCoord);
+        //return Vector(Scalar(1.0) - edgeCoord, edgeCoord);
       } break;
       case 2:
       {
@@ -88,7 +87,7 @@ struct Cell<Space2>
         pows.pows[0] = 1;
         coords[1].AddTerm(pows, -1);
         return;
-  //      return Vector(0, Scalar(1.0) - edgeCoord);
+        //return Vector(0, Scalar(1.0) - edgeCoord);
       } break;
     }
     assert(0);

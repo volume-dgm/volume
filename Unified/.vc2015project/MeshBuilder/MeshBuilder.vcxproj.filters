@@ -40,12 +40,6 @@
     <Filter Include="MeshBuilder\MeshSplitter">
       <UniqueIdentifier>{029ca0a6-27ac-49e6-b325-4d84ca633050}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MeshBuilder\3rdparty">
-      <UniqueIdentifier>{d5fcd2c1-c39e-4fd2-9b45-1de853491d1b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MeshBuilder\3rdparty\TinyXML">
-      <UniqueIdentifier>{7e8d2ae6-ce47-47d7-87bd-609d6df060b3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\3rdparty\tinyxml\tinystr.cpp">

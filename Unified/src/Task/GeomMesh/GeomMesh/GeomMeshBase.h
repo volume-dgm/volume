@@ -2,13 +2,9 @@
 
 #include "../../../Maths/Spaces.h"
 #include "../TopologyReconstructor.h"
-#include "../DisjointSetBuilder.h"
 
-#include <iostream>
 #include <assert.h>
-#include <stdio.h>
 #include <vector>
-#include <algorithm>
 
 template <typename Space>
 struct GeomMeshBase;
@@ -16,6 +12,8 @@ struct GeomMeshBase;
 template <>
 struct GeomMeshBase<Space2>
 {
+  virtual ~GeomMeshBase() {}
+
   SPACE2_TYPEDEFS
   typedef Space2 Space;
 
@@ -51,6 +49,20 @@ struct GeomMeshBase<Space3>
 {
   SPACE3_TYPEDEFS
   typedef Space3 Space;
+
+  GeomMeshBase(): submeshesCount(0), 
+    submeshInfos(nullptr),
+    faceBorderIndicesCount(0),
+    edgeBorderIndicesCount(0),
+    nodeBorderIndicesCount(0),
+    faceContactIndicesCount(0),
+    edgeContactIndicesCount(0),
+    nodeContactIndicesCount(0),
+    contactNodeGroupsCount(0),
+    contactFaceGroupsCount(0),
+    contactEdgeGroupsCount(0)
+  {
+  }
 
   struct CellTopologyInfo
   {

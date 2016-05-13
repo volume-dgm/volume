@@ -24,7 +24,7 @@ struct SimpleIterationsSolver : public NonlinearSystemSolver<Scalar, IndexType>
     delete [] nextEstimation;
   }
 
-  virtual void SetFunction(NonlinearFunctionSystem<Scalar, IndexType> *func)
+  virtual void SetFunction(NonlinearFunctionSystem<Scalar, IndexType> *func) override
   {
     this->func = func;
     dimsCount = func->GetMaxDimentionsCount();
@@ -32,14 +32,14 @@ struct SimpleIterationsSolver : public NonlinearSystemSolver<Scalar, IndexType>
     nextEstimation = new Scalar[dimsCount];
   }
 
-  bool AdvancePhase(Scalar* solution, Scalar& err)
+  bool AdvancePhase(Scalar* solution, Scalar& err) override
   {
-    evalsCount++;
+    ++evalsCount;
     err = func->GetValue(solution, solverState, nextEstimation);
 
     if (err < tolerance) return true;
 
-    for(IndexType coordIndex = 0; coordIndex < dimsCount; coordIndex++)
+    for(IndexType coordIndex = 0; coordIndex < dimsCount; ++coordIndex)
     {
       solution[coordIndex] += nextEstimation[coordIndex] * slopeMultiplier;
     }

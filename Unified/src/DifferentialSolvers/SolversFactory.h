@@ -12,7 +12,6 @@
 
 #include "../NonlinearSolvers/Solvers/SimpleIterations.h"
 #include "../NonlinearSolvers/Solvers/KrylovProjector.h"
-#include <string>
 
 template <typename Scalar, typename IndexType>
 class SolversFactory
@@ -36,6 +35,6 @@ public:
     if (solverName == "RungeSolver8_10")  return new RungeSolver8_10<Scalar>();
     if (solverName == "RungeSolver12_14") return new RungeSolver12_14<Scalar>();
     */
-    return 0;
+    return nullptr;
   }
 };

@@ -11,10 +11,11 @@ public:
   typedef typename ElasticSpace::SpaceType Space;
   SPACE_TYPEDEFS
 
+  virtual ~IniStateMaker() {}
   virtual void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) = 0;
 
   // point, lambda, mju, invRho have to be dimensionless
-  virtual const typename ElasticSpace::Elastic GetValue(const Vector& point,
+  virtual typename ElasticSpace::Elastic GetValue(const Vector& point,
     const Scalar lambda, const Scalar mju, const Scalar invRho) = 0;
 };
 
@@ -34,14 +35,14 @@ public:
     this->wavelength = wavelength;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->pos /= velocityDimensionlessMult;
     this->velocity /= velocityDimensionlessMult;
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -64,7 +65,7 @@ public:
     return res;
   }
 
-  const typename Space2::Tensor GetTension(Overload<Space2>,
+  typename Space2::Tensor GetTension(Overload<Space2>,
     Scalar rhoc1mc3, Scalar rhoc2, Scalar rhoc3, Scalar absv, typename Space2::Vector n, Scalar ex)
   {
     Scalar xx = -ex * absv * rhoc3 - ex * absv * rhoc1mc3 * n.x * n.x;
@@ -74,7 +75,7 @@ public:
     return typename Space2::Tensor(xx, xy, yy);
   }
 
-  const typename Space3::Tensor GetTension(Overload<Space3>,
+  typename Space3::Tensor GetTension(Overload<Space3>,
     Scalar rhoc1mc3, Scalar rhoc2, Scalar rhoc3, Scalar absv, typename Space3::Vector n, Scalar ex)
   {
     Scalar xx = -ex * absv * rhoc3 - ex * absv * rhoc1mc3 * n.x * n.x;
@@ -113,14 +114,14 @@ public:
     this->waveLength = waveLength;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->pos /= velocityDimensionlessMult;
     this->velocity /= velocityDimensionlessMult;
     this->waveLength /= velocityDimensionlessMult;
   }
 
-  const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar , const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar , const Scalar invRho) override
   {
     MediumParameters mediumParameters(lambda, Scalar(0.0), invRho);
     Elastic          elastic;
@@ -174,14 +175,14 @@ public:
     this->shear = shear;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->pos /= velocityDimensionlessMult;
     this->velocity /= velocityDimensionlessMult;
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -283,14 +284,14 @@ public:
     this->smoothFactor   = smoothFactor;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->pos /= velocityDimensionlessMult;
     this->radialVelocity /= velocityDimensionlessMult;
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  virtual const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -360,7 +361,7 @@ public:
     this->smoothFactor = smoothFactor;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->pos /= velocityDimensionlessMult;
     this->pressure /= tensionDimensionlessMult;
@@ -368,7 +369,7 @@ public:
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  virtual const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -423,7 +424,7 @@ public:
     this->velocityMagnitude = velocityMagnitude;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->r1                /= velocityDimensionlessMult;
     this->r2                /= velocityDimensionlessMult;
@@ -431,7 +432,7 @@ public:
     this->velocityMagnitude /= velocityDimensionlessMult;
   }
 
-  virtual const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     MediumParameters mediumParameters(lambda, mju, invRho);
     Elastic elastic;
@@ -490,14 +491,14 @@ public:
     this->smoothFactor = smoothFactor;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->pos        /= velocityDimensionlessMult;
     this->velocity   /= velocityDimensionlessMult;
     this->wavelength /= velocityDimensionlessMult; 
   }
 
-  virtual const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -546,14 +547,14 @@ public:
     this->fullBoundary = fullBoundary;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     this->velocity                        /= velocityDimensionlessMult;
     this->fullBoundary.boxPoint1          /= velocityDimensionlessMult;
     this->fullBoundary.boxPoint2          /= velocityDimensionlessMult;
   }
 
-  virtual const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Elastic res;
     res.SetZeroValues();
@@ -588,13 +589,13 @@ public:
     k = 2 * pi * invWaveLength;
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     invWaveLength *= velocityDimensionlessMult;
     k             *= velocityDimensionlessMult;
   }
 
-  virtual const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Elastic res; 
     /*
@@ -658,14 +659,14 @@ public:
     tangent = normal.GetPerpendicular();
   }
 
-  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult)
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
     center     /= velocityDimensionlessMult;
     waveLength /= velocityDimensionlessMult;
     velocity   /= velocityDimensionlessMult;
   }
 
-  const Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho)
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
   {
     Elastic res;
 
@@ -724,14 +725,14 @@ public:
 
   void GetProjection(const Space2::Vector& point, 
     const Space2::Vector& linePoint, const Space2::Vector& lineNormal, const Space2::Vector& projectionDirection,
-    Space2::Vector& projectedPoint)
+    Space2::Vector& projectedPoint) const
   {
     ProjectPointAgainstLine(point, linePoint, lineNormal, projectionDirection, projectedPoint);
   }
 
   void GetProjection(const Space3::Vector& point,
     const Space3::Vector& planePoint, const Space3::Vector& planeNormal, const Space3::Vector& projectionDirection,
-    Space3::Vector& projectedPoint)
+    Space3::Vector& projectedPoint) const
   {
     ProjectPointAgainstPlane(point, planePoint, planeNormal, projectionDirection, projectedPoint);
   }

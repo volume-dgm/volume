@@ -2,11 +2,13 @@
 #include <vector>
 struct NotifyListener
 {
+  virtual ~NotifyListener() noexcept {}
   virtual void OnNotify() = 0;
 };
 
 struct ReceiveListener
 {
+  virtual ~ReceiveListener() noexcept {}
   virtual void OnDataReceive(void *data, int size, int hostId) = 0;
 };
 
@@ -42,7 +44,7 @@ public:
       notificationsRemained(0)
     {}
   
-    virtual void OnNotify()
+    virtual void OnNotify() override
     {
       notificationsRemained--;
     }
@@ -57,7 +59,7 @@ public:
       commonData(data),
       comparator(comparator)
     {}
-    virtual void OnDataReceive(void *data, int size, int hostId)
+    virtual void OnDataReceive(void *data, int size, int hostId) override
     {
       DataType value = *((DataType*)data);
       commonData = comparator(value, commonData);
@@ -83,7 +85,7 @@ public:
       sendBuf[dstHost] = data;
       if(dstHost != this->getID())
       {
-        this->sendDataAsync(sendBuf + dstHost, sizeof(DataType), (int)dstHost, &stepNotifyListener);
+        this->sendDataAsync(sendBuf + dstHost, sizeof(DataType), int(dstHost), &stepNotifyListener);
         stepNotifyListener.notificationsRemained++;
       }
     }
@@ -116,26 +118,26 @@ private:
     ReceivedNotification,
     Data
   };
-	void sendReceivedNotification(int i_dest);
-	bool blokingReceive(int &infoType, int &sourceId);
-	bool nonBlokingReceive(int &infoType, int &sourceId);
+  void sendReceivedNotification(int i_dest);
+  bool blokingReceive(int &infoType, int &sourceId);
+  bool nonBlokingReceive(int &infoType, int &sourceId);
 private:
-	//process info
-	int rank;
-	//for handling receive event
-	ReceiveListener* receiveListener;
-	NotifyListener* notifyListener;
-	//buffers
+  //process info
+  int rank;
+  //for handling receive event
+  ReceiveListener* receiveListener;
+  NotifyListener* notifyListener;
+  //buffers
   std::vector<char> receiveBuffer;
-	int notifyBuffer;//type indicator of notification
-	int currentBufSize;//size of info in receiveBuffer
-	int infoType;
-	//information for handling interaction
-	int lastSource;//id of last process netInerface interact with
-	MPI_Status status;
-	int numReadyNotifications;//number of received ready notifications
-	int numAllProc;
-	bool readyForBarrier;
+  int notifyBuffer;//type indicator of notification
+  int currentBufSize;//size of info in receiveBuffer
+  int infoType;
+  //information for handling interaction
+  int lastSource;//id of last process netInerface interact with
+  MPI_Status status;
+  int numReadyNotifications;//number of received ready notifications
+  int numAllProc;
+  bool readyForBarrier;
 
   std::vector<MPI_Request> requests;
   int requestsCount;
@@ -143,7 +145,7 @@ private:
   MPI_Request* GetRequest()
   {
     requestsCount++;
-    if ((size_t)requestsCount > requests.size()) requests.resize(requestsCount);
+    if (size_t(requestsCount) > requests.size()) requests.resize(requestsCount);
     requests[requestsCount - 1] = MPI_REQUEST_NULL;
     return &requests[requestsCount - 1];
   }

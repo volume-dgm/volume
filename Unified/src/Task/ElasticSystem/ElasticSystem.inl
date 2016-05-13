@@ -288,7 +288,7 @@ Space3::Scalar ElasticSystem<Space3>::ValueType::GetXZ() const
 
 Space3::Tensor ElasticSystem<Space3>::ValueType::GetTension() const
 {
-  return Space3::Tensor(values[0], values[3], values[5], values[1], values[4], values[2]);
+  return Space3::Tensor(GetXX(), GetXY(), GetXZ(), GetYY(), GetYZ(), GetZZ());
 }
 
 void ElasticSystem<Space2>::BuildEdgeTransformMatrix(Vector edgeVertices[Space::NodesPerEdge], 

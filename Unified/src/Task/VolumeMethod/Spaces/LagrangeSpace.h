@@ -22,7 +22,7 @@ struct LagrangeSpace<Space2, Order>: public BaseSpace<Space2, Order>
     ComputeCoordPowers();
   }
 
-  Polynomial<Scalar, IndexType, 2> GetBasisPolynomial(IndexType functionIndex)
+  Polynomial<Scalar, IndexType, 2> GetBasisPolynomial(IndexType functionIndex) const
   {
     return GetBasisFunctionPolynomial(functionIndex);
     /*Vector2i polynomialPows = GetCoordPowers(functionIndex);
@@ -37,7 +37,7 @@ struct LagrangeSpace<Space2, Order>: public BaseSpace<Space2, Order>
   }
 
 
-  PolynomialType GetBasisFunctionPolynomial(IndexType functionIndex)
+  PolynomialType GetBasisFunctionPolynomial(IndexType functionIndex) const
   {
     Vector localCoordGradients[3];
 
@@ -120,7 +120,7 @@ struct LagrangeSpace<Space2, Order>: public BaseSpace<Space2, Order>
     return resPolynomial;
   }
 
-  Vector GetBasisPoint(IndexType functionIndex)
+  Vector GetBasisPoint(IndexType functionIndex) const
   {
     IndexType coordPowers[3];
     GetCoordPowers(functionIndex, coordPowers);
@@ -187,7 +187,7 @@ public:
       }
     }
 
-    Scalar denom = res;
+    // Scalar denom = res;
 
     for(IndexType coordIndex = 0; coordIndex < 3; coordIndex++)
     {
@@ -197,7 +197,7 @@ public:
       }
     }
 
-    Scalar baseRes = res;
+    // Scalar baseRes = res;
     return res;
   }
 
@@ -244,13 +244,13 @@ struct LagrangeSpace<Space3, Order>: public BaseSpace<Space3, Order>
     ComputeCoordPowers();
   }
 
-  Polynomial<Scalar, IndexType, 3> GetBasisPolynomial(IndexType functionIndex)
+  Polynomial<Scalar, IndexType, 3> GetBasisPolynomial(IndexType functionIndex) const
   {
     return GetBasisFunctionPolynomial(functionIndex);
   }
 
 
-  PolynomialType GetBasisFunctionPolynomial(IndexType functionIndex)
+  PolynomialType GetBasisFunctionPolynomial(IndexType functionIndex) const
   {
 
     Vector localCoordGradients[4];
@@ -262,7 +262,7 @@ struct LagrangeSpace<Space3, Order>: public BaseSpace<Space3, Order>
     vertices[3] = Vector(0, 0, Scalar(1));
 
     Scalar volume = MixedProduct(vertices[1] - vertices[0], vertices[2] - vertices[0], vertices[3] - vertices[0]) / Scalar(6.0);
-    Scalar invVolume = Scalar(1.0) / volume;
+    // Scalar invVolume = Scalar(1.0) / volume;
 
 
     localCoordGradients[0] = (vertices[3] - vertices[1]) ^ (vertices[2] - vertices[1]) / (Scalar(6.0) * volume);
@@ -341,7 +341,7 @@ struct LagrangeSpace<Space3, Order>: public BaseSpace<Space3, Order>
     return resPolynomial;
   }
 
-  Vector GetBasisPoint(IndexType functionIndex)
+  Vector GetBasisPoint(IndexType functionIndex) const
   {
     IndexType coordPowers[4];
     GetCoordPowers(functionIndex, coordPowers);
@@ -392,7 +392,7 @@ public:
     vertices[3] = Vector(0, 0, Scalar(1));
 
     Scalar volume = MixedProduct(vertices[1] - vertices[0], vertices[2] - vertices[0], vertices[3] - vertices[0]) / Scalar(6.0);
-    Scalar invVolume = Scalar(1.0) / volume;
+    // Scalar invVolume = Scalar(1.0) / volume;
 
     Vector localCoordGradients[4];
 
@@ -419,7 +419,7 @@ public:
       }
     }
 
-    Scalar denom = res;
+    // Scalar denom = res;
 
     for (IndexType coordIndex = 0; coordIndex < 4; coordIndex++)
     {
@@ -429,7 +429,7 @@ public:
       }
     }
 
-    Scalar baseRes = res;
+    // Scalar baseRes = res;
 
     return res;
   }

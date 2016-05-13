@@ -98,7 +98,7 @@ public:
 
     for (int i = 0; i < 2; ++i)
     {
-      if (eigenVectors[i].SquareLen() < T(1e-8))
+      if (eigenVectors[i].SquareLen() < T(1e-7))
       {
         eigenVectors[i] = eigenVectors[1 - i].GetPerpendicular();
       }

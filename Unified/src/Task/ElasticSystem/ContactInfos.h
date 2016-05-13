@@ -13,7 +13,8 @@ struct ContactConditions
 
 struct ContactDescription
 {
-  ContactDescription(): infoIndex(-1)
+  ContactDescription(): 
+    type(ContactConditions::Glue), infoIndex(-1)
   {}
 
   ContactConditions::Types type;

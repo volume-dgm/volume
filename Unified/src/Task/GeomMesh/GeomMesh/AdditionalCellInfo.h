@@ -53,7 +53,7 @@ struct AdditionalCellInfo: public AdditionalCellInfoBase<Space>
   {
     SPACE_TYPEDEFS
     typedef T DataType;
-    AuxInfo(): data(0), count(0)
+    AuxInfo(): data(nullptr), count(0)
     {}
     DataType* data;
     IndexType count;

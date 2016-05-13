@@ -99,12 +99,12 @@ struct QuadratureDecomposer : public FunctionSpaceT
     //building function integrals
     std::fill_n(cellVolumeIntegrals, functionsCount * functionsCount, 0);
 
-    for (IndexType functionIndex0 = 0; functionIndex0 < functionsCount; functionIndex0++)
+    for (IndexType functionIndex0 = 0; functionIndex0 < functionsCount; ++functionIndex0)
     {
 
-      for (IndexType functionIndex1 = 0; functionIndex1 < functionsCount; functionIndex1++)
+      for (IndexType functionIndex1 = 0; functionIndex1 < functionsCount; ++functionIndex1)
       {
-        for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+        for (IndexType pointIndex = 0; pointIndex < points.size(); ++pointIndex)
         {
           Scalar functionValue0 = this->GetBasisFunctionValue(points[pointIndex], functionIndex0);
           Scalar functionValue1 = this->GetBasisFunctionValue(points[pointIndex], functionIndex1);
@@ -116,9 +116,9 @@ struct QuadratureDecomposer : public FunctionSpaceT
 
     basisFunctionValues.resize(functionsCount * points.size());
 
-    for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+    for (IndexType pointIndex = 0; pointIndex < points.size(); ++pointIndex)
     {
-      for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+      for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
       {
         basisFunctionValues[pointIndex * functionsCount + functionIndex] = this->GetBasisFunctionValue(points[pointIndex], functionIndex);
       }
@@ -175,14 +175,14 @@ private:
     Scalar values[ValuesCount];
     ::DecomposeGetter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
 
-    for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+    for (IndexType pointIndex = 0; pointIndex < points.size(); ++pointIndex)
     {
       getter(pointIndex, values);
 
-      for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+      for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
       {
         Scalar basisFunctionValue = basisFunctionValues[pointIndex * functionsCount + functionIndex];
-        for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+        for (IndexType valueIndex = 0; valueIndex < ValuesCount; ++valueIndex)
         {
           correlations[valueIndex * functionsCount + functionIndex] += basisFunctionValue * values[valueIndex] * weights[pointIndex];
         }
@@ -190,9 +190,9 @@ private:
     }
 
     std::fill_n(coords, ValuesCount * functionsCount, 0);
-    for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
-      for (IndexType i = 0; i < functionsCount; i++)
-        for (IndexType j = 0; j < functionsCount; j++)
+    for (IndexType valueIndex = 0; valueIndex < ValuesCount; ++valueIndex)
+      for (IndexType i = 0; i < functionsCount; ++i)
+        for (IndexType j = 0; j < functionsCount; ++j)
           coords[valueIndex * functionsCount + i] +=
           correlations[valueIndex * functionsCount + j] * cellVolumeIntegralsInv[j * functionsCount + i];
   }
@@ -203,7 +203,7 @@ private:
     ValueType integratedValue(0);
     ::Getter<Space, DecomposerType, Function, ValueType, FuncArgType> getter(this, func);
 
-    for (IndexType pointIndex = 0; pointIndex < points.size(); pointIndex++)
+    for (IndexType pointIndex = 0; pointIndex < points.size(); ++pointIndex)
     {
       ValueType value = getter(pointIndex);
       integratedValue += value * weights[pointIndex] / ::Cell<Space>::GetRefCellVolume();
@@ -227,7 +227,7 @@ struct NodalDecomposer : public PolynomialSpaceT
   {
     basisPoints.reserve(functionsCount);
     precomputedCellIntegrals.reserve(functionsCount);
-    for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
     {
       basisPoints.push_back(this->GetBasisPoint(functionIndex));
 
@@ -275,11 +275,11 @@ private:
     Scalar values[ValuesCount];
     ::DecomposeGetter<Space, DecomposerType, Function, FuncArgType> getter(this, func);
 
-    for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
     {
       getter(functionIndex, values);
 
-      for (IndexType valueIndex = 0; valueIndex < ValuesCount; valueIndex++)
+      for (IndexType valueIndex = 0; valueIndex < ValuesCount; ++valueIndex)
       {
         coords[valueIndex * functionsCount + functionIndex] = values[valueIndex];
       }
@@ -292,7 +292,7 @@ private:
     ValueType integratedValue(0);
     ::Getter<Space, DecomposerType, Function, ValueType, FuncArgType> getter(this, func);
 
-    for (IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    for (IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
     {
       ValueType value = getter(functionIndex);
       integratedValue += value * precomputedCellIntegrals[functionIndex] / ::Cell<Space>::GetRefCellVolume();

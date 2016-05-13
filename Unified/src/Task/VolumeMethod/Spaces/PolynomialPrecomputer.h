@@ -73,8 +73,6 @@ struct PolynomialPrecomputer<Space2, Decomposer>: public Decomposer
     Polynomial<Scalar, IndexType, 2> function0 = this->GetBasisPolynomial(functionIndex0);
     Polynomial<Scalar, IndexType, 2> function1 = this->GetBasisPolynomial(functionIndex1);
 
-    Vector res;
-
     IndexType derivatives[2];
 
     derivatives[0] = 1;
@@ -320,8 +318,6 @@ struct PolynomialPrecomputer<Space3, Decomposer>: public Decomposer
   {
     Polynomial<Scalar, IndexType, 3> function0 = this->GetBasisPolynomial(functionIndex0);
     Polynomial<Scalar, IndexType, 3> function1 = this->GetBasisPolynomial(functionIndex1);
-
-    Vector res;
 
     IndexType derivatives[3];
 

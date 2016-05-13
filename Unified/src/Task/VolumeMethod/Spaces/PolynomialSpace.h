@@ -85,7 +85,7 @@ struct PolynomialSpace<Space2, Order>: public BaseSpace<Space2, Order>
     }
   }
 
-  Polynomial<Scalar, IndexType, 2> GetBasisPolynomial(IndexType functionIndex)
+  Polynomial<Scalar, IndexType, 2> GetBasisPolynomial(IndexType functionIndex) const
   {
     IndexVector polynomialPows = GetCoordPowers(functionIndex);
 
@@ -98,11 +98,11 @@ struct PolynomialSpace<Space2, Order>: public BaseSpace<Space2, Order>
     return res;
   }
 
-  Scalar GetBasisFunctionMaxValue(IndexType functionIndex)
+  Scalar GetBasisFunctionMaxValue(IndexType functionIndex) const
   {
-    float maxValue = 0;
+    /* float maxValue = 0;
     float testVal;
-    testVal = GetBasisFunctionValue(Vector2(0, 0), functionIndex);
+    testVal = GetBasisFunctionValue(Vector2(0, 0), functionIndex); */
     return 0;
   }
   Scalar GetMaxFunctionValue(IndexType functionIndex)
@@ -244,7 +244,7 @@ public:
     return exp(b * log(a));
   }
 
-  void GetPolynomeDerivative(IndexVector pows, IndexVector derivatives, IndexVector &resPows, IndexType &coef)
+  void GetPolynomeDerivative(IndexVector pows, IndexVector derivatives, IndexVector &resPows, IndexType &coef) const
   {
     coef = 1;
     if(derivatives.x > pows.x)
@@ -347,7 +347,7 @@ public:
     return functionIndices[pows.x][pows.y];
   }
 
-  Scalar Factorial(IndexType num)
+  static Scalar Factorial(IndexType num)
   {
     Scalar res(1.0);
     for(IndexType i = 1; i <= num; i++)
@@ -357,7 +357,7 @@ public:
     return res;
   }
 
-  Scalar ComputePolynomialIntegral(IndexVector pows)
+  Scalar ComputePolynomialIntegral(IndexVector pows) const
   {
     return 
       Scalar(Factorial(pows.x) * Factorial(pows.y)) /
@@ -455,7 +455,7 @@ struct PolynomialSpace<Space3, Order>: public BaseSpace<Space3, Order>
     }
   }
 
-  Polynomial<Scalar, IndexType, 3> GetBasisPolynomial(IndexType functionIndex)
+  Polynomial<Scalar, IndexType, 3> GetBasisPolynomial(IndexType functionIndex) const
   {
     IndexVector polynomialPows = GetCoordPowers(functionIndex);
 
@@ -563,7 +563,7 @@ private:
     return exp(b * log(a));
   }
 
-  void GetPolynomeDerivative(IndexVector pows, IndexVector derivatives, IndexVector &resPows, IndexType &coef)
+  void GetPolynomeDerivative(IndexVector pows, IndexVector derivatives, IndexVector &resPows, IndexType &coef) const
   {
     coef = 1;
     if (derivatives.x > pows.x)
@@ -667,7 +667,7 @@ private:
     return functionIndices[pows.x][pows.y][pows.z];
   }
 
-  Scalar Factorial(IndexType num)
+  static Scalar Factorial(IndexType num)
   {
     Scalar res(1.0);
     for (IndexType i = 1; i <= num; i++)
@@ -677,7 +677,7 @@ private:
     return res;
   }
 
-  Scalar ComputePolynomialIntegral(IndexVector pows)
+  Scalar ComputePolynomialIntegral(IndexVector pows) const
   {
     return
       Scalar(Factorial(pows.x) * Factorial(pows.y) * Factorial(pows.z)) /

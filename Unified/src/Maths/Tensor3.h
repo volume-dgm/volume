@@ -144,20 +144,6 @@ public:
 
   void GetEigenValues(T* eigenValues, Vector3<T>* eigenVectors) const
   {
-    /*
-    // from http://www.continuummechanics.org/cm/principalstress.html
-    Scalar i1 = GetTrace();
-    Scalar i2 = GetSecondInv();
-    Scalar i3 = GetThirdInv();
-
-    Scalar q = (3 * i2 - Sqr(i1)) / 9;
-    Scalar r = (2 * pow(i1, 3) - 9 * i1 * i2 + 27 * i3) / 54;
-
-    Scalar theta = std::acos(r / sqrt( pow(fabs(q), 3) ));
-
-    Vector3 res = Scalar(2.0) * sqrt( fabs(q) ) * (cos(theta / 3), cos((theta + 2 * pi) / 3), cos((theta + 4 * pi) / 3)) + 
-      i1 / Scalar(3.0) * Vector3::one();
-    */
     typedef Eigen::Matrix<T, 3, 3> Matrix;
     Matrix sigma;
 

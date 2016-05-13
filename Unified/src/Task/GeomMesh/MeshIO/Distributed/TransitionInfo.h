@@ -2,7 +2,6 @@
 
 #include "../../GeomMesh/GeomMesh.h"
 #include <vector>
-#include <iostream>
 
 template <typename Space>
 struct TransitionInfo

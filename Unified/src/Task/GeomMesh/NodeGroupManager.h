@@ -9,7 +9,7 @@ public:
   SPACE_TYPEDEFS
 
   NodeGroupManager(IndexType maxNodeGroupSize): 
-    maxNodeGroupSize(maxNodeGroupSize), volumeMesh(0), groupsCount(0)
+    maxNodeGroupSize(maxNodeGroupSize), volumeMesh(nullptr), groupsCount(0)
   {
   }
 
@@ -39,7 +39,7 @@ public:
           nodeGroupPool[groupsCount * maxNodeGroupSize + nodeNumber] = pool[nodeNumber];
         }
 
-        groupsCount++;
+        ++groupsCount;
       }
     }
   }
@@ -74,7 +74,7 @@ public:
           nodeGroupPool[groupsCount * maxNodeGroupSize + nodeNumber] = pool[nodeNumber];
         }
 
-        groupsCount++;
+        ++groupsCount;
       }
     }
   }
@@ -97,13 +97,13 @@ public:
 
     IndexType nodeNumber = 0;
     while (nodeNumber < nodeGroupSizes[groupIndex] && nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber] != nodeIndex)
-      nodeNumber++;
+      ++nodeNumber;
 
     assert(nodeNumber < nodeGroupSizes[groupIndex]);
 
     std::swap(nodeGroupPool[groupIndex * maxNodeGroupSize + nodeNumber], nodeGroupPool[groupIndex * maxNodeGroupSize + nodeGroupSizes[groupIndex] - 1]);
     nodeGroupPool[groupIndex * maxNodeGroupSize + nodeGroupSizes[groupIndex] - 1] = 0;
-    nodeGroupSizes[groupIndex]--;
+    --nodeGroupSizes[groupIndex];
     nodeGroupIndices[nodeIndex] = IndexType(-1);
   }
 
@@ -155,7 +155,7 @@ private:
 
     nodeGroupSizes[groupIndex] = nodeGroupSizes[groupsCount - 1];
     nodeGroupSizes[groupsCount - 1] = 0;
-    groupsCount--;
+    --groupsCount;
 
     for (IndexType nodeNumber = 0; nodeNumber < nodeGroupSizes[groupIndex]; ++nodeNumber)
     {

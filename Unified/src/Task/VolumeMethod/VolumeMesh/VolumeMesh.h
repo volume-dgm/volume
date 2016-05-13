@@ -35,14 +35,15 @@ public:
     typedef typename Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXDimFunc;
     typedef typename Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXFunc;
   #else
-    typedef typename Eigen::Matrix<Scalar, dimsCount, functionsCount> MatrixXDimFunc;
-    typedef typename Eigen::Matrix<Scalar, functionsCount, functionsCount> MatrixXFunc;
+    using MatrixXDimFunc = Eigen::Matrix<Scalar, dimsCount, functionsCount>;
+    using MatrixXFunc    = Eigen::Matrix<Scalar, functionsCount, functionsCount>;
   #endif
 
-  VolumeMeshCommon(int solverPhasesCount, int hierarchyLevelsCount):
+  VolumeMeshCommon(int solverPhasesCount, int hierarchyLevelsCount) :
     DifferentialSystem<Scalar>(solverPhasesCount, hierarchyLevelsCount), GeomMesh<Space>(),
     xDerivativeVolumeIntegralsSparse(functionsCount, functionsCount),
-    yDerivativeVolumeIntegralsSparse(functionsCount, functionsCount)
+    yDerivativeVolumeIntegralsSparse(functionsCount, functionsCount),
+    debugMode(false)
   {
     functionSpace = new FunctionSpace;
 
@@ -145,17 +146,17 @@ public:
 
   typename System::MediumParameters GetRefCellParams(Scalar* coeffs, Vector refCoords) const;
 
-  int  GetDimentionsCount(const SolverState&) const;
-  int  GetMaxDimentionsCount() const;
+  int  GetDimentionsCount(const SolverState&) const override;
+  int  GetMaxDimentionsCount() const override;
 
-  void GetCurrCoords(Scalar& time, Scalar* currCoords, Scalar* oldCoords, const SolverState&);
-  void GetCurrCoords(Scalar& time, Scalar* currCoords) const;
+  void GetCurrCoords(Scalar& time, Scalar* currCoords, Scalar* oldCoords, const SolverState&) override;
+  void GetCurrCoords(Scalar& time, Scalar* currCoords) const override;
 
-  void SetCurrCoords(Scalar time, const Scalar* newCoords, const Scalar* oldCoords, const SolverState&);
-  void SetCurrCoords(Scalar time, const Scalar* newCoords, const SolverState&);
-  void SetCurrCoords(Scalar time, const Scalar* oldCoords);
+  void SetCurrCoords(Scalar time, const Scalar* newCoords, const Scalar* oldCoords, const SolverState&) override;
+  void SetCurrCoords(Scalar time, const Scalar* newCoords, const SolverState&) override;
+  void SetCurrCoords(Scalar time, const Scalar* oldCoords) override;
 
-  Scalar GetErrorValue(Scalar time, const Scalar* coords0, const Scalar* coords1, const SolverState&, const Scalar* mults);
+  Scalar GetErrorValue(Scalar time, const Scalar* coords0, const Scalar* coords1, const SolverState&, const Scalar* mults) override;
 
   virtual Vector GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const = 0; // x -> ξ
   typename System::ValueType GetCellAverageSolution(IndexType cellIndex) const;
@@ -163,7 +164,7 @@ public:
   // associatedPermutation = 0 1 2 -> 1 2 0
   void TransformCellSolution(IndexType cellIndex, IndexType associatedPermutation[Space::NodesPerCell], CellSolution* cellSolution);
 
-  Scalar GetTimeStepPrediction();
+  Scalar GetTimeStepPrediction() override;
 
   FunctionSpace* functionSpace;
   System system;
@@ -296,11 +297,11 @@ public:
   typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXDimFunc MatrixXDimFunc;
   typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::MatrixXFunc MatrixXFunc;
 
-  typedef typename GeomMesh<Space2>::EdgeLocationPair EdgeLocationPair;
-  typedef typename GeomMesh<Space2>::EdgeLocation     EdgeLocation;
-  typedef typename GeomMesh<Space2>::EdgePairIndices  EdgePairIndices;
-  typedef typename GeomMesh<Space2>::BoundaryEdge     BoundaryEdge;
-  typedef typename GeomMesh<Space2>::EdgeIndices      EdgeIndices;
+  using EdgeLocationPair = GeomMesh<Space2>::EdgeLocationPair;
+  using EdgeLocation     = GeomMesh<Space2>::EdgeLocation;
+  using EdgePairIndices  = GeomMesh<Space2>::EdgePairIndices;
+  using BoundaryEdge     = GeomMesh<Space2>::BoundaryEdge;
+  using EdgeIndices      = GeomMesh<Space2>::EdgeIndices;
 
   using VolumeMeshCommon<Space, FunctionSpace, System>::additionalCellInfos;
   using VolumeMeshCommon<Space, FunctionSpace, System>::GetMassCenter;
@@ -363,7 +364,7 @@ public:
     VolumeMeshCommon<Space2, FunctionSpace, System>(solverPhasesCount, hierarchyLevelsCount)
   {}
 
-  void GetCurrDerivatives(Scalar* derivatives, const SolverState&);
+  void GetCurrDerivatives(Scalar* derivatives, const SolverState&) override;
 
   void LoadGeom(Vector* vertexPositions, IndexType* cellIndices, IndexType verticesCount, IndexType cellsCount,
     EdgePairIndices*  contactEdges, IndexType* contactEdgesCount, IndexType contactTypesCount,
@@ -374,10 +375,10 @@ public:
   typename System::ValueType GetEdgeAverageSolution(IndexType cellIndex, IndexType edgeNumber) const;
   typename System::ValueType GetFaceAverageSolution(IndexType cellIndex, IndexType edgeNumber) const;
 
-  Vector GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const; // x -> ξ
+  Vector GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const override; // x -> ξ
   Vector RefToGlobalVolumeCoords(Vector refCoords, Vector cellVertices[Space::NodesPerCell]) const; // ξ -> x
 
-  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
+  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const override;
   Vector    GetRefXDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy) * J
   Vector    GetRefYDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy) * J
 
@@ -385,7 +386,7 @@ public:
 
 private:
   void BuildMatrices();
-  bool IsCellRegular(IndexType cellIndex) const;
+  bool IsCellRegular(IndexType cellIndex) const override;
 
   struct OutgoingFlux
   {
@@ -432,8 +433,8 @@ public:
   typedef Space3 Space;
   typedef System SystemT;
 
-  typedef typename GeomMesh<Space3>::FacePairIndices FacePairIndices;
-  typedef typename GeomMesh<Space3>::BoundaryFace    BoundaryFace;
+  using FacePairIndices = GeomMesh<Space3>::FacePairIndices;
+  using BoundaryFace = GeomMesh<Space3>::BoundaryFace;
   typedef VolumeMesh<Space3, FunctionSpace, SystemT> VolumeMeshT;
   typedef typename System::MediumParameters          MediumParameters;
   typedef typename VolumeMeshCommon<Space, FunctionSpace, SystemT>::GeomMeshT GeomMeshT;
@@ -508,13 +509,13 @@ public:
     MediumParameters* cellMediumParameters,
     IndexType *internalContactTypes);
 
-  void GetCurrDerivatives(Scalar* derivatives, const SolverState&);
+  void GetCurrDerivatives(Scalar* derivatives, const SolverState&) override;
 
-  Vector GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const; // x -> ξ
+  Vector GlobalToRefVolumeCoords(Vector globalCoords, Vector cellVertices[Space::NodesPerCell]) const override; // x -> ξ
   Vector RefToGlobalVolumeCoords(Vector refCoords, Vector cellVertices[Space::NodesPerCell]) const; // ξ -> x
   typename System::ValueType GetFaceAverageSolution(IndexType cellIndex, IndexType faceNumber) const;
 
-  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const;
+  Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const override;
   Vector    GetRefXDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dξ/dx, dξ/dy, dξ/dz) * J
   Vector    GetRefYDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dη/dx, dη/dy, dη/dz) * J
   Vector    GetRefZDerivativesMulJacobian(Vector cellVertices[Space::NodesPerCell]) const; //(dζ/dx, dζ/dy, dζ/dz) * J
@@ -523,7 +524,7 @@ public:
 
 private:
   void BuildMatrices();
-  bool IsCellRegular(IndexType cellIndex) const;
+  bool IsCellRegular(IndexType cellIndex) const override;
 
   MatrixXFunc zDerivativeVolumeIntegrals;
 

@@ -12,8 +12,8 @@ class BasicVtkWriter
   SPACE_TYPEDEFS
 
   protected:
-    std::string TypeName() const;
-    void WriteNumber(std::fstream&, Scalar); // ascii format
+    static std::string TypeName();
+    static void WriteNumber(std::fstream&, Scalar); // ascii format
     void WriteTuple(std::fstream&,
                     Scalar, Scalar);
     void WriteTuple(std::fstream&,
@@ -27,7 +27,7 @@ void BasicVtkWriter<Space>::WriteNumber(std::fstream& file, Scalar value)
 {
   // binary
   swap_endian(value);
-  file.write((const char *)(&value), sizeof(Scalar));
+  file.write(static_cast<const char *>(&value), sizeof(Scalar));
   
   // ascii
   // file << value << " ";
@@ -61,7 +61,7 @@ void BasicVtkWriter<Space>::WriteTuple(std::fstream& file,
 }
 
 template <typename Space>
-std::string BasicVtkWriter<Space>::TypeName() const
+std::string BasicVtkWriter<Space>::TypeName()
 {
   if (sizeof(Scalar) == sizeof(float)) 
   {

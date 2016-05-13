@@ -39,9 +39,9 @@
 #include "../../Maths/Spaces.h"
 
 
-#define PROFILING
+// #define PROFILING
 // #define SINGLE_THREAD
-#define WRITE_ENERGY_AND_IMPULSE
+// #define WRITE_ENERGY_AND_IMPULSE
 
 template<typename Space, unsigned int order>
 class Task: public NotifyListener, public ReceiveListener
@@ -143,7 +143,7 @@ private:
   {
     struct CombinedFunctor: public VectorFunctor<Space>
     {
-      virtual Vector operator ()(const Vector& point, const Vector& norm, Scalar time) const
+      virtual Vector operator ()(const Vector& point, const Vector& norm, Scalar time) const override
       {
         Vector res = Vector::zero();
         for (size_t functorIndex = 0; functorIndex < functors.size(); functorIndex++)
@@ -156,7 +156,7 @@ private:
       {
         functors.push_back(newbie);
       }
-      void SetCurrentVelocity(const Vector& v)
+      void SetCurrentVelocity(const Vector& v) override
       {
         for (IndexType functorIndex = 0; functorIndex < functors.size(); ++functorIndex)
         {
@@ -234,18 +234,18 @@ private:
     return combinedFunctor->IsEmpty() ? 0 : combinedFunctor;
   }
 
-  void PrintSolverState(const SolverState& solverState, Scalar currTime, Scalar timeStep);
+  static void PrintSolverState(const SolverState& solverState, Scalar currTime, Scalar timeStep);
 
   void UpdateMeshData(char* data);
-  void OnNotify();
-  void OnDataReceive(void *data, int, int);
+  void OnNotify() override;
+  void OnDataReceive(void *data, int, int) override;
   void SynchronizeMeshes();
 
   void      LoadNodesSchedule();
   IndexType GetDomainsCount() const;
   IndexType GetNodeId() const;
   IndexType GetCurrentNodeDomainsCount() const;
-  void      SetThreadsCount();
+  static void SetThreadsCount();
 
   void WriteEnergyAndImpulseDeviation(const std::vector<Scalar>& initialEnergies, 
     const std::vector<Vector>& initialImpulses, Scalar currTime);
@@ -304,7 +304,7 @@ protected:
 
   struct LogicSumComparator
   {
-    bool operator()(bool oldValue, bool newValue)
+    bool operator()(bool oldValue, bool newValue) const
     {
       return oldValue && newValue;
     }
@@ -312,7 +312,7 @@ protected:
 
   struct SumComparator
   {
-    IndexType operator()(IndexType oldValue, IndexType newValue)
+    IndexType operator()(IndexType oldValue, IndexType newValue) const
     {
       return oldValue + newValue;
     }
@@ -344,11 +344,11 @@ protected:
 template<typename Space, unsigned int order>
 void Task<Space, order>::Run()
 {
-  network->init(0, 0);
+  network->init(nullptr, nullptr);
   double taskBegin = MPI_Wtime();
   SetThreadsCount();
 
-  printf("Node %d network initialized\n", (int)network->getID());
+  printf("Node %d network initialized\n", static_cast<int>(network->getID()));
   network->setReceiveListener(this);
   settings.Parse("task.xml");
 
@@ -397,7 +397,7 @@ void Task<Space, order>::Run()
 
   {
     char filename[1024];
-    sprintf(filename, "out/SnapshotCollection[%d].pvd" , (int)GetNodeId());
+    sprintf(filename, "out/SnapshotCollection[%d].pvd" , static_cast<int>(GetNodeId()));
     snapshotCollectionFile.open(filename, fstream::out);
   }
 
@@ -520,7 +520,7 @@ void Task<Space, order>::Run()
       for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
       {
         Scalar localError = distributedElasticMeshes[domainNumber]->solver->GetLastStepError();
-        printf("node %d; domain %d; error %f\n", (int)GetNodeId(), (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber], localError);
+        printf("node %d; domain %d; error %f\n", static_cast<int>(GetNodeId()), static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]), localError);
 
         bool stepSuccessful = forceStep || (localError < Scalar(2.0));
 
@@ -649,7 +649,7 @@ void Task<Space, order>::BuildContactDescriptions()
     ElasticSystem<Space>* system = distributedElasticMeshes[domainNumber]->GetSystem();
     ContactSection contactSection = settings.mesh.contactSection;
 
-    for(IndexType contactIndex = 0; contactIndex < contactSection.contacts.size(); contactIndex++)
+    for(IndexType contactIndex = 0; contactIndex < contactSection.contacts.size(); ++contactIndex)
     {
       IndexType interactionType = contactSection.contacts[contactIndex].interactionType;
       switch(contactSection.contacts[contactIndex].type)
@@ -707,9 +707,9 @@ void Task<Space, order>::BuildBoundaryDescriptions()
     typename MeshSettings<Space>::BoundarySection boundarySection = settings.mesh.boundarySection;
     typedef typename MeshSettings<Space>::BoundarySection BoundarySection;
     typedef typename MeshSettings<Space>::BoundarySection::Boundary Boundary;
-    for(IndexType boundaryIndex = 0; boundaryIndex < boundarySection.boundaries.size(); boundaryIndex++)
+    for(IndexType boundaryIndex = 0; boundaryIndex < boundarySection.boundaries.size(); ++boundaryIndex)
     {
-      VectorFunctor<Space> *functor = 0;
+      VectorFunctor<Space> *functor = nullptr;
 
       IndexType interactionType = boundarySection.boundaries[boundaryIndex].interactionType;
       Scalar    reflectionCoeff = boundarySection.boundaries[boundaryIndex].reflectionCoeff;
@@ -816,8 +816,8 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
     char stepString[256];
     char domainString[256];
     char timeString[256];
-    sprintf(stepString, "%.6d", (int)stepIndex);
-    sprintf(domainString, "%.3d", (int)domainIndex);
+    sprintf(stepString, "%.6d", static_cast<int>(stepIndex));
+    sprintf(domainString, "%.3d", static_cast<int>(domainIndex));
     sprintf(timeString, "%.5f", currTime);
 
     if(settings.snapshots[snapshotIndex].data.used)
@@ -919,8 +919,8 @@ void Task<Space, order>::AnalyzeSnapshotData(Scalar currTime, IndexType snapshot
   char stepString[256];
   char timeString[256];
 
-  int domainIndex = 0;
-  sprintf(stepString, "%.6d", (int)stepIndex);
+  // int domainIndex = 0;
+  sprintf(stepString, "%.6d", static_cast<int>(stepIndex));
   sprintf(timeString, "%.5f", currTime);
 
   ReplaceSubstring(analysisFileName, "<step>",    std::string(stepString));
@@ -1005,15 +1005,15 @@ void Task<Space, order>::LoadMeshes()
 
     meshes[domainNumber] = new DistributedMeshIO<Space>(GetDomainsCount());
     char domainString[256];
-    sprintf(domainString, "%.3d", (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber]);
+    sprintf(domainString, "%.3d", static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]));
 
     std::string meshName = AddExtensionToFileName(settings.mesh.meshFileName, ".mesh");
     ReplaceSubstring(meshName, "<domain>", domainString);
 
     printf("Loading %s geom: node %d; domain %d from file %s\n",
       (settings.configDimsCount == 2) ? "2d" : "3d",
-      (int)GetNodeId(),
-      (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber],
+      static_cast<int>(GetNodeId()),
+      static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]),
       meshName.c_str());
 
     meshes[domainNumber]->Load(meshName);
@@ -1045,13 +1045,13 @@ void Task<Space, order>::LoadMeshes()
         FILE* paramsFile = fopen(paramsFileName.c_str(), "rb");
         if (paramsFile)
         {
-          for(IndexType cellIndex = 0; cellIndex < meshCellsCount; cellIndex++)
+          for(IndexType cellIndex = 0; cellIndex < meshCellsCount; ++cellIndex)
           {
             char currCellSubmeshIndex = char(-1);
             IndexType bytesRead = fread(&currCellSubmeshIndex, sizeof(char), 1, paramsFile);
             assert(bytesRead == 1);
 
-            for(IndexType submeshNumber = 0; submeshNumber < perSubmeshInfo.submeshParams.size(); submeshNumber++)
+            for(IndexType submeshNumber = 0; submeshNumber < perSubmeshInfo.submeshParams.size(); ++submeshNumber)
             {
               if(perSubmeshInfo.submeshParams[submeshNumber].submeshIndex == currCellSubmeshIndex)
               {
@@ -1073,7 +1073,7 @@ void Task<Space, order>::LoadMeshes()
         typename MediumParamsSection::UniformInfo uniformInfo =
           settings.mesh.mediumParamsSection.uniformInfos[paramsDesc.infoIndex];
 
-        for(IndexType cellIndex = 0; cellIndex < meshCellsCount; cellIndex++)
+        for(IndexType cellIndex = 0; cellIndex < meshCellsCount; ++cellIndex)
         {
           cellMediumParams[cellIndex] = MakeElasticMediumParams(uniformInfo.params);
           internalContactTypes[cellIndex] = uniformInfo.internalContactType;
@@ -1095,7 +1095,7 @@ void Task<Space, order>::LoadMeshes()
 
         FILE *paramsFile = fopen(paramsFileName.c_str(), "rb");
 
-        for(IndexType cellIndex = 0; cellIndex < meshCellsCount; cellIndex++)
+        for(IndexType cellIndex = 0; cellIndex < meshCellsCount; ++cellIndex)
         {
           IndexType currCellSubmeshIndex = IndexType(-1);
 
@@ -1183,7 +1183,7 @@ void Task<Space, order>::AllocateSnapshotData()
 template<typename Space, unsigned int order>
 void Task<Space, order>::BuildIniStateMakers()
 {
-  for (IndexType stateIndex = 0; stateIndex < settings.task.iniStates.size(); stateIndex++)
+  for (IndexType stateIndex = 0; stateIndex < settings.task.iniStates.size(); ++stateIndex)
   {
     IndexType infoIndex = settings.task.iniStates[stateIndex].infoIndex;
     switch (settings.task.iniStates[stateIndex].type)
@@ -1250,10 +1250,10 @@ void Task<Space, order>::BuildIniStateMakers()
 template<typename Space, unsigned int order>
 void Task<Space, order>::BuildSourceTerms()
 {
-  SourceFunctor< Space >* sourceFunctor = 0;
+  SourceFunctor< Space >* sourceFunctor = nullptr;
 
   //actually only the first source is used. still looks cool.
-  for(IndexType sourceIndex = 0; sourceIndex < settings.task.sourceTerms.size(); sourceIndex++)
+  for(IndexType sourceIndex = 0; sourceIndex < settings.task.sourceTerms.size(); ++sourceIndex)
   {
     IndexType infoIndex = settings.task.sourceTerms[sourceIndex].infoIndex;
     switch(settings.task.sourceTerms[sourceIndex].type)
@@ -1280,7 +1280,7 @@ void Task<Space, order>::BuildPointSources()
 {
   std::vector< PointSource<Space>* > pointSources;
 
-  for (IndexType sourceIndex = 0; sourceIndex < settings.task.pointSources.size(); sourceIndex++)
+  for (IndexType sourceIndex = 0; sourceIndex < settings.task.pointSources.size(); ++sourceIndex)
   {
     IndexType infoIndex = settings.task.pointSources[sourceIndex].infoIndex;
     switch (settings.task.pointSources[sourceIndex].type)
@@ -1352,7 +1352,7 @@ void Task<Space, order>::PrintSolverState(const SolverState& solverState, Scalar
 
 template<typename Space, unsigned int order>
 Task<Space, order>::Task(): NotifyListener(), ReceiveListener(),
-  distributedElasticMeshes(0), snapshotData(0), network(new NetworkInterface()), packetsToReceive(0)
+  distributedElasticMeshes(0), network(new NetworkInterface()), packetsToReceive(0), snapshotData(nullptr)
 {
 }
 
@@ -1392,7 +1392,7 @@ void Task<Space, order>::SaveDetectorsDataToFile()
     IndexType domainIndex = nodesSchedule[GetNodeId()].domainsIndices[domainNumber];
 
     char domainString[256];
-    sprintf(domainString, "%.3d", (int)domainIndex);
+    sprintf(domainString, "%.3d", static_cast<int>(domainIndex));
 
     for (IndexType detectorIndex = 0; detectorIndex < distributedElasticMeshes[domainNumber]->detectorsPositions.size(); ++detectorIndex)
     {
@@ -1400,7 +1400,7 @@ void Task<Space, order>::SaveDetectorsDataToFile()
       ReplaceSubstring(detectorFilename, "<domain>", std::string(domainString));
 
       char detectorString[256];
-      sprintf(detectorString, "%.3d", (int)detectorIndex);
+      sprintf(detectorString, "%.3d", static_cast<int>(detectorIndex));
       ReplaceSubstring(detectorFilename, "<detector>", std::string(detectorString));
 
       ReplaceSubstring(detectorFilename, "<coords>",
@@ -1461,14 +1461,14 @@ void Task<Space, order>::UpdateMeshData(char* data)
 template<typename Space, unsigned int order>
 void Task<Space, order>::OnNotify()
 {
-  notificationsToReceive--;
+  --notificationsToReceive;
 }
 
 template<typename Space, unsigned int order>
 void Task<Space, order>::OnDataReceive(void *data, int, int)
 {
-  UpdateMeshData((char*)data);
-  receivedPackets++; 
+  UpdateMeshData(static_cast<char*>(data));
+  ++receivedPackets; 
 }
 
 template<typename Space, unsigned int order>
@@ -1489,7 +1489,8 @@ void Task<Space, order>::SynchronizeMeshes()
 
       IndexType dstHost = domainsLocation[dstDomainIndex];
       network->sendDataAsync(syncData[domainNumber][dstDomainIndex].sendingData, 
-                            (int)distributedElasticMeshes[domainNumber]->GetSyncDataSize(dstDomainIndex), (int)dstHost, this);
+                            static_cast<int>(distributedElasticMeshes[domainNumber]->GetSyncDataSize(dstDomainIndex)), 
+                            static_cast<int>(dstHost), this);
        
       ++notificationsToReceive;
     }
@@ -1558,7 +1559,7 @@ void Task<Space, order>::SetThreadsCount()
   #endif
 
   int size, rank;
-  int nthreads;// , tid;
+  int nthreads;
   MPI_Status status;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -1579,10 +1580,9 @@ void Task<Space, order>::SetThreadsCount()
     MPI_Recv(&nthreads, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
     omp_set_num_threads(nthreads);
   }
-  #pragma omp parallel private(/*tid,*/nthreads)
+  #pragma omp parallel private(nthreads)
   {
     nthreads = omp_get_num_threads();
-    //tid = omp_get_thread_num();
   }
 }
 
@@ -1591,18 +1591,20 @@ void Task<Space, order>::ComputePacketsToReceiveCount()
 {
   struct CacheNotifyListener: public NotifyListener
   {
-    virtual void OnNotify()
+    virtual ~CacheNotifyListener() {}
+    virtual void OnNotify() override
     {
-      notificationsRemained--;
+      --notificationsRemained;
     }
     IndexType notificationsRemained;
   } cacheNotifyListener;
 
   struct CacheReceiveListener: public ReceiveListener
   {
-    virtual void OnDataReceive(void *data, int size, int hostId)
+    virtual ~CacheReceiveListener() {}
+    virtual void OnDataReceive(void *data, int size, int hostId) override
     {
-      packetsToReceive++;
+      ++packetsToReceive;
     }
     IndexType packetsToReceive;
   } cacheReceiveListener;
@@ -1621,8 +1623,8 @@ void Task<Space, order>::ComputePacketsToReceiveCount()
       IndexType dstHost = domainsLocation[dstDomainIndex];
       if (nonEmpty)
       {
-        network->sendDataAsync(&dummyData, sizeof(char), (int)dstHost, &cacheNotifyListener);
-        cacheNotifyListener.notificationsRemained++;
+        network->sendDataAsync(&dummyData, sizeof(char), static_cast<int>(dstHost), &cacheNotifyListener);
+        ++cacheNotifyListener.notificationsRemained;
       }
     }
   }

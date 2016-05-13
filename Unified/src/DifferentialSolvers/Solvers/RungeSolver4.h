@@ -10,13 +10,13 @@ public:
   RungeSolver(): DifferentialSolver<Scalar>()
   {}
 
-  void SetSystem(DifferentialSystem<Scalar>* system)
+  void SetSystem(DifferentialSystem<Scalar>* system) override
   {
     this->system = system;
     currCoords  = new Scalar[system->GetMaxDimentionsCount()];
     nextCoords  = new Scalar[system->GetMaxDimentionsCount()];
     probeCoords = new Scalar[system->GetMaxDimentionsCount()];
-    oldCoords = (system->GetHierarchyLevelsCount() > 1) ? new Scalar[system->GetMaxDimentionsCount()] : 0;
+    oldCoords = (system->GetHierarchyLevelsCount() > 1) ? new Scalar[system->GetMaxDimentionsCount()] : nullptr;
 
     k1 = new Scalar[system->GetMaxDimentionsCount()];
     k2 = new Scalar[system->GetMaxDimentionsCount()];
@@ -42,12 +42,12 @@ public:
     delete [] k4;
   }
 
-  int GetPhasesCount()
+  int GetPhasesCount() const override
   {
     return 4;
   }
 
-  void InitStep(Scalar timeStep, Scalar tolerance, bool updateInitialCoords)
+  void InitStep(Scalar timeStep, Scalar tolerance, bool updateInitialCoords) override
   {
     DifferentialSolver<Scalar>::InitStep(timeStep, tolerance, updateInitialCoords);
     if (system->GetHierarchyLevelsCount() == 1)
@@ -56,7 +56,7 @@ public:
     }
   }
 
-  void InitStep(const SolverState& solverState)
+  void InitStep(const SolverState& solverState) override
   {
     if (system->GetHierarchyLevelsCount() > 1)
     {
@@ -64,7 +64,7 @@ public:
     }
   }
 
-  bool AdvancePhase(const SolverState& solverState)
+  bool AdvancePhase(const SolverState& solverState) override
   {
     Scalar currStep = timeStep * (1 << solverState.hierarchyLevel);
 
@@ -121,7 +121,7 @@ public:
     return true;
   }
 
-  void AdvanceStep(const SolverState& solverState)
+  void AdvanceStep(const SolverState& solverState) override
   {
     if (solverState.IsPreInitial())
     {
@@ -137,17 +137,17 @@ public:
     }
   }
 
-  void RevertStep(Scalar)
+  void RevertStep(Scalar) override
   {
     // never will be called
   }
 
-  Scalar GetLastStepError()
+  Scalar GetLastStepError() const override
   {
     return Scalar(1.0);
   }
 
-  Scalar GetTimeStepPrediction()
+  Scalar GetTimeStepPrediction() const override
   {
     return system->GetTimeStepPrediction() * Scalar(0.25);
   }

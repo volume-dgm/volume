@@ -254,7 +254,7 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
             // Set binary header data
             // ///////////////////////////////////////
             struct segy_bin_header_data header_data;
-            header_data.sample_interval = (uint32)(floor(this->interpolationIntervals[path_index] * 1000000.0 + 0.5));
+            header_data.sample_interval = static_cast<uint32>(floor(this->interpolationIntervals[path_index] * 1000000.0 + 0.5));
             header_data.sample_interval_reel = header_data.sample_interval;
 
 

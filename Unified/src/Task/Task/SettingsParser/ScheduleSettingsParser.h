@@ -23,7 +23,7 @@ struct ScheduleSettings
 template<typename Space>
 void ScheduleSettings<Space>::Parse(TiXmlElement *scheduleElement)
 {
-  if (scheduleElement->QueryUnsignedAttribute("domainsCount", (unsigned int*)(&domainsCount)) != TIXML_SUCCESS)
+  if (scheduleElement->QueryUnsignedAttribute("domainsCount", reinterpret_cast<unsigned int*>(&domainsCount)) != TIXML_SUCCESS)
   {
     std::cerr << "There is no Schedule.domainsCount attribute";
     throw;
@@ -47,12 +47,12 @@ void ScheduleSettings<Space>::Parse(TiXmlElement *scheduleElement)
   {
     unsigned int nodeIndex;
 
-    if (nodeElement->QueryUnsignedAttribute("node", (unsigned int*)(&nodeIndex)) != TIXML_SUCCESS)
+    if (nodeElement->QueryUnsignedAttribute("node", static_cast<unsigned int*>(&nodeIndex)) != TIXML_SUCCESS)
     {
       std::cerr << "There is no attribute NodeSchedule.node";
       throw;
     }
-    nodesSchedule.resize(std::max((size_t)(nodeIndex + 1), nodesSchedule.size()));
+    nodesSchedule.resize(std::max(static_cast<size_t>(nodeIndex + 1), nodesSchedule.size()));
     std::string domains;
 
     if (nodeElement->QueryStringAttribute("domains", &domains) != TIXML_SUCCESS)

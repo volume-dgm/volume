@@ -18,24 +18,24 @@ class MeshVtkWriter: public BasicVtkWriter<Space>
     void Write(const std::string& fileName,
       const std::vector<NodeType>& nodes, const std::vector<CellType>& cells,
       std::vector<typename CellInfo::DataType>& cellsData,
-      std::vector<bool>* needToDrawCell = 0);
+      std::vector<bool>* needToDrawCell = nullptr);
 
     void Write(const std::string& fileName,
       const std::vector<NodeType>& nodes, const std::vector<CellType>& cells,
       const std::vector<CellInfo>& cellInfos  = std::vector<CellInfo>(),
-      std::vector<bool>* needToDrawCell = 0);
+      std::vector<bool>* needToDrawCell = nullptr);
 
     void Write(const std::string& fileName,
       const std::vector<Vector>& nodes, 
       const std::vector<IndexType>& indices,
       std::vector<typename CellInfo::DataType>& cellsData,
-      std::vector<bool>* needToDrawCell = 0);
+      std::vector<bool>* needToDrawCell = nullptr);
 
     void Write(const std::string& fileName,
       const std::vector<Vector>& nodes, 
       const std::vector<IndexType>& indices,
       const std::vector<CellInfo>& cellInfos  = std::vector<CellInfo>(),
-      std::vector<bool>* needToDrawCell = 0);
+      std::vector<bool>* needToDrawCell = nullptr);
 
     void WriteFaces(const std::string& fileName,
       const std::vector<Vector>& nodes,
@@ -45,14 +45,14 @@ class MeshVtkWriter: public BasicVtkWriter<Space>
   private:
     void WriteCellData(std::fstream& file,
                        const std::vector<CellInfo>& cellInfos  = std::vector<CellInfo>(),
-      std::vector<bool>* needToDrawCell = 0);
+      std::vector<bool>* needToDrawCell = nullptr);
 
     IndexType GetCellsToDrawCount(std::vector<bool>* needToDrawCell, IndexType totalCellsCount)
     {
       IndexType cellsToDrawCount = 0;
       for (IndexType cellIndex = 0; cellIndex < totalCellsCount; ++cellIndex)
       {
-        if (needToDrawCell == 0 || (*needToDrawCell)[cellIndex]) cellsToDrawCount++;
+        if (needToDrawCell == nullptr || (*needToDrawCell)[cellIndex]) ++cellsToDrawCount;
       }
       return cellsToDrawCount;
     }
@@ -131,7 +131,7 @@ void MeshVtkWriter<Space, CellInfo>::Write(const std::string& fileName,
     
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex) 
   {
-    if (needToDrawCell == 0 || (*needToDrawCell)[cellIndex])
+    if (needToDrawCell == nullptr || (*needToDrawCell)[cellIndex])
     {
       file << Space::NodesPerCell;
       for (IndexType nodeIndex = 0; nodeIndex < Space::NodesPerCell; ++nodeIndex)
@@ -145,7 +145,7 @@ void MeshVtkWriter<Space, CellInfo>::Write(const std::string& fileName,
   file << "CELL_TYPES " << cellsToDrawCount << "\n";
   for (IndexType cellIndex = 0; cellIndex < cells.size(); ++cellIndex) 
   {
-    if (needToDrawCell == 0 || (*needToDrawCell)[cellIndex])
+    if (needToDrawCell == nullptr || (*needToDrawCell)[cellIndex])
     {
       if (Space::NodesPerCell == 4)
       {
@@ -205,7 +205,7 @@ void MeshVtkWriter<Space, CellInfo>::Write(const std::string& fileName,
     
   for (IndexType cellIndex = 0; Space::NodesPerCell * cellIndex < indices.size(); ++cellIndex) 
   {
-    if (needToDrawCell == 0 || (*needToDrawCell)[cellIndex])
+    if (needToDrawCell == nullptr || (*needToDrawCell)[cellIndex])
     {
       file << Space::NodesPerCell;
       for (IndexType nodeIndex = 0; nodeIndex < Space::NodesPerCell; ++nodeIndex)
@@ -219,7 +219,7 @@ void MeshVtkWriter<Space, CellInfo>::Write(const std::string& fileName,
   file << "CELL_TYPES " << cellsToDrawCount << "\n";
   for (IndexType cellIndex = 0; Space::NodesPerCell * cellIndex < indices.size(); ++cellIndex)
   {
-    if (needToDrawCell == 0 || (*needToDrawCell)[cellIndex])
+    if (needToDrawCell == nullptr || (*needToDrawCell)[cellIndex])
     {
       if (Space::NodesPerCell == 4)
       {
@@ -326,7 +326,7 @@ void MeshVtkWriter<Space, CellInfo>::WriteCellData(std::fstream& file,
 
     for (IndexType cellIndex = 0; cellIndex < cellInfos.size(); ++cellIndex)
     {
-      if (needToDrawCell == 0 || (*needToDrawCell)[cellIndex])
+      if (needToDrawCell == nullptr || (*needToDrawCell)[cellIndex])
       {
         for (IndexType dataIndex = 0; dataIndex < dataSize; ++dataIndex)
         {

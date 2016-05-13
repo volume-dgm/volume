@@ -82,12 +82,12 @@ public:
     boxPoint1 -= size * (mult - T(1.0)) * T(0.5);
     boxPoint2 += size * (mult - T(1.0)) * T(0.5);
   }
-  const T Square() const //perimeter actually, used for AABBTree balancing
+  T Square() const //perimeter actually, used for AABBTree balancing
   {
     Vector2<T> size = boxPoint2 - boxPoint1;
     return (size.x + size.y) * T(2.0);
   }
-  const T Volume() const
+  T Volume() const
   {
     Vector2<T> size = boxPoint2 - boxPoint1;
     return size.x * size.y;

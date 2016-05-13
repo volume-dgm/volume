@@ -1,7 +1,11 @@
 template<typename Space, typename FunctionSpace>
 ElasticVolumeMeshCommon<Space, FunctionSpace>::
   ElasticVolumeMeshCommon(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount):
-  DifferentialSystem<Scalar>(solver->GetPhasesCount(), hierarchyLevelsCount), volumeMesh(solver->GetPhasesCount(), hierarchyLevelsCount),
+  DifferentialSystem<Scalar>(solver->GetPhasesCount(), hierarchyLevelsCount), volumeMesh(solver->GetPhasesCount(), hierarchyLevelsCount), 
+  allowMovement(false), 
+  allowPlasticity(false), 
+  allowContinuousDestruction(false), 
+  allowDiscreteDestruction(false),
   nodeGroupManager(99) // TODO
 {
   this->solver = solver;
@@ -29,9 +33,9 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::LoadState(const std::vector<
   #pragma omp parallel for
   for(int cellIndex = 0; cellIndex < int(volumeMesh.cells.size()); cellIndex++)
   {
-    for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
     {
-      for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++) 
+      for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex) 
       {
         volumeMesh.cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] = Scalar(0.0);
       }
@@ -52,9 +56,9 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::LoadState(const std::vector<
                      totalCellValues, totalCellValues, std::plus<Scalar>());
     }
 
-    for(IndexType functionIndex = 0; functionIndex < functionsCount; functionIndex++)
+    for(IndexType functionIndex = 0; functionIndex < functionsCount; ++functionIndex)
     {
-      for(IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++) 
+      for(IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex) 
       {
         volumeMesh.cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] = 
           totalCellValues[valueIndex * functionsCount + functionIndex];
@@ -126,7 +130,7 @@ void  ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrCoords(Scalar& time,
 
   if(allowMovement && solverState.IsLastStep())
   {    
-    Vector* nodePositions = (Vector*)(currCoords + volumeMesh.GetDimentionsCount(solverState));
+    Vector* nodePositions = reinterpret_cast<Vector*>(currCoords + volumeMesh.GetDimentionsCount(solverState));
 
     #pragma omp parallel for
     for(int nodeIndex = 0; nodeIndex < int(volumeMesh.nodes.size()); nodeIndex++)
@@ -143,7 +147,7 @@ void  ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrCoords(Scalar& time,
 
   if(allowMovement)
   {
-    Vector* nodePositions = (Vector*)(currCoords + volumeMesh.GetMaxDimentionsCount());
+    Vector* nodePositions = reinterpret_cast<Vector*>(currCoords + volumeMesh.GetMaxDimentionsCount());
 
     #pragma omp parallel for
     for(int nodeIndex = 0; nodeIndex < int(volumeMesh.nodes.size()); nodeIndex++)
@@ -170,7 +174,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time, c
 
   if(allowMovement && solverState.IsLastStep())
   {
-    Vector* nodePositions = (Vector*)(newCoords + volumeMesh.GetDimentionsCount(solverState));
+    const Vector* nodePositions = reinterpret_cast<const Vector*>(newCoords + volumeMesh.GetDimentionsCount(solverState));
 
     #pragma omp parallel for
     for(int nodeIndex = 0; nodeIndex < int(volumeMesh.nodes.size()); nodeIndex++)
@@ -188,7 +192,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time,
 
   if(allowMovement && solverState.IsLastStep())
   {
-    Vector* nodePositions = (Vector*)(newCoords + volumeMesh.GetDimentionsCount(solverState));
+    const Vector* nodePositions = reinterpret_cast<const Vector*>(newCoords + volumeMesh.GetDimentionsCount(solverState));
 
     #pragma omp parallel for
     for(int nodeIndex = 0; nodeIndex < int(volumeMesh.nodes.size()); nodeIndex++)
@@ -208,7 +212,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::SetCurrCoords(Scalar time, c
 
   if(allowMovement)
   {
-    Vector* nodePositions = (Vector*)(oldCoords + volumeMesh.GetMaxDimentionsCount());
+    const Vector* nodePositions = reinterpret_cast<const Vector*>(oldCoords + volumeMesh.GetMaxDimentionsCount());
     #pragma omp parallel for
     for(int nodeIndex = 0; nodeIndex < int(volumeMesh.nodes.size()); nodeIndex++)
     {
@@ -227,7 +231,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
 
   if(allowMovement && solverState.IsLastStep())
   {
-    Vector* nodeVelocities = (Vector*)(derivatives + volumeMesh.GetDimentionsCount(solverState));
+    Vector* nodeVelocities = reinterpret_cast<Vector*>(derivatives + volumeMesh.GetDimentionsCount(solverState));
 
     std::fill_n(nodeVelocities, volumeMesh.nodes.size(), Vector::zeroVector());
 
@@ -238,7 +242,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
         IndexType cellIndices[Space::NodesPerCell];
         volumeMesh.GetFixedCellIndices(cellIndex, cellIndices);
 
-        for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; nodeNumber++)
+        for (IndexType nodeNumber = 0; nodeNumber < Space::NodesPerCell; ++nodeNumber)
         {
           Vector v = InterpolateElasticRef(cellIndex, nodeNumber, VolumeMeshTypeCommon::CellNode).GetVelocity();
           // Vector v = InterpolateElastic(cellIndex, volumeMesh.nodes[cellIndices[nodeNumber]].pos).GetVelocity();
@@ -248,7 +252,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCurrDerivatives(Scalar* d
       }
     }
 
-    for (IndexType nodeIndex = 0; nodeIndex < volumeMesh.nodes.size(); nodeIndex++)
+    for (IndexType nodeIndex = 0; nodeIndex < volumeMesh.nodes.size(); ++nodeIndex)
     {
       nodeVelocities[nodeIndex] /= Scalar(volumeMesh.GetIncidentCellsCount(nodeIndex));
     }
@@ -473,8 +477,8 @@ typename Space::Scalar
   if (allowMovement)
   {
     Scalar dynamicError = 0;
-    Vector* node0Positions = (Vector*)(coords0 + volumeMesh.GetDimentionsCount(solverState));
-    Vector* node1Positions = (Vector*)(coords1 + volumeMesh.GetDimentionsCount(solverState));
+    const Vector* node0Positions = reinterpret_cast<const Vector*>(coords0 + volumeMesh.GetDimentionsCount(solverState));
+    const Vector* node1Positions = reinterpret_cast<const Vector*>(coords1 + volumeMesh.GetDimentionsCount(solverState));
 
     #pragma omp parallel for
     for (int nodeIndex = 0; nodeIndex < int(volumeMesh.nodes.size()); nodeIndex++)
@@ -792,7 +796,7 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDeformR
   for (IndexType velocityComponentIndex = 0; velocityComponentIndex < Space::Dimension; ++velocityComponentIndex)
   {
     velocityGradient[velocityComponentIndex] = Vector::zero();
-    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; dimIndex++)
+    for (IndexType dimIndex = 0; dimIndex < Space::Dimension; ++dimIndex)
     {
       velocityGradient[velocityComponentIndex] +=
         refDerivatives[dimIndex] * refVelocityGradient[velocityComponentIndex][dimIndex];

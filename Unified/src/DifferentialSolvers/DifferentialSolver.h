@@ -11,7 +11,7 @@ public:
   virtual ~DifferentialSolver() {}
 
   virtual void    SetSystem(DifferentialSystem<Scalar>* system) = 0;
-  virtual int     GetPhasesCount() = 0;
+  virtual int     GetPhasesCount() const = 0;
 
   virtual void    InitStep(Scalar timeStep, Scalar tolerance, bool)
   {
@@ -25,8 +25,8 @@ public:
   virtual void    AdvanceStep(const SolverState&) = 0;
   virtual void    RevertStep(Scalar currTime) = 0;
 
-  virtual Scalar  GetLastStepError() = 0;
-  virtual Scalar  GetTimeStepPrediction() = 0;
+  virtual Scalar  GetLastStepError() const = 0;
+  virtual Scalar  GetTimeStepPrediction() const = 0;
 
   Scalar GetCurrTime() const
   {

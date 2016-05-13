@@ -49,7 +49,7 @@ struct GeomMesh<Space2>: public GeomMeshCommon<Space2>
   void BuildAdditionalTopology(
     EdgePairIndices* contactEdges,  IndexType* contactEdgesCount,  IndexType contactTypesCount,
     BoundaryEdge*    boundaryEdges, IndexType* boundaryEdgesCount, IndexType boundaryTypesCount,
-    IndexType *internalContactTypes = 0);
+    IndexType *internalContactTypes = nullptr);
 
   EdgeLocationPair GetEdgeLocation(IndexType nodeIndex0, IndexType nodeIndex1) const;
   EdgeLocationPair GetEdgeLocation(EdgeIndices edgeIndices) const;
@@ -86,7 +86,7 @@ public:
   void BuildAdditionalTopology(
     FacePairIndices* contactFaces,  IndexType* contactEdgesCount,  IndexType contactTypesCount,
     BoundaryFace*    boundaryFaces, IndexType* boundaryEdgesCount, IndexType boundaryTypesCount,
-    IndexType *internalContactTypes = 0);
+    IndexType *internalContactTypes = nullptr);
 
   IndexType GetNodeSubmeshIndex(IndexType nodeIndex);
   IndexType GetEdgeSubmeshIndex(IndexType edgeIndex);

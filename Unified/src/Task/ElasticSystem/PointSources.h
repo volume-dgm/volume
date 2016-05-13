@@ -45,7 +45,7 @@ public:
     this->latency = std::max(latency, sqrt(1.5) / (pi * peakFrequency) * 3);
   }
 
-  void operator()(Scalar time, Scalar* values) const
+  void operator()(Scalar time, Scalar* values) const override
   {
     Scalar arg = Sqr(pi * peakFrequency * (time - latency));
     Scalar mult = (1 - 2 * arg) * exp(-arg);
@@ -98,7 +98,7 @@ struct MonopoleSource: public PointSource<typename ElasticSystem::Space>
 
   virtual ~MonopoleSource() {}
 
-  virtual void operator()(Scalar time, Scalar* values) const
+  virtual void operator()(Scalar time, Scalar* values) const override
   {
     std::fill_n(values, dimsCount, Scalar(0.0));
 

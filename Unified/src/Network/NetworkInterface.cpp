@@ -8,8 +8,8 @@ NetworkInterface::NetworkInterface()
   notifyBuffer = 0;
   rank = -1;
   readyForBarrier = false;
-  receiveListener = NULL;
-  notifyListener  = NULL;
+  receiveListener = nullptr;
+  notifyListener  = nullptr;
 }
 /*
 denote the start of parallel program
@@ -106,7 +106,7 @@ bool NetworkInterface::blokingReceive(int &infoType, int &sourceId)
     case Data:
     {
       MPI_Get_count(&status, MPI_CHAR, &count);
-      if(receiveBuffer.size() < (size_t)count) receiveBuffer.resize(count);
+      if(receiveBuffer.size() < size_t(count)) receiveBuffer.resize(count);
       MPI_Recv(&(receiveBuffer[0]), count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
       currentBufSize = count;
     }break;
@@ -148,7 +148,7 @@ bool NetworkInterface::nonBlokingReceive(int &infoType, int &sourceId)
       case Data:
       {
         MPI_Get_count(&status, MPI_CHAR, &count);
-        if(receiveBuffer.size() < (size_t)count) receiveBuffer.resize(count * sizeof(char));
+        if(receiveBuffer.size() < size_t(count)) receiveBuffer.resize(count * sizeof(char));
         MPI_Recv(&(receiveBuffer[0]), count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         currentBufSize = count;
       }break;

@@ -63,7 +63,7 @@ private:
   void BuildEdgesSyncData(IndexType dstDomainIndex, char* const data);
   void UpdateEdgesData(IndexType edgesCount, const EdgeSyncData* const edgesData);
 
-  void ComputeSyncDataSizes();
+  void ComputeSyncDataSizes() override;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -122,7 +122,7 @@ private:
   void BuildFacesSyncData(IndexType dstDomainIndex, char* const data);
   void UpdateFacesData(IndexType facesCount, const FaceSyncData* const facesData);
 
-  void ComputeSyncDataSizes();
+  void ComputeSyncDataSizes() override;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

@@ -13,11 +13,12 @@ struct BoundaryConditions
 struct BoundaryDescription
 {
   BoundaryDescription(): infoIndex(-1),
-    reflectionCoeff(1.0)
+    reflectionCoeff(1.0), type(BoundaryConditions::Absorb)
   {}
-  BoundaryConditions::Types type;
+
   int infoIndex;
   double reflectionCoeff;
+  BoundaryConditions::Types type;
 };
 
 template <typename Space>
@@ -25,6 +26,7 @@ struct BoundaryInfoFunctor
 {
   SPACE_TYPEDEFS
 
+  virtual ~BoundaryInfoFunctor() {}
   virtual void operator()(const Vector& globalPoint,
                           const Vector& externalNormal,
                           const Scalar currTime,
@@ -38,7 +40,7 @@ struct FreeBoundaryInfo
 {
   SPACE_TYPEDEFS
   FreeBoundaryInfo(): 
-    boundaryFunctor(0), 
+    boundaryFunctor(nullptr), 
     dynamicContactInteractionType(IndexType(-1))
   {
   }
@@ -51,7 +53,7 @@ struct FixedBoundaryInfo
 {
   SPACE_TYPEDEFS
 
-  FixedBoundaryInfo(): boundaryFunctor(0)
+  FixedBoundaryInfo(): boundaryFunctor(nullptr)
   {
   }
   BoundaryInfoFunctor<Space>* boundaryFunctor;

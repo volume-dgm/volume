@@ -4,7 +4,6 @@
 #include "BasicMeshBuilder.h"
 
 #include <map>
-#include <set>
 #include <vector>
 #include <string.h>
 
@@ -40,7 +39,7 @@ protected:
 
   void BuildMesh(MeshIO<Space>* const mesh, 
     GeomMesh<Space>* updatedGeomMesh, 
-    MeshIO<Space>* const nonDuplicatedVerticesMesh = 0)
+    MeshIO<Space>* const nonDuplicatedVerticesMesh = nullptr) override
   {
     this->updatedGeomMesh = updatedGeomMesh;
     printf("  Building triangulation...\n");
@@ -277,7 +276,7 @@ protected:
   std::vector<BoundaryEdge*> boundaryData;
   std::vector<EdgePairIndices*> contactData;
 
-  void BuildBoundary(MeshIO<Space2>* const mesh)
+  void BuildBoundary(MeshIO<Space2>* const mesh) override
   {
     std::vector<BoundaryEdge> boundaryEdges;
     IndexType offset = 0;
@@ -346,7 +345,7 @@ protected:
     mesh->boundaryEdges = boundaryEdges;
   }
 
-  void BuildContacts(MeshIO<Space2>* const mesh)
+  void BuildContacts(MeshIO<Space2>* const mesh) override
   {
     if (!duplicateNodes && mesh->contactTypesCount > 0)
     {
@@ -466,7 +465,7 @@ public:
   using UnstructuredMeshBuilderCommon<Space>::splitNodeBiasRatio;
 
 protected:
-  void BuildBoundary(MeshIO<Space3>* const mesh)
+  void BuildBoundary(MeshIO<Space3>* const mesh) override
   {
     std::vector<BoundaryFace> boundaryFaces;
     IndexType offset = 0;
@@ -559,7 +558,7 @@ protected:
     return found;
   }
 
-  void BuildContacts(MeshIO<Space>* const mesh)
+  void BuildContacts(MeshIO<Space>* const mesh) override
   {
     if (!duplicateNodes && mesh->contactTypesCount > 0)
     {

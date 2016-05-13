@@ -87,7 +87,7 @@ public:
     const IndexType tensionElementsCount = Space::Dimension * (Space::Dimension + 1) / 2;
     if (rawData.size() < snapshotSize * tensionElementsCount) rawData.resize(snapshotSize * tensionElementsCount);
 
-    TiXmlElement* dataArrayElement;
+    TiXmlElement* dataArrayElement = nullptr;
     for (IndexType dataArrayIndex = 0; dataArrayIndex < 2; ++dataArrayIndex)
     {
       if (dataArrayIndex == 0)
@@ -210,7 +210,7 @@ private:
     size_t sourceLen = ((uint32_t*)output)[2];
     int compressedLen = ((uint32_t*)output)[3];
     free(output);
-    output = 0;
+    output = nullptr;
 
     int dataSize = 4 * ((compressedLen + 2) / 3);
     output = ::base64_decode(input + prefixSize, dataSize, &outputSize);
@@ -221,7 +221,7 @@ private:
     }
 
     if (data.size() * sizeof(Scalar) < sourceLen) data.resize(sourceLen / sizeof(Scalar) + 1);
-    int result = ::uncompress((Bytef*)(&data[0]), (uLongf*)&sourceLen, output, compressedLen);
+    int result = ::uncompress((Bytef*)(data.data()), (uLongf*)&sourceLen, output, compressedLen);
     
     free(output);
 

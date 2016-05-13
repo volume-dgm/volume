@@ -1,11 +1,7 @@
 #pragma once
 #include "VectorFunctors.h"
-#include "SourceFunctors.h"
-
 #include "../../Maths/Spaces.h"
 #include "ElasticSystemCommon.h"
-
-#include "Eigen/Core"
 
 template <typename Space>
 struct ElasticSystem;
@@ -34,10 +30,12 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
     {
     }
 
+    virtual ~ValueType() {}
+
     void SetTension(Scalar xx, Scalar yy, Scalar xy);
     Scalar GetPressure() const;
     Scalar GetDeviatorSquare() const;
-    Vector GetForce(const Vector& normal) const;
+    Vector GetForce(const Vector& normal) const override;
     Tensor GetTension() const;
   };
 
@@ -90,7 +88,7 @@ struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
     Scalar GetXZ() const;
     Scalar GetPressure() const;
     Scalar GetDeviatorSquare() const;
-    Vector GetForce(const Vector& normal) const;
+    Vector GetForce(const Vector& normal) const override;
   };
 
   struct ElasticSpace: public Space3

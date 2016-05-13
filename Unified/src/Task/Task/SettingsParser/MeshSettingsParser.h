@@ -303,8 +303,8 @@ struct MeshSettings
     struct TabulatedFunctorInfo
     {
       TabulatedFunctorInfo():
-        fileName("impulse.txt"),
-        direction(-Vector::yAxis())
+        direction(-Vector::yAxis()),
+        fileName("impulse.txt")
       {}
       Vector direction;
       std::string fileName;
@@ -608,15 +608,15 @@ void MeshSettings<GeomSpace>::Parse(TiXmlElement *meshInfoElement)
   ParseScalar(meshInfoElement, "collisionWidth", &collisionWidth);
 
   //Medium params
-  TiXmlElement* mediumParamsElement;
-  if (mediumParamsElement = meshInfoElement->FirstChildElement("MediumParams"))
+  TiXmlElement* mediumParamsElement = meshInfoElement->FirstChildElement("MediumParams");
+  if (mediumParamsElement)
   {
     mediumParamsSection.paramsDescription = mediumParamsSection.ParseParamsDescription(mediumParamsElement);
   }
 
   //Boundaries
-  TiXmlElement* boundariesElement;
-  if (boundariesElement = meshInfoElement->FirstChildElement("Boundaries"))
+  TiXmlElement* boundariesElement = meshInfoElement->FirstChildElement("Boundaries");
+  if (boundariesElement)
   {
     TiXmlElement *freeBoundaryElement = boundariesElement->FirstChildElement("Free");
     while (freeBoundaryElement)
@@ -702,8 +702,8 @@ void MeshSettings<GeomSpace>::Parse(TiXmlElement *meshInfoElement)
   }
 
   //Contacts
-  TiXmlElement* contactsElement;
-  if (contactsElement = meshInfoElement->FirstChildElement("Contacts"))
+  TiXmlElement* contactsElement = meshInfoElement->FirstChildElement("Contacts");
+  if (contactsElement)
   {
     TiXmlElement *glueContactElement = contactsElement->FirstChildElement("Glue");
     while (glueContactElement)

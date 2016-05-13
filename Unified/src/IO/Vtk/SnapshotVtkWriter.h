@@ -25,39 +25,51 @@ class SnapshotVtkWriter: public BasicVtkWriter<ElasticSpace>
                const AABB& wholeBox, const AABB& box,
                bool writeVelocity, bool writeTension, bool writeWaves, bool asScalars = false);
 
-    void WriteSnapsotCollectionHeader(std::fstream& file)
+    static void WriteSnapsotCollectionHeader(std::fstream& file)
     {
       file << "<?xml version=\"1.0\"?>\n";
       file << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
       file << "<Collection>\n";
     }
 
-    void WriteSnapsotCollectionLastTags(std::fstream& file)
+    static void WriteSnapsotCollectionLastTags(std::fstream& file)
     {
       file << "</Collection>";
       file << "</VTKFile>";
     }
 
   private:
+    std::vector<Scalar> rawData;
+    std::vector<unsigned char> compressedData;
+
     void WriteCompressedData(fstream& file, unsigned char* src, size_t srcLen);
 
     string FloatTypeName() const
     {
-      if (sizeof(Scalar) == 4)
+      switch (sizeof(Scalar))
       {
-        return "\"Float32\"";
-      } else
-      if (sizeof(Scalar) == 8)
-      {
-        return "\"Float64\"";
-      } else
-      {
-        throw 42;
+        case 4: return "\"Float32\"";
+        case 8: return "\"Float64\"";
+        default: throw 42;
       }
     }
 
-    std::vector<Scalar> rawData;
-    std::vector<unsigned char> compressedData;
+    void RenumberTensorComponents(const Space2::Tensor& tension, Scalar* tensionValues) const
+    {
+      tensionValues[0] = tension.xx;
+      tensionValues[1] = tension.yy;
+      tensionValues[2] = tension.xy;
+    }
+
+    void RenumberTensorComponents(const Space3::Tensor& tension, Scalar* tensionValues) const
+    {
+      tensionValues[0] = tension.xx;
+      tensionValues[1] = tension.yy;
+      tensionValues[2] = tension.zz;
+      tensionValues[3] = tension.xy;
+      tensionValues[4] = tension.yz;
+      tensionValues[5] = tension.xz;
+    }
 };
 
 
@@ -102,8 +114,8 @@ void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
 
   IndexType snapshotSize = ::ComputeSnapshotSize<Space>(origin, spacing, box, &iaabb);
 
-  IndexType tensorElementsCount = Space::Dimension * (Space::Dimension + 1) / 2;
-  IndexType vectorElementsCount = 3; //we have to write 3 components regardless of space used
+  constexpr IndexType tensorElementsCount = Space::Dimension * (Space::Dimension + 1) / 2;
+  constexpr IndexType vectorElementsCount = 3; //we have to write 3 components regardless of space used
 
   IndexType maxElementsCount = 0;
 
@@ -166,7 +178,7 @@ void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
         rawData[3 * elasticIndex + dimIndex] = data[elasticIndex].GetVelocity().Get(dimIndex);
       }
     }
-    WriteCompressedData(file, (unsigned char*)(&rawData[0]), snapshotSize * vectorElementsCount * sizeof(Scalar));
+    WriteCompressedData(file, reinterpret_cast<unsigned char*>(rawData.data()), snapshotSize * vectorElementsCount * sizeof(Scalar));
     file << "</DataArray>\n";
   }
 
@@ -177,12 +189,14 @@ void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
     for (IndexType elasticIndex = 0; elasticIndex < snapshotSize; ++elasticIndex)
     {
       const Tensor& tension = data[elasticIndex].GetTension();
+      Scalar tensionValues[tensorElementsCount];
+      RenumberTensorComponents(tension, tensionValues);
       for (IndexType tensorElementIndex = 0; tensorElementIndex < tensorElementsCount; ++tensorElementIndex)
       {
-        rawData[tensorElementsCount * elasticIndex + tensorElementIndex] = tension[tensorElementIndex];
+        rawData[tensorElementsCount * elasticIndex + tensorElementIndex] = tensionValues[tensorElementIndex];
       }
     }
-    WriteCompressedData(file, (unsigned char*)(&rawData[0]), snapshotSize * tensorElementsCount * sizeof(Scalar));
+    WriteCompressedData(file, reinterpret_cast<unsigned char*>(rawData.data()), snapshotSize * tensorElementsCount * sizeof(Scalar));
     file << "</DataArray>\n"; 
   }
 
@@ -200,7 +214,7 @@ void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
       Scalar pWave = energyGradient * velocity; //p-wave intensity is v * gradient
       rawData[elasticIndex] = fabs(pWave);
     }
-    WriteCompressedData(file, (unsigned char*)(&rawData[0]), snapshotSize * sizeof(Scalar));
+    WriteCompressedData(file, reinterpret_cast<unsigned char*>(rawData.data()), snapshotSize * sizeof(Scalar));
     file << "</DataArray>\n";
 
     //sWave
@@ -216,7 +230,7 @@ void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
 
       rawData[elasticIndex] = sWave;
     }
-    WriteCompressedData(file, (unsigned char*)(&rawData[0]), snapshotSize * sizeof(Scalar));
+    WriteCompressedData(file, reinterpret_cast<unsigned char*>(rawData.data()), snapshotSize * sizeof(Scalar));
     file << "</DataArray>\n";
 
     //abs(pWave)
@@ -231,7 +245,7 @@ void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
       Scalar pWave = energyGradient * velocity; //p-wave intensity is v * gradient
       rawData[elasticIndex] = pWave;
     }
-    WriteCompressedData(file, (unsigned char*)(&rawData[0]), snapshotSize * sizeof(Scalar));
+    WriteCompressedData(file, reinterpret_cast<unsigned char*>(rawData.data()), snapshotSize * sizeof(Scalar));
     file << "</DataArray>\n";
   }
 
@@ -252,21 +266,21 @@ void SnapshotVtkWriter<ElasticSpace>::WriteCompressedData(fstream& file, unsigne
 
   uint32_t prefix[4];
   prefix[0] = 1;
-  prefix[1] = (uint32_t)sourceLen;
-  prefix[2] = (uint32_t)sourceLen;
-  prefix[3] = (uint32_t)compressedDataLen;
+  prefix[1] = static_cast<uint32_t>(sourceLen);
+  prefix[2] = static_cast<uint32_t>(sourceLen);
+  prefix[3] = static_cast<uint32_t>(compressedDataLen);
 
   size_t outputSize;
-  char* output = ::base64_encode((const unsigned char*)prefix, 4 * sizeof(uint32_t), &outputSize);
-  if(output == NULL)
+  char* output = ::base64_encode(reinterpret_cast<const unsigned char*>(prefix), 4 * sizeof(uint32_t), &outputSize);
+  if (output == nullptr)
   {
     printf("Fatal error: base64_encode returned NULL trying to encode %lu bytes", 4 * sizeof(uint32_t));
     return;
   }
   file.write(output, outputSize);
 
-  output = ::base64_encode((const unsigned char*)(&compressedData[0]), compressedDataLen, &outputSize);
-  if(output == NULL)
+  output = ::base64_encode(static_cast<const unsigned char*>(compressedData.data()), compressedDataLen, &outputSize);
+  if (output == nullptr)
   {
     printf("Fatal error: base64_encode returned NULL trying to encode %lu bytes", compressedDataLen);
     return;

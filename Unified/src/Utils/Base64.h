@@ -13,9 +13,9 @@ static char encoding_table[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
 '4', '5', '6', '7', '8', '9', '+', '/' };
 
 static int mod_table[] = { 0, 2, 1 };
-static char* decoding_table = NULL;
+static char* decoding_table = nullptr;
 
-static char* encoded_data = NULL;
+static char* encoded_data = nullptr;
 static size_t encoded_data_size = 0;
 
 char* base64_encode(const unsigned char *data,
@@ -28,10 +28,10 @@ char* base64_encode(const unsigned char *data,
   if (*output_length > encoded_data_size)
   {
     encoded_data = (char*)realloc(encoded_data, *output_length * sizeof(char));
-    if (encoded_data == NULL)
+    if (encoded_data == nullptr)
     {
       encoded_data_size = 0;
-      return NULL;
+      return nullptr;
     } else
     encoded_data_size = *output_length;
   }
@@ -75,16 +75,16 @@ unsigned char *base64_decode(const char *data,
   size_t *output_length)
 {
 
-  if (decoding_table == NULL) build_decoding_table();
+  if (decoding_table == nullptr) build_decoding_table();
 
-  if (input_length % 4 != 0) return NULL;
+  if (input_length % 4 != 0) return nullptr;
 
   *output_length = input_length / 4 * 3;
   if (data[input_length - 1] == '=') (*output_length)--;
   if (data[input_length - 2] == '=') (*output_length)--;
 
   unsigned char *decoded_data = (unsigned char*)malloc(*output_length);
-  if (decoded_data == NULL) return NULL;
+  if (decoded_data == nullptr) return nullptr;
 
   for (size_t i = 0, j = 0; i < input_length;)
   {

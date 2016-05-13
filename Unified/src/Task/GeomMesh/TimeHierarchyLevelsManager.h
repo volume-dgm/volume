@@ -26,7 +26,7 @@ public:
   IndexType GetLevel(IndexType cellIndex) const;
   void      SetLevel(IndexType cellIndex, IndexType hierarchyLevel);
 
-  bool NeedToUpdate(IndexType cellIndex, const SolverState& solverState, bool* auxCell = 0) const;
+  bool NeedToUpdate(IndexType cellIndex, const SolverState& solverState, bool* auxCell = nullptr) const;
   bool UseHalfStepSolution(IndexType cellIndex, const SolverState&, bool auxCell, bool toRead) const;
   bool UseHalfStepSolutionForNeighbour(IndexType cellIndex, const SolverState&, bool auxCell, IndexType correspondingCellIndex) const;
 
@@ -245,7 +245,7 @@ void TimeHierarchyLevelsManager<Space>::BuildTimeHierarchyLevels(const GeomMesh<
         IndexType cellIndex = *it;
         if (distToCell[cellIndex] == solverPhasesCount && timeHierarchyLevels[cellIndex] == hierarchyLevel - 1 + step)
         {
-          for(IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; faceNumber++)
+          for(IndexType faceNumber = 0; faceNumber < Space::FacesPerCell; ++faceNumber)
           {
             IndexType correspondingCellIndex = geomMesh->GetCorrespondingCellIndex(cellIndex, faceNumber);
             if (correspondingCellIndex != IndexType(-1) && timeHierarchyLevels[correspondingCellIndex] > IndexType(hierarchyLevel))
@@ -289,13 +289,13 @@ void TimeHierarchyLevelsManager<Space>::BuildTimeHierarchyLevels(const GeomMesh<
 
     if (hierarchyLevel == 0) 
     {
-      hierarchyLevel++;
+      ++hierarchyLevel;
     } else
     {
       step++;
       if (step == 2)
       {
-        hierarchyLevel++;
+        ++hierarchyLevel;
         step = 0;
       }
     }
@@ -343,7 +343,7 @@ typename TimeHierarchyLevelsManager<Space>::IndexType
           solverState.SetState(globalStepIndex, hierarchyPhase, hierarchyLevel);
           if (NeedToUpdate(cellIndex, solverState))
           {
-            cellCost++;
+            ++cellCost;
           }
         }
       }

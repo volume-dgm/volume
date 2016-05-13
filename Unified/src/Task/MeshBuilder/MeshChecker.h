@@ -12,7 +12,7 @@ public:
   SPACE_TYPEDEFS
 
   MeshChecker(const std::string& meshBaseName, IndexType domainsCount):
-    domains(domainsCount, DistributedMeshIO<Space>(domainsCount)), meshBaseName(meshBaseName), minEdgeLen(std::numeric_limits<Scalar>::max())
+    minEdgeLen(std::numeric_limits<Scalar>::max()), domains(domainsCount, DistributedMeshIO<Space>(domainsCount)), meshBaseName(meshBaseName)
   {
     std::cout << "Checking mesh..." << std::endl;
   }

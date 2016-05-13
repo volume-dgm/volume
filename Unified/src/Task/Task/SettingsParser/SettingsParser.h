@@ -15,6 +15,7 @@
 
 struct BasicSettings
 {
+  virtual ~BasicSettings() {}
   //std::string fileName;
   int configDimsCount; //dimsCount would probably conflict with Space::dimsCount
 
@@ -73,7 +74,7 @@ struct Settings : public BasicSettings
   std::vector< SnapshotSettings<Space> > snapshots;
 
   std::string settingsFileName;
-  void Parse(const char* fileName);
+  void Parse(const char* fileName) override;
 
 private:
   void ParseSettingsFile(const char* fileName);

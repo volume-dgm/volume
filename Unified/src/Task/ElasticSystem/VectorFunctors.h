@@ -25,7 +25,7 @@ struct ConstVectorFunctor: public VectorFunctor<Space>
     this->constantValue = constantValue;
   }
 
-  Vector operator()(const Vector&, const Vector&, Scalar) const
+  Vector operator()(const Vector&, const Vector&, Scalar) const override
   {
     return constantValue;
   }
@@ -46,7 +46,7 @@ struct BoxVectorFunctor: public VectorFunctor<Space>
     this->aabbVelocity  = aabbVelocity;
   }
 
-  Vector operator()(const Vector& point, const Vector&, Scalar time) const
+  Vector operator()(const Vector& point, const Vector&, Scalar time) const override
   {
     AABB movedAABB;
     movedAABB.Expand(aabb.boxPoint1 + aabbVelocity * time);
@@ -74,7 +74,7 @@ struct RadialVectorFunctor: public VectorFunctor<Space>
     this->intensity = intensity;
   }
 
-  Vector operator()(const Vector& point, const Vector&, Scalar) const
+  Vector operator()(const Vector& point, const Vector&, Scalar) const override
   {
     return (point - center).GetNorm() * intensity;
   }
@@ -104,7 +104,7 @@ struct WaveVectorFunctor: public VectorFunctor<Space>
     omega = 2 * Scalar(pi) * speed * invWaveLength;
   }
 
-  Vector operator()(const Vector& point, const Vector& faceNormal, Scalar time) const
+  Vector operator()(const Vector& point, const Vector& faceNormal, Scalar time) const override
   {
     Vector value;
 
@@ -153,7 +153,7 @@ struct RotatingVectorFunctor: public VectorFunctor<Space>
   {
   }
 
-  Vector operator()(const Vector& point, const Vector& faceNormal, Scalar time) const
+  Vector operator()(const Vector& point, const Vector& faceNormal, Scalar time) const override
   {
     Vector value;
 
@@ -196,7 +196,7 @@ struct RiekerVectorFunctor: public VectorFunctor<Space>
     delay = sqrt(1.5) / (pi * peakFrequency) * 3;
   }
 
-  Vector operator()(const Vector&, const Vector&, Scalar time) const
+  Vector operator()(const Vector&, const Vector&, Scalar time) const override
   {
     Scalar arg = Sqr(pi * peakFrequency * (time - delay));
     Scalar mult = (1 - 2 * arg) * exp(-arg);
@@ -244,7 +244,7 @@ struct TabulatedVectorFunctor: public VectorFunctor<Space>
     std::sort(samples.begin(), samples.end());
   }
 
-  Vector operator()(const Vector&, const Vector&, Scalar time) const
+  Vector operator()(const Vector&, const Vector&, Scalar time) const override
   {
     IndexType sampleIndex = 0;
     IndexType leftBorder = 0;
@@ -274,7 +274,7 @@ struct HydraulicPressureFunctor: public VectorFunctor<Space>
     fluidRho(fluidRho), g(g), fluidSurfacePoint(fluidSurfacePoint)
   {}
 
-  Vector operator()(const Vector& point, const Vector& normal, Scalar) const
+  Vector operator()(const Vector& point, const Vector& normal, Scalar) const override
   {
     Scalar pressure = fluidRho * g * (point - fluidSurfacePoint);
     if (pressure > 0)
@@ -300,12 +300,12 @@ struct HydrodynamicResistanceFunctor: public VectorFunctor<Space>
     aabb(aabb), mediumRho(mediumRho), flowVelocity(flowVelocity), alpha(alpha), beta(beta)
   {}
   
-  virtual void SetCurrentVelocity(const Vector& velocity)
+  virtual void SetCurrentVelocity(const Vector& velocity) override
   {
     this->v = velocity;
   }
 
-  Vector operator()(const Vector& point, const Vector& n, Scalar /* time */) const
+  Vector operator()(const Vector& point, const Vector& n, Scalar /* time */) const override
   { 
     Scalar vn = (v - flowVelocity) * n;
     if (aabb.Includes(point) && vn >= 0)
@@ -318,7 +318,6 @@ struct HydrodynamicResistanceFunctor: public VectorFunctor<Space>
     {
       return Vector::zero();
     }
-    return Vector::zero();
   }
 
   AABB    aabb;

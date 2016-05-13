@@ -16,12 +16,12 @@ public:
   {
   }
 
-  virtual void LoadGeom(MeshIO<Space>* const mesh)
+  virtual void LoadGeom(MeshIO<Space>* const mesh) override
   {
     mesh->Load(std::string(AddExtensionToFileName(meshFileName, ".mesh")).c_str(), IO::Ascii);
   }
 
-  virtual void BuildMediumParams(MeshIO<Space>* const mesh, std::vector<char>* mediumParams)
+  virtual void BuildMediumParams(MeshIO<Space>* const mesh, std::vector<char>* mediumParams) override
   {
     std::fstream paramsFile(std::string(AddExtensionToFileName(meshFileName, ".params")).c_str(), std::fstream::in | std::fstream::binary);
     
@@ -35,11 +35,11 @@ public:
     paramsFile.read(mediumParams->data(), mediumParams->size());
   }
 
-  void BuildDetectors(MeshIO<Space>* const mesh)
+  void BuildDetectors(MeshIO<Space>* const mesh) override
   {
   }
 
-  virtual void BuildAdditionalContacts(MeshIO<Space>* const mesh)
+  virtual void BuildAdditionalContacts(MeshIO<Space>* const mesh) override
   {
   }
 

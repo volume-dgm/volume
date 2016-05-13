@@ -473,7 +473,7 @@ GetCurrDerivatives(Scalar *derivatives, const SolverState& solverState)
             = -timeDerivatives(valueIndex, functionIndex);
         }
       }
-      targetCellIndex++;
+      ++targetCellIndex;
     }
     double endPhase = MPI_Wtime();
     res[threadIndex] = endPhase - beginPhase;

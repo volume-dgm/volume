@@ -1,3 +1,4 @@
+#include "../DisjointSetBuilder.h"
 
 void GeomMesh<Space3>::BuildAdditionalGroupsInfo(IndexType* submeshNodesCount, IndexType submeshesCount,
   FacePairIndices* contactFaces,  IndexType* contactFacesCount,  IndexType contactTypesCount,
@@ -37,7 +38,7 @@ void GeomMesh<Space3>::BuildAdditionalGroupsInfo(IndexType* submeshNodesCount, I
     currTypeOffset += contactFacesCount[contactTypeIndex];
   }
   if(rejectedContactFacesCount > 0)
-    printf("rejected contact faces: %d\n", (int)rejectedContactFacesCount);
+    printf("rejected contact faces: %d\n", static_cast<int>(rejectedContactFacesCount));
 
   std::vector<BoundaryFace>  refinedBoundaryFaces;
   std::vector<IndexType>     refinedBoundaryFacesCount;
@@ -70,10 +71,10 @@ void GeomMesh<Space3>::BuildAdditionalGroupsInfo(IndexType* submeshNodesCount, I
     currTypeOffset += boundaryFacesCount[boundaryTypeIndex];
   }
   if (rejectedBoundaryFacesCount > 0)
-    printf("rejected boundary faces: %d\n", (int)rejectedBoundaryFacesCount);
+    printf("rejected boundary faces: %d\n", static_cast<int>(rejectedBoundaryFacesCount));
 
-  FacePairIndices* contactPtr = 0;
-  FaceIndices* boundaryPtr = 0;
+  FacePairIndices* contactPtr  = nullptr;
+  FaceIndices*     boundaryPtr = nullptr;
   if (refinedContactFaces.size() > 0) contactPtr = refinedContactFaces.data();
   if (refinedBoundaryFaces.size() > 0) boundaryPtr = refinedBoundaryFaces.data();
 
@@ -1203,7 +1204,7 @@ void GeomMesh<Space3>::
         newbie.faces[faceNumber].nodeIndices[1], 
         newbie.faces[faceNumber].nodeIndices[2]);
       assert(faceIndex != -1);
-      Vector outerNormal = GetFaceOuterNormal(faceIndex, 0);
+      Vector outerNormal = GetFaceOuterNormal(faceIndex, nullptr);
 
       for(IndexType nodeNumber = 0; nodeNumber < 3; nodeNumber++)
       {
@@ -1326,7 +1327,7 @@ void GeomMesh<Space3>::
       newbie.nodeIndices[2]);
     assert(faceIndex != -1);
 
-    Vector outerNormal = GetFaceOuterNormal(faceIndex,  0);
+    Vector outerNormal = GetFaceOuterNormal(faceIndex,  nullptr);
 
     for(IndexType nodeNumber = 0; nodeNumber < 3; nodeNumber++)
     {
@@ -1483,7 +1484,7 @@ void GeomMesh<Space3>::
         newbie.faces[faceNumber].nodeIndices[2]);
       assert(faceIndex != -1);
 
-      Vector outerNormal = GetFaceOuterNormal(faceIndex, 0);
+      Vector outerNormal = GetFaceOuterNormal(faceIndex, nullptr);
 
       for(IndexType nodeNumber = 0; nodeNumber < 3; nodeNumber++)
       {
@@ -1621,7 +1622,7 @@ void GeomMesh<Space3>::
       newbie.nodeIndices[2]);
     assert(faceIndex != -1);
 
-    Vector outerNormal = GetFaceOuterNormal(faceIndex,  0);
+    Vector outerNormal = GetFaceOuterNormal(faceIndex,  nullptr);
 
     for(IndexType nodeNumber = 0; nodeNumber < 3; nodeNumber++)
     {
@@ -1726,7 +1727,7 @@ void GeomMesh<Space3>::
       {
         edgeNormals[edgeIndex] = Vector::zeroVector();
       }
-      for(IndexType faceIndex = 0; faceIndex < GetFacesCount(); faceIndex++)
+      for(IndexType faceIndex = 0; faceIndex < GetFacesCount(); ++faceIndex)
       {
         faceNormals[faceIndex] = Vector::zeroVector();
       }
@@ -2186,7 +2187,7 @@ Space3::Vector GeomMesh<Space3>::
   Vector vec1;
   Vector vec2;
 
-  if(vertexPositions != 0)
+  if(vertexPositions != nullptr)
   {
     origin  = vertexPositions[faceNode0];
     vec0    = vertexPositions[faceNode1] - origin;

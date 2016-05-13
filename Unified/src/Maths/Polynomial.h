@@ -14,10 +14,7 @@ struct Polynomial
   {
     Pows()
     {
-      for(IndexType powIndex = 0; powIndex < DimsCount; powIndex++)
-      {
-        pows[powIndex] = 0;
-      }
+      std::fill(pows, pows + DimsCount, 0);
     }
     bool operator <(const Pows& other) const
     {
@@ -27,7 +24,7 @@ struct Polynomial
     }
     bool operator == (const Pows& other) const
     {
-      for(IndexType i = 0; i < DimsCount; i++)
+      for(IndexType i = 0; i < DimsCount; ++i)
       {
         if(pows[i] != other.pows[i]) 
         {
@@ -49,7 +46,7 @@ struct Polynomial
     size_t operator()(const Pows &key) const
     {
       size_t hash_value = 1;
-      for(IndexType i = 0; i < DimsCount; i++)
+      for(IndexType i = 0; i < DimsCount; ++i)
       {
         hash_value *= 10;
         hash_value += key.pows[i];
@@ -66,7 +63,7 @@ struct Polynomial
   Polynomial(Scalar value = 0)
   {
     Pows zeroPows;
-    for(IndexType coordIndex = 0; coordIndex < DimsCount; coordIndex++)
+    for(IndexType coordIndex = 0; coordIndex < DimsCount; ++coordIndex)
     {
       zeroPows.pows[coordIndex] = 0;
     }
@@ -84,7 +81,7 @@ struct Polynomial
 
   Polynomial &operator *=(Scalar mult)
   {
-    for(typename TermsMap::iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::iterator it = terms.begin(); it != terms.end(); ++it)
     {
       it->second *= mult;
     }
@@ -93,7 +90,7 @@ struct Polynomial
 
   Polynomial &operator +=(const Polynomial &other)
   {
-    for(typename TermsMap::const_iterator it = other.terms.begin(); it != other.terms.end(); it++)
+    for(typename TermsMap::const_iterator it = other.terms.begin(); it != other.terms.end(); ++it)
     {
       terms[it->first] += it->second;
     }
@@ -102,7 +99,7 @@ struct Polynomial
 
   Polynomial &operator -=(Polynomial &other)
   {
-    for(typename TermsMap::const_iterator it = other.terms.begin(); it != other.terms.end(); it++)
+    for(typename TermsMap::const_iterator it = other.terms.begin(); it != other.terms.end(); ++it)
     {
       terms[it->first] -= it->second;
     }
@@ -119,15 +116,15 @@ struct Polynomial
   Polynomial operator *(const Polynomial &other) const
   {
     PolynomialType res;
-    for(typename TermsMap::const_iterator it0 = terms.begin(); it0 != terms.end(); it0++)
+    for(typename TermsMap::const_iterator it0 = terms.begin(); it0 != terms.end(); ++it0)
     {
       Pows pows0 = it0->first;
-      for(typename TermsMap::const_iterator it1 = other.terms.begin(); it1 != other.terms.end(); it1++)
+      for(typename TermsMap::const_iterator it1 = other.terms.begin(); it1 != other.terms.end(); ++it1)
       {
         Pows pows1 = it1->first;
         Pows resPows;
 
-        for(IndexType coordIndex = 0; coordIndex < DimsCount; coordIndex++)
+        for(IndexType coordIndex = 0; coordIndex < DimsCount; ++coordIndex)
         {
           resPows.pows[coordIndex] = pows0.pows[coordIndex] + pows1.pows[coordIndex];
         }
@@ -150,14 +147,14 @@ struct Polynomial
   OtherPolynomial Substitute   (const OtherPolynomial *coords) const
   {
     OtherPolynomial res(0);
-    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); ++it)
     {
       if(it->second == 0) continue;
 
       OtherPolynomial termRes(Scalar(it->second));
-      for(IndexType coordIndex = 0; coordIndex < DimsCount; coordIndex++)
+      for(IndexType coordIndex = 0; coordIndex < DimsCount; ++coordIndex)
       {
-        for(IndexType powValue = 0; powValue < it->first.pows[coordIndex]; powValue++)
+        for(IndexType powValue = 0; powValue < it->first.pows[coordIndex]; ++powValue)
         {
           termRes = termRes * coords[coordIndex];
         }
@@ -172,12 +169,12 @@ struct Polynomial
   {
     PolynomialType res;
 
-    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); ++it)
     {
       bool ok = 1;
       Pows termPows;
       Scalar coef = it->second;
-      for(IndexType coordIndex = 0; coordIndex < DimsCount; coordIndex++)
+      for(IndexType coordIndex = 0; coordIndex < DimsCount; ++coordIndex)
       {
         if(derivativeDegrees[coordIndex] == 0)
         {
@@ -203,10 +200,10 @@ struct Polynomial
   Scalar GetValue(Scalar *coords) const
   {
     Scalar res = 0;
-    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); ++it)
     {
       Scalar term(it->second);
-      for(IndexType coordIndex = 0; coordIndex < DimsCount; coordIndex++)
+      for(IndexType coordIndex = 0; coordIndex < DimsCount; ++coordIndex)
       {
         term *= Pow(coords[coordIndex], it->first.pows[coordIndex]);
       }
@@ -225,12 +222,12 @@ struct Polynomial
   {
     assert(dimsCount <= DimsCount);
     Scalar res = 0;
-    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); it++)
+    for(typename TermsMap::const_iterator it = terms.begin(); it != terms.end(); ++it)
     {
       Scalar nom(1.0);
       IndexType denom = dimsCount;
 
-      for(IndexType coordIndex = 0; coordIndex < dimsCount; coordIndex++)
+      for(IndexType coordIndex = 0; coordIndex < dimsCount; ++coordIndex)
       {
         nom *= Factorial(it->first.pows[coordIndex]);
         denom += it->first.pows[coordIndex];
@@ -251,7 +248,7 @@ private:
   Scalar Factorial(IndexType num) const
   {
     Scalar res(1.0);
-    for(IndexType i = 1; i <= num; i++)
+    for(IndexType i = 1; i <= num; ++i)
     {
       res *= Scalar(i);
     }
@@ -310,7 +307,7 @@ private:
     Polynomial<Scalar, IndexType, DimsCount> prevOperand;
     Polynomial<Scalar, IndexType, DimsCount> currOperand;
 
-    std::map<char, Polynomial<Scalar, IndexType, DimsCount>::Pows > charTerms;
+    std::map<char, typename Polynomial<Scalar, IndexType, DimsCount>::Pows > charTerms;
     if(DimsCount > 0)
       charTerms['x'].pows[0] = 1;
     if(DimsCount > 1)

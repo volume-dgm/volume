@@ -127,7 +127,7 @@ struct GhostCellFunctionGetter
         case Solution: 
         {
           ValueType neighbourSolution = mesh->GetCellSolution(neighbourCellIndex, testPoint);
-          for (IndexType valueIndex = 0; valueIndex < dimsCount; valueIndex++)
+          for (IndexType valueIndex = 0; valueIndex < dimsCount; ++valueIndex)
           {
             values[valueIndex] = neighbourSolution.values[valueIndex];
           }

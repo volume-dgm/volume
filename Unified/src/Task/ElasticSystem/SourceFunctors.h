@@ -39,7 +39,7 @@ struct ConstantAccelerationFunctor: public SourceFunctor<typename ElasticSystem:
   }
 
   virtual ~ConstantAccelerationFunctor() {}
-  virtual void operator()(const Vector&, Scalar, Scalar* values) const
+  virtual void operator()(const Vector&, Scalar, Scalar* values) const override
   {
     std::fill_n(values, dimsCount, Scalar(0.0));
     SetAcceleration(Overload<Space>(), values);

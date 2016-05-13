@@ -72,21 +72,21 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   Elastic GetAverageCellElastic(IndexType cellIndex) const;
   
-  int GetDimentionsCount(const SolverState& solverState) const;
-  int GetMaxDimentionsCount() const;
+  int GetDimentionsCount(const SolverState& solverState) const override;
+  int GetMaxDimentionsCount() const override;
 
-  void GetCurrDerivatives(Scalar* derivatives, const SolverState& solverState);
-  void GetCurrCoords(Scalar& time, Scalar* currCoords, Scalar* oldCoords, const SolverState& solverState);
-  void GetCurrCoords(Scalar& time, Scalar* currCoords) const;
+  void GetCurrDerivatives(Scalar* derivatives, const SolverState& solverState) override;
+  void GetCurrCoords(Scalar& time, Scalar* currCoords, Scalar* oldCoords, const SolverState& solverState) override;
+  void GetCurrCoords(Scalar& time, Scalar* currCoords) const override;
 
-  void SetCurrCoords(Scalar time, const Scalar* newCoords, const SolverState& solverState);
-  void SetCurrCoords(Scalar time, const Scalar* newCoords, const Scalar* oldCoords, const SolverState& solverState);
-  void SetCurrCoords(Scalar time, const Scalar* oldCoords);
+  void SetCurrCoords(Scalar time, const Scalar* newCoords, const SolverState& solverState) override;
+  void SetCurrCoords(Scalar time, const Scalar* newCoords, const Scalar* oldCoords, const SolverState& solverState) override;
+  void SetCurrCoords(Scalar time, const Scalar* oldCoords) override;
   
   void SetDetectors(const std::vector<Vector>& globalDetectorsPositions);
   void GetDetectorsData(IndexType detectorIndex, Scalar* data);
 
-  Scalar GetErrorValue(Scalar time, const Scalar* coords0, const Scalar* coords1, const SolverState&, const Scalar* mults);
+  Scalar GetErrorValue(Scalar time, const Scalar* coords0, const Scalar* coords1, const SolverState&, const Scalar* mults) override;
 
   void FindDestructions(std::vector<bool>* isCellBroken);
   virtual void UnfoldMesh(Scalar minHeight, IndexType iterationsCount) = 0;
@@ -113,7 +113,7 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
 
   void HandleMaterialErosion();
 
-  virtual Scalar GetTimeStepPrediction();
+  virtual Scalar GetTimeStepPrediction() override;
 
   virtual void DestroyFace(IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType) = 0;
 
@@ -264,8 +264,8 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
   SPACE2_TYPEDEFS
   typedef          Space2                                                  Space;
   typedef          ElasticSystem<Space>                                    ElasticSystemType;
-  typedef typename ElasticSystemType::ElasticSpace                         ElasticSpaceType;
-  typedef typename ElasticSpaceType::Elastic                               Elastic;
+  using ElasticSpaceType = ElasticSystemType::ElasticSpace;
+  using Elastic = ElasticSpaceType::Elastic;
   typedef          VolumeMesh<Space, FunctionSpace, ElasticSystemType>     VolumeMeshType;
   typedef typename VolumeMeshType::EdgePairIndices                         EdgePairIndices;
   typedef typename VolumeMeshType::BoundaryEdge                            BoundaryEdge;
@@ -301,13 +301,9 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
 
   Elastic GetAverageEdgeElastic (IndexType cellIndex, IndexType edgeNumber) const;
 
-  // if stress components on the edge are over threshold then contact will be substituted for free boundary
-  void FindDestructions(EdgePairIndices* contactEdges, IndexType* contactEdgesCount, IndexType contactTypesCount,
-                        std::vector<bool>* isContactBroken, std::vector<bool>* isCellBroken);
+  void HandleContinuousDestruction() override;
 
-  void HandleContinuousDestruction();
-
-  void DestroyFace(IndexType cellIndex, IndexType edgeNumber, IndexType dynamicBoundaryType)
+  void DestroyFace(IndexType cellIndex, IndexType edgeNumber, IndexType dynamicBoundaryType) override
   {
     IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, edgeNumber);
     IndexType correspondingEdgeNumber = volumeMesh.additionalCellInfos[cellIndex].neighbouringEdges[edgeNumber].correspondingEdgeNumber;
@@ -326,7 +322,7 @@ struct ElasticVolumeMesh<Space2, FunctionSpace>: public ElasticVolumeMeshCommon<
   }
 
 private:
-  void UnfoldMesh(Scalar minHeight, IndexType iterationsCount);
+  void UnfoldMesh(Scalar minHeight, IndexType iterationsCount) override;
 };
 
 template <typename FunctionSpace>
@@ -335,8 +331,8 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   SPACE3_TYPEDEFS
   typedef          Space3                                       Space;
   typedef          ElasticSystem<Space3>                        ElasticSystemType;
-  typedef typename ElasticSystemType::ElasticSpace              ElasticSpaceType;
-  typedef typename ElasticSystemType::MediumParameters          MediumParameters;
+  using ElasticSpaceType = ElasticSystemType::ElasticSpace;
+  using MediumParameters = ElasticSystemType::MediumParameters;
 
   typedef          VolumeMesh<Space3, FunctionSpace, ElasticSystemType>    VolumeMeshType;
   typedef typename VolumeMeshType::FacePairIndices                         FacePairIndices;
@@ -344,7 +340,7 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
   typedef typename VolumeMeshType::Node                                    Node;
   typedef typename VolumeMeshType::Cell                                    Cell;
   typedef typename VolumeMeshType::CellSolution                            CellSolution;
-  typedef typename ElasticSpaceType::Elastic                               Elastic;
+  using Elastic = ElasticSpaceType::Elastic;
   typedef typename VolumeMeshType::FaceLocation                            FaceLocation;
   typedef typename VolumeMeshType::FaceLocationPair                        FaceLocationPair;
   using ElasticVolumeMeshCommon<Space, FunctionSpace>::volumeMesh;
@@ -364,19 +360,16 @@ struct ElasticVolumeMesh<Space3, FunctionSpace>: public ElasticVolumeMeshCommon<
 
   ElasticVolumeMesh(DifferentialSolver<Scalar>* solver, Scalar tolerance, int hierarchyLevelsCount);
 
-  void UnfoldMesh(Scalar minHeight, IndexType iterationsCount);
+  void UnfoldMesh(Scalar minHeight, IndexType iterationsCount) override;
 
   virtual void MakeSnapshot(Elastic* destData,
     const Vector& origin, const Vector& spacing, 
     const Vector& boxPoint1, const Vector& boxPoint2,
     bool halfStepSolution);
 
-  void FindDestructions(FacePairIndices* contactEdges, IndexType* contactFacesCount, IndexType contactTypesCount,
-    std::vector<bool>* isContactBroken, std::vector<bool>* isCellBroken);
+  void HandleContinuousDestruction() override;
 
-  void HandleContinuousDestruction();
-
-  void DestroyFace(IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType)
+  void DestroyFace(IndexType cellIndex, IndexType faceNumber, IndexType dynamicBoundaryType) override
   {
     IndexType correspondingCellIndex = volumeMesh.GetCorrespondingCellIndex(cellIndex, faceNumber);
     IndexType correspondingFaceNumber = volumeMesh.additionalCellInfos[cellIndex].neighbouringFaces[faceNumber].correspondingFaceNumber;
@@ -421,7 +414,7 @@ struct FunctionGetter
     Scalar invRho = mesh->volumeMesh.cellMediumParameters[cellIndex].invRho;
 
     typename MeshType::Elastic elastic = stateMaker->GetValue(globalPoint, lambda, mju, invRho);
-    for (IndexType valueIndex = 0; valueIndex < mesh->dimsCount; valueIndex++)
+    for (IndexType valueIndex = 0; valueIndex < mesh->dimsCount; ++valueIndex)
     {
       values[valueIndex] = elastic.values[valueIndex];
     }
@@ -436,12 +429,12 @@ struct FunctionGetter
 template <typename MeshType, typename Corrector>
 void ApplyCorrector(MeshType* const mesh)
 {
-  typedef typename MeshType::Scalar    Scalar;
-  typedef typename MeshType::IndexType IndexType;
-  typedef typename MeshType::Vector    Vector;
+  using Scalar = typename MeshType::Scalar;
+  using IndexType = typename MeshType::IndexType;
+  using Vector = typename MeshType::Vector;
 
   #pragma omp parallel for
-  for (int cellIndex = 0; cellIndex < (int)mesh->volumeMesh.cells.size(); ++cellIndex)
+  for (int cellIndex = 0; cellIndex < int(mesh->volumeMesh.cells.size()); ++cellIndex)
   {
     Corrector corrector(mesh, cellIndex);
     Scalar cellValues[mesh->functionsCount * mesh->dimsCount];
@@ -450,9 +443,9 @@ void ApplyCorrector(MeshType* const mesh)
     //mesh->volumeMesh.functionSpace->template Decompose< Corrector, MeshType::dimsCount >(corrector, cellValues);
 
 
-    for (IndexType functionIndex = 0; functionIndex < mesh->functionsCount; functionIndex++)
+    for (IndexType functionIndex = 0; functionIndex < mesh->functionsCount; ++functionIndex)
     {
-      for (IndexType valueIndex = 0; valueIndex < mesh->dimsCount; valueIndex++)
+      for (IndexType valueIndex = 0; valueIndex < mesh->dimsCount; ++valueIndex)
       {
         mesh->volumeMesh.cellSolutions[cellIndex].basisVectors[functionIndex].values[valueIndex] =
           cellValues[valueIndex * mesh->functionsCount + functionIndex];

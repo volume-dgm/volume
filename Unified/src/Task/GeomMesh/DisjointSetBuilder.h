@@ -6,7 +6,7 @@ struct DisjointSetUnion
   DisjointSetUnion(IndexType setsCount)
   {
     setIndices.resize(setsCount);
-    for(IndexType setIndex = 0; setIndex < setsCount; setIndex++)
+    for(IndexType setIndex = 0; setIndex < setsCount; ++setIndex)
     {
       setIndices[setIndex] = setIndex;
     }
@@ -61,9 +61,9 @@ struct GroupBuilder
     std::vector<SetElement<T, IndexType> > elements;
 
     elements.resize(pairsCount * 2);
-    for(IndexType pairIndex = 0; pairIndex < pairsCount; pairIndex++)
+    for(IndexType pairIndex = 0; pairIndex < pairsCount; ++pairIndex)
     {
-      for(IndexType valueIndex = 0; valueIndex < 2; valueIndex++)
+      for(IndexType valueIndex = 0; valueIndex < 2; ++valueIndex)
       {
         SetElement<T, IndexType> newbie;
         newbie.pairIndex = pairIndex;
@@ -80,7 +80,7 @@ struct GroupBuilder
     DisjointSetUnion<IndexType> dsu(pairsCount);
     std::sort(elements.begin(), elements.end(), SetElement<T, IndexType>::CompareValue);
     IndexType size = IndexType(elements.size());
-    for(IndexType i = 1; i < size; i++)
+    for(IndexType i = 1; i < size; ++i)
     {
       if(elements[i - 1].value == elements[i].value)
       {
@@ -95,13 +95,13 @@ struct GroupBuilder
     std::vector<IndexType> pairToGroup;
     pairToGroup.resize(pairsCount);
 
-    for(IndexType pairIndex = 0; pairIndex < pairsCount; pairIndex++)
+    for(IndexType pairIndex = 0; pairIndex < pairsCount; ++pairIndex)
     {
-      frequencies[dsu.GetSetIndex(pairIndex)]++;
+      ++frequencies[dsu.GetSetIndex(pairIndex)];
     }
 
     IndexType uniqueGroupsCount = 0;
-    for(IndexType pairIndex = 0; pairIndex < pairsCount; pairIndex++)
+    for(IndexType pairIndex = 0; pairIndex < pairsCount; ++pairIndex)
     {
       if(frequencies[pairIndex] != 0) 
       {
@@ -111,22 +111,22 @@ struct GroupBuilder
 
     pairGroupIndices.resize(pairsCount);
     groupInfos.resize(uniqueGroupsCount);
-    for(IndexType pairIndex = 0; pairIndex < pairsCount; pairIndex++)
+    for(IndexType pairIndex = 0; pairIndex < pairsCount; ++pairIndex)
     {
-      groupInfos[pairToGroup[dsu.GetSetIndex(pairIndex)]].size++;
+      ++groupInfos[pairToGroup[dsu.GetSetIndex(pairIndex)]].size;
     }
 
     IndexType test0 = groupInfos[0].size;
 
     IndexType currGroupOffset = 0;
-    for(IndexType groupIndex = 0; groupIndex < uniqueGroupsCount; groupIndex++)
+    for(IndexType groupIndex = 0; groupIndex < uniqueGroupsCount; ++groupIndex)
     {
       groupInfos[groupIndex].offset = currGroupOffset;
       currGroupOffset += groupInfos[groupIndex].size;
       groupInfos[groupIndex].size = 0; //will be recalculated
     }
 
-    for(IndexType pairIndex = 0; pairIndex < pairsCount; pairIndex++)
+    for(IndexType pairIndex = 0; pairIndex < pairsCount; ++pairIndex)
     {
       IndexType groupIndex = pairToGroup[dsu.GetSetIndex(pairIndex)];
       pairGroupIndices[groupInfos[groupIndex].offset + groupInfos[groupIndex].size++] = pairIndex;

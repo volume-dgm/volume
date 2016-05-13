@@ -12,7 +12,7 @@ public:
 
   virtual void BuildMesh(MeshIO<Space>* const mesh, 
     GeomMesh<Space>* geomMesh, 
-    MeshIO<Space>* const nonDuplicatedVerticesMesh = 0) = 0;
+    MeshIO<Space>* const nonDuplicatedVerticesMesh = nullptr) = 0;
 
   virtual void BuildMediumParams(MeshIO<Space>* const domain, std::vector<char>* mediumParams) {}
 
@@ -26,7 +26,7 @@ protected:
   template <typename DataType>
   void WriteData(std::vector<char>* mediumParams, DataType data)
   {
-    char* bytes = (char*)(&data);
+    char* bytes = static_cast<char*>(&data);
     for (IndexType byteIndex = 0; byteIndex < sizeof(DataType); ++byteIndex)
     {
       mediumParams->push_back(bytes[byteIndex]);

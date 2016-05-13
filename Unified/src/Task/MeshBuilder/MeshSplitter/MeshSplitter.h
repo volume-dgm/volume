@@ -23,8 +23,8 @@ public:
   }
 
 protected:
-  void AddBoundariesToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains);
-  void AddContactsToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains);
+  void AddBoundariesToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains) override;
+  void AddContactsToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains) override;
 };
 
 template <>
@@ -45,8 +45,8 @@ public:
   }
 
 protected:
-  void AddBoundariesToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains);
-  void AddContactsToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains);
+  void AddBoundariesToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains) override;
+  void AddContactsToDomains(IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains) override;
 };
 
 #include "MeshSplitter2.inl"

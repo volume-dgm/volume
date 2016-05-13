@@ -5,7 +5,7 @@
 #include "ContactInfos.h"
 #include "PointSources.h"
 
-#include "../VolumeMethod/FunctionGetters/BoundaryFunctionGetter.h"
+#include "SourceFunctors.h"
 #include <vector>
 
 #include "Eigen/Dense"
@@ -43,9 +43,8 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   {
     Scalar values[ElasticSystemBase<Space>::dimsCount];
 
-    ValueTypeCommon()
-    {
-    }
+    ValueTypeCommon() {}
+    virtual ~ValueTypeCommon() {}
 
     ValueTypeCommon(Scalar initialValue)
     {
@@ -75,8 +74,6 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
     void SetZeroValues();
     Vector GetVelocity() const;
     void SetVelocity(const Vector& velocity);
-
-    Tensor GetTension() const;
     void SetTension(const Tensor& tension);
 
     void MakeDimension(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult);
@@ -186,10 +183,10 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   BoundaryInfoFunctor<Space>* GetBoundaryInfoFunctor(IndexType interactionType);
 
   void SetFreeBoundary(IndexType interactionType, Scalar tensionDimensionlessMult, Scalar reflectionCoeff,
-    VectorFunctor<Space>* externalForceFunctor = 0, IndexType dynamicContactInteractionType = IndexType(-1));
+    VectorFunctor<Space>* externalForceFunctor = nullptr, IndexType dynamicContactInteractionType = IndexType(-1));
 
   void SetFixedBoundary(IndexType interactionType, Scalar velocityDimensionlessMult, Scalar reflectionCoeff,
-    VectorFunctor<Space>* externalVelocityFunctor = 0);
+    VectorFunctor<Space>* externalVelocityFunctor = nullptr);
 
   void SetAbsorbBoundary(IndexType interactiontype);
   void SetSymmetryBoundary(IndexType interactionType);
@@ -221,7 +218,7 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   {
   public:
     SPACE_TYPEDEFS
-    void operator()(const Vector&, const Vector&, const Scalar, Scalar* values)
+    void operator()(const Vector&, const Vector&, const Scalar, Scalar* values) override
     {
       std::fill_n(values, dimsCount, Scalar(0.0));
     }
@@ -237,9 +234,9 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
       this->tensionDimensionlessMult = tensionDimensionlessMult;
     }
 
-    void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values);
+    void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values) override;
 
-    void SetCurrentVelocity(const Vector& velocity)
+    void SetCurrentVelocity(const Vector& velocity) override
     {
       forceFunctor->SetCurrentVelocity(velocity);
     }
@@ -259,7 +256,7 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
       this->velocityDimensionlessMult = velocityDimensionlessMult;
     }
 
-    void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values)
+    void operator()(const Vector& globalPoint, const Vector& externalNormal, const Scalar time, Scalar* values) override
     {
       std::fill(values, values + dimsCount, 0);
       Vector externalVelocity = (*velocityFunctor)(globalPoint, externalNormal, time) / velocityDimensionlessMult;

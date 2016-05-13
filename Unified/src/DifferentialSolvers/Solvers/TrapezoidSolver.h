@@ -17,7 +17,7 @@ public:
     this->nonlinearSolver = nonlinearSolver;
   }
 
-  void SetSystem(DifferentialSystem<Scalar>* system)
+  void SetSystem(DifferentialSystem<Scalar>* system) override
   {
     this->system = system;
     nonlinearSolver->SetFunction(this);
@@ -51,12 +51,12 @@ public:
     delete [] predictedCoords;
   }
 
-  int GetPhasesCount()
+  int GetPhasesCount() const override
   {
     return 1;
   }
 
-  void InitStep(Scalar timeStep, Scalar tolerance, bool updateInitialCoords)
+  void InitStep(Scalar timeStep, Scalar tolerance, bool updateInitialCoords) override
   {
     DifferentialSolver<Scalar>::InitStep(timeStep, tolerance, updateInitialCoords);
     if (system->GetHierarchyLevelsCount() == 1)
@@ -67,7 +67,7 @@ public:
     }
   }
 
-  void InitStep(const SolverState& solverState)
+  void InitStep(const SolverState& solverState) override
   {
     if (system->GetHierarchyLevelsCount() > 1)
     {
@@ -77,7 +77,7 @@ public:
     }
   }
 
-  bool AdvancePhase(const SolverState& solverState)
+  bool AdvancePhase(const SolverState& solverState) override
   {
     if (!initialized)
     {
@@ -94,7 +94,7 @@ public:
 
     if (!phaseAdvanced)
     {
-      iteration++;
+      ++iteration;
       Scalar time;
       system->GetCurrCoords(time, nextCoords);
 
@@ -118,7 +118,7 @@ public:
     return phaseAdvanced;
   }
 
-  void AdvanceStep(const SolverState& solverState)
+  void AdvanceStep(const SolverState& solverState) override
   {
     if (solverState.IsPreInitial())
     {
@@ -133,31 +133,31 @@ public:
     }
   }
 
-  void RevertStep(Scalar)
+  void RevertStep(Scalar) override
   {
   }
 
-  Scalar GetLastStepError()
+  Scalar GetLastStepError() const override
   {
     return stepError;
   }
 
-  Scalar GetTimeStepPrediction()
+  Scalar GetTimeStepPrediction() const override
   {
     return timeStep;
   }
 
-  IndexType GetMaxDimentionsCount() const
+  IndexType GetMaxDimentionsCount() const override
   {
     return system->GetMaxDimentionsCount();
   }
 
-  IndexType GetDimentionsCount(const SolverState& solverState) const
+  IndexType GetDimentionsCount(const SolverState& solverState) const override
   {
     return system->GetDimentionsCount(solverState);
   }
 
-  virtual Scalar GetValue(const Scalar* coords, const SolverState& solverState, Scalar* values)
+  virtual Scalar GetValue(const Scalar* coords, const SolverState& solverState, Scalar* values) override
   {
   //  system->SetCurrCoords(currTime + currStep, coords, solverState);
     system->GetCurrDerivatives(probeCoords, solverState);

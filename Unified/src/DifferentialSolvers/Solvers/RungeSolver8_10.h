@@ -16,7 +16,7 @@ public:
 	RungeSolver8_10()
 	{
 	}
-	void SetSystem(DifferentialSystem<Scalar> *system)
+	void SetSystem(DifferentialSystem<Scalar> *system) override
 	{
 		this->system = system;
 		int maxDimentionsCount = system->GetMaxDimentionsCount();
@@ -80,7 +80,7 @@ public:
 		return exp(log(a) * b);
 	}
 
-	int GetPhasesCount()
+	int GetPhasesCount() const override
 	{
 		return 17;
 	}
@@ -636,7 +636,7 @@ public:
 		}
 	}
 
-	void AdvanceStep()
+	void AdvanceStep(const SolverState& solverState) override
 	{
 		if (this->hierarchyPhase == 1)
 		{
@@ -645,17 +645,17 @@ public:
 		system->SetCurrCoords(this->currTime, nextCoords2, this->globalStepIndex, this->hierarchyPhase);
 	}
 
-	void RevertStep()
+	void RevertStep(Scalar) override 
 	{
 		system->SetCurrCoords(this->currTime, currCoords, this->globalStepIndex, this->hierarchyPhase);
 	}
 
-	Scalar GetLastStepError()
+	Scalar GetLastStepError() const override
 	{
 		return stepError;
 	}
 
-	Scalar GetTimeStepPrediction()
+	Scalar GetTimeStepPrediction() const override
 	{
 		return predictedStep;
 	}
