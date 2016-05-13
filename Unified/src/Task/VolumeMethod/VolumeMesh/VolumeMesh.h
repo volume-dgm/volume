@@ -182,11 +182,6 @@ public:
   TimeHierarchyLevelsManager<Space> timeHierarchyLevelsManager;
   void RebuildTimeHierarchyLevels(IndexType globalStepIndex, bool allowCollisions, bool externalInitialization = false);
 
-  void   GetCellEnergy(IndexType cellIndex, Scalar& kineticEnergy, Scalar& potentialEnergy) const;
-  Vector GetTotalImpulse() const;
-  Scalar GetTotalEnergy(Scalar& kineticEnergy, Scalar& potentialEnergy) const;
-  Scalar GetTotalMass() const;
-
   virtual Scalar GetCellDeformJacobian(Vector cellVertices[Space::NodesPerCell]) const = 0;
 
   void BuildAABBTree(const Vector& boxPoint1, const Vector& boxPoint2);
@@ -357,7 +352,6 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::isCellAvailable;
   using VolumeMeshCommon<Space, FunctionSpace, System>::IsReadyForCollisionCell;
   using VolumeMeshCommon<Space, FunctionSpace, System>::AddToAABBTree;
-  using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy;
 
 public:
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
@@ -497,7 +491,6 @@ public:
   using VolumeMeshCommon<Space, FunctionSpace, System>::isCellAvailable;
   using VolumeMeshCommon<Space, FunctionSpace, System>::IsReadyForCollisionCell;
   using VolumeMeshCommon<Space, FunctionSpace, System>::AddToAABBTree;
-  using VolumeMeshCommon<Space, FunctionSpace, System>::GetCellEnergy;
 
   VolumeMesh(int solverPhasesCount, int hierarchyLevelsCount):
     VolumeMeshCommon<Space3, FunctionSpace, System>(solverPhasesCount, hierarchyLevelsCount)

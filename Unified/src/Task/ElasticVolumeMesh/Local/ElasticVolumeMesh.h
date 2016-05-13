@@ -111,6 +111,11 @@ struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar
   typename SolverSettings<Space>::Erosion erosion;
   typename SolverSettings<Space>::DynamicContactBox dynamicContactBox;
 
+  void   GetCellEnergy(IndexType cellIndex, Scalar& kineticEnergy, Scalar& potentialEnergy) const;
+  Vector GetTotalImpulse() const;
+  Scalar GetTotalEnergy(Scalar& kineticEnergy, Scalar& potentialEnergy) const;
+  Scalar GetTotalMass() const;
+
   void HandleMaterialErosion();
 
   virtual Scalar GetTimeStepPrediction() override;

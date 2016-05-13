@@ -991,3 +991,84 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions(std::vector
 
   HandleMaterialErosion();
 }
+
+template<typename Space, typename FunctionSpace>
+typename Space::Vector ElasticVolumeMeshCommon<Space, FunctionSpace>::GetTotalImpulse() const
+{
+  Vector totalImpulse = Vector::zero();
+
+  for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
+  {
+    auto velocityFunc = [&](IndexType basisPointIndex)
+    {
+      return volumeMesh.GetRefCellSolution(cellIndex, basisPointIndex, VolumeMeshTypeCommon::Basis).GetVelocity();
+    };
+
+    Vector intVel = volumeMesh.functionSpace->template GetCellAveragePrecomputed<decltype(velocityFunc), Vector>(velocityFunc);
+
+    totalImpulse += volumeMesh.GetVolume(cellIndex) * intVel / volumeMesh.cellMediumParameters[cellIndex].invRho;
+  }
+  return totalImpulse;
+}
+
+template<typename Space, typename FunctionSpace>
+void ElasticVolumeMeshCommon<Space, FunctionSpace>::GetCellEnergy(IndexType cellIndex, Scalar& kineticEnergy, Scalar& potentialEnergy) const
+{
+  const Scalar lambda = volumeMesh.cellMediumParameters[cellIndex].lambda;
+  const Scalar mu = volumeMesh.cellMediumParameters[cellIndex].mju;
+  const Scalar rho = 1 / volumeMesh.cellMediumParameters[cellIndex].invRho;
+  const Tensor identityTensor = Tensor(1);
+
+  Scalar cellVolume = volumeMesh.GetVolume(cellIndex);
+
+  auto kineticEnergyFunc = [&](IndexType basisPointIndex)
+  {
+    auto cellSolution = volumeMesh.GetRefCellSolution(cellIndex, basisPointIndex, VolumeMeshTypeCommon::Basis);
+    return Scalar(0.5) * cellSolution.GetVelocity().SquareLen() * rho;
+  };
+
+  auto potentialEnergyFunc = [&](IndexType basisPointIndex)
+  {
+    auto cellSolution = volumeMesh.GetRefCellSolution(cellIndex, basisPointIndex, VolumeMeshTypeCommon::Basis);
+    Tensor t = cellSolution.GetTension();
+    Scalar s = lambda / (Space::Dimension * lambda + 2 * mu);
+
+    // from Chelnokov phd thesis
+    return Scalar(0.25) / mu * (DoubleConvolution(t, t) - s * Sqr(DoubleConvolution(t, identityTensor)));
+  };
+
+  kineticEnergy = volumeMesh.functionSpace->template GetCellAveragePrecomputed<decltype(kineticEnergyFunc), Scalar>(kineticEnergyFunc)   * cellVolume;
+  potentialEnergy = volumeMesh.functionSpace->template GetCellAveragePrecomputed<decltype(potentialEnergyFunc), Scalar>(potentialEnergyFunc) * cellVolume;
+}
+
+template<typename Space, typename FunctionSpace>
+typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetTotalEnergy(Scalar& kineticEnergy, Scalar& potentialEnergy) const
+{
+  kineticEnergy = potentialEnergy = 0;
+
+  for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
+  {
+    Scalar kineticCellEnergy;
+    Scalar potentialCellEnergy;
+    GetCellEnergy(cellIndex, kineticCellEnergy, potentialCellEnergy);
+    kineticEnergy += kineticCellEnergy;
+    potentialEnergy += potentialCellEnergy;
+  }
+  Scalar totalEnergy = kineticEnergy + potentialEnergy;
+  return totalEnergy;
+}
+
+template<typename Space, typename FunctionSpace>
+typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetTotalMass() const
+{
+  Scalar totalMass = 0;
+  for (IndexType cellIndex = 0; cellIndex < volumeMesh.cells.size(); ++cellIndex)
+  {
+    if (volumeMesh.IsCellInAABBTree(cellIndex))
+    {
+      totalMass += volumeMesh.GetVolume(cellIndex) / volumeMesh.cellMediumParameters[cellIndex].invRho;
+    }
+  }
+  return totalMass;
+}
+

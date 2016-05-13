@@ -442,8 +442,8 @@ void Task<Space, order>::Run()
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
     Scalar kineticEnergy, potentialEnergy;
-    initialEnergies.push_back(distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy(kineticEnergy, potentialEnergy));
-    initialImpulses.push_back(distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalImpulse());
+    initialEnergies.push_back(distributedElasticMeshes[domainNumber]->GetTotalEnergy(kineticEnergy, potentialEnergy));
+    initialImpulses.push_back(distributedElasticMeshes[domainNumber]->GetTotalImpulse());
   }
 
   while(currTime < settings.task.destinationTime || settings.task.destinationTime < 0)
@@ -1664,10 +1664,10 @@ void Task<Space, order>::WriteEnergyAndImpulseDeviation(const std::vector<Scalar
   if (!file.is_open()) return;
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
-    Vector totalImpulse = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalImpulse();
+    Vector totalImpulse = distributedElasticMeshes[domainNumber]->GetTotalImpulse();
 
     Scalar kineticEnergy, potentialEnergy;
-    Scalar totalEnergy = distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalEnergy(kineticEnergy, potentialEnergy);
+    Scalar totalEnergy = distributedElasticMeshes[domainNumber]->GetTotalEnergy(kineticEnergy, potentialEnergy);
     file << currTime << " " 
                      << "Energy deviation: " << totalEnergy - initialEnergies[domainNumber] << "; "
                      << "Energy: " << totalEnergy << "; " 
@@ -1678,7 +1678,7 @@ void Task<Space, order>::WriteEnergyAndImpulseDeviation(const std::vector<Scalar
       file << totalImpulse[dimIndex] << " ";
     }
     
-    file << "Mass: " << distributedElasticMeshes[domainNumber]->volumeMesh.GetTotalMass();
+    file << "Mass: " << distributedElasticMeshes[domainNumber]->GetTotalMass();
     file << " Kinetic E: " << kineticEnergy << ";";
     file << " Potential E: " << potentialEnergy;
     file << std::endl;
