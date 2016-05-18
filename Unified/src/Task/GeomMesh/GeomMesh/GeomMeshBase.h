@@ -12,7 +12,7 @@ struct GeomMeshBase;
 template <>
 struct GeomMeshBase<Space2>
 {
-  virtual ~GeomMeshBase() {}
+  virtual ~GeomMeshBase() = default;
 
   SPACE2_TYPEDEFS
   typedef Space2 Space;

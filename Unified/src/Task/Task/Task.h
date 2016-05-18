@@ -1591,7 +1591,7 @@ void Task<Space, order>::ComputePacketsToReceiveCount()
 {
   struct CacheNotifyListener: public NotifyListener
   {
-    virtual ~CacheNotifyListener() {}
+    virtual ~CacheNotifyListener() = default;
     virtual void OnNotify() override
     {
       --notificationsRemained;
@@ -1601,7 +1601,7 @@ void Task<Space, order>::ComputePacketsToReceiveCount()
 
   struct CacheReceiveListener: public ReceiveListener
   {
-    virtual ~CacheReceiveListener() {}
+    virtual ~CacheReceiveListener() = default;
     virtual void OnDataReceive(void *data, int size, int hostId) override
     {
       ++packetsToReceive;

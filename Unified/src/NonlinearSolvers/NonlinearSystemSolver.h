@@ -11,7 +11,7 @@ public:
   {
   }
 
-  virtual ~NonlinearSystemSolver() {}
+  virtual ~NonlinearSystemSolver() = default;
   virtual void SetFunction(NonlinearFunctionSystem<Scalar, IndexType>* func) = 0;
   virtual bool AdvancePhase(Scalar* solution, Scalar& err) = 0;
 

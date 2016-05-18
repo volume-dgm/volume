@@ -15,7 +15,7 @@
 
 struct BasicSettings
 {
-  virtual ~BasicSettings() {}
+  virtual ~BasicSettings() = default;
   //std::string fileName;
   int configDimsCount; //dimsCount would probably conflict with Space::dimsCount
 

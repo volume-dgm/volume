@@ -64,8 +64,7 @@ public:
     mesh(mesh), geomMesh(geomMesh)
   {}
 
-  virtual ~MeshSplitterCommon()
-  {}
+  virtual ~MeshSplitterCommon() = default;
 
   void Split(const std::vector<IndexType>& cellsDomainIds, 
     IndexType domainsCount, std::vector< DistributedMeshIO<Space> >* const domains, bool allowMovement);

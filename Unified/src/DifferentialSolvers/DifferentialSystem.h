@@ -10,7 +10,7 @@ public:
     this->solverPhasesCount    = solverPhasesCount;
     this->hierarchyLevelsCount = hierarchyLevelsCount;
   }
-  virtual ~DifferentialSystem(){}
+  virtual ~DifferentialSystem() = default;
 
   virtual int GetDimentionsCount(const SolverState& solverState = SolverState()) const = 0;
   virtual int GetMaxDimentionsCount() const = 0;

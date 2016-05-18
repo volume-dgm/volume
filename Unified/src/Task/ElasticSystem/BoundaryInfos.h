@@ -26,7 +26,7 @@ struct BoundaryInfoFunctor
 {
   SPACE_TYPEDEFS
 
-  virtual ~BoundaryInfoFunctor() {}
+  virtual ~BoundaryInfoFunctor() = default;
   virtual void operator()(const Vector& globalPoint,
                           const Vector& externalNormal,
                           const Scalar currTime,

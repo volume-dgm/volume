@@ -16,7 +16,7 @@ public:
     printf("Distributing cells between domains\n");
   }
 
-  virtual ~MeshDestributor() {}
+  virtual ~MeshDestributor() = default;
 
   virtual void Distribute(const MeshIO<Space>* const mesh, IndexType domainsCount, 
     const std::vector<IndexType>& cellsComputationalCosts, const std::string& algorithmName, std::vector<IndexType>* const cellsColors) const = 0;

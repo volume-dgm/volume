@@ -9,7 +9,7 @@ struct VectorFunctor
 {
   SPACE_TYPEDEFS
 
-  virtual ~VectorFunctor() {}
+  virtual ~VectorFunctor() = default;
   virtual Vector operator ()(const Vector& point, const Vector& norm, Scalar time) const = 0;
 
   virtual void SetCurrentVelocity(const Vector& velocity) {}

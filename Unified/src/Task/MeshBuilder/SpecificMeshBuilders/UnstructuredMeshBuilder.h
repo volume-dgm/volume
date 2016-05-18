@@ -23,9 +23,7 @@ public:
   {
   }
 
-  virtual ~UnstructuredMeshBuilderCommon()
-  {
-  }
+  virtual ~UnstructuredMeshBuilderCommon() = default;
 
   bool duplicateNodes;
   Scalar splitNodeBiasRatio;
@@ -262,9 +260,7 @@ public:
   {
   }
 
-  virtual ~UnstructuredMeshBuilder()
-  {
-  }
+  virtual ~UnstructuredMeshBuilder() = default;
 
   typedef MeshIO<Space>::EdgePairIndices    EdgePairIndices;
   typedef MeshIO<Space>::BoundaryEdge       BoundaryEdge;
@@ -451,9 +447,7 @@ public:
   {
   }
 
-  virtual ~UnstructuredMeshBuilder()
-  {
-  }
+  virtual ~UnstructuredMeshBuilder() = default;
 
   typedef MeshIO<Space>::FacePairIndices    FacePairIndices;
   typedef MeshIO<Space>::BoundaryFace       BoundaryFace;

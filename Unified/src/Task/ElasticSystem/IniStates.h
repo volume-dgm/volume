@@ -11,7 +11,7 @@ public:
   typedef typename ElasticSpace::SpaceType Space;
   SPACE_TYPEDEFS
 
-  virtual ~IniStateMaker() {}
+  virtual ~IniStateMaker() = default;
   virtual void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) = 0;
 
   // point, lambda, mju, invRho have to be dimensionless

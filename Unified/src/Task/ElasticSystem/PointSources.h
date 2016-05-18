@@ -13,7 +13,7 @@ public:
     velocityDimensionlessMult(velocityDimensionlessMult)
   {}
 
-  virtual ~PointSource() {}
+  virtual ~PointSource() = default;
   virtual Vector GetPoint() const
   {
     return point;
@@ -96,7 +96,7 @@ struct MonopoleSource: public PointSource<typename ElasticSystem::Space>
     this->latency = std::max(latency, sqrt(1.5) / (pi * peakFrequency) * 3);
   }
 
-  virtual ~MonopoleSource() {}
+  virtual ~MonopoleSource() = default;
 
   virtual void operator()(Scalar time, Scalar* values) const override
   {

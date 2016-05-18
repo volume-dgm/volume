@@ -5,7 +5,7 @@
 template <typename Scalar, typename IndexType>
 struct NonlinearFunctionSystem
 {
-  virtual ~NonlinearFunctionSystem() {}
+  virtual ~NonlinearFunctionSystem() = default;
 
   virtual IndexType GetMaxDimentionsCount() const = 0;
   virtual IndexType GetDimentionsCount(const SolverState& solverState) const = 0;

@@ -14,7 +14,7 @@ struct SourceFunctor
   {
   }
 
-  virtual ~SourceFunctor() {}
+  virtual ~SourceFunctor() = default;
   virtual void operator ()(const Vector& point, Scalar time, Scalar* values) const = 0;
 
   Scalar tensionDimensionlessMult;
@@ -38,7 +38,7 @@ struct ConstantAccelerationFunctor: public SourceFunctor<typename ElasticSystem:
   {
   }
 
-  virtual ~ConstantAccelerationFunctor() {}
+  virtual ~ConstantAccelerationFunctor() = default;
   virtual void operator()(const Vector&, Scalar, Scalar* values) const override
   {
     std::fill_n(values, dimsCount, Scalar(0.0));

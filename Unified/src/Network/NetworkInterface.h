@@ -2,13 +2,13 @@
 #include <vector>
 struct NotifyListener
 {
-  virtual ~NotifyListener() noexcept {}
+  virtual ~NotifyListener() = default;
   virtual void OnNotify() = 0;
 };
 
 struct ReceiveListener
 {
-  virtual ~ReceiveListener() noexcept {}
+  virtual ~ReceiveListener() = default;
   virtual void OnDataReceive(void *data, int size, int hostId) = 0;
 };
 

@@ -8,7 +8,7 @@ class BasicMeshBuilder
 {
 public:
   SPACE_TYPEDEFS
-  virtual ~BasicMeshBuilder() {}
+  virtual ~BasicMeshBuilder() = default;
 
   virtual void BuildMesh(MeshIO<Space>* const mesh, 
     GeomMesh<Space>* geomMesh, 

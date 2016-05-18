@@ -30,7 +30,7 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
     {
     }
 
-    virtual ~ValueType() {}
+    virtual ~ValueType() = default;
 
     void SetTension(Scalar xx, Scalar yy, Scalar xy);
     Scalar GetPressure() const;

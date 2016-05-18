@@ -43,8 +43,8 @@ struct ElasticSystemCommon: public ElasticSystemBase<Space>
   {
     Scalar values[ElasticSystemBase<Space>::dimsCount];
 
-    ValueTypeCommon() {}
-    virtual ~ValueTypeCommon() {}
+    ValueTypeCommon() = default;
+    virtual ~ValueTypeCommon() = default;
 
     ValueTypeCommon(Scalar initialValue)
     {

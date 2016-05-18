@@ -7,8 +7,8 @@ template<typename Scalar>
 class DifferentialSolver
 {
 public:
-  DifferentialSolver() {}
-  virtual ~DifferentialSolver() {}
+  DifferentialSolver() = default;
+  virtual ~DifferentialSolver() = default;
 
   virtual void    SetSystem(DifferentialSystem<Scalar>* system) = 0;
   virtual int     GetPhasesCount() const = 0;
