@@ -134,19 +134,21 @@ void Seismogramm<Scalar>::SaveSegY(const std::string& path, const std::vector<Sc
         text_header[i] = 0;
     outf.write(text_header, 3200);
 
-    swap_header_endian();    //TODO: this basically breaks header. the class becomes unusable after saving.
-    swap_all_trace_headers_endian();
-    swap_data_endian();
-
+    swap_header_endian();
     outf.write(reinterpret_cast<char*>(&header_data), sizeof(header_data));
-
     swap_header_endian();
 
+
+    swap_all_trace_headers_endian();
+    swap_data_endian();
     for (uint32 i = 0; i <  header_data.num_of_traces_per_record; i++)
     {
         outf.write(reinterpret_cast<char*>(&trace_header_data.at(i)), sizeof(trace_header_data.at(i)));
         outf.write(reinterpret_cast<char*>(data.at(i).data()), sizeof(float) * data.at(i).size());
     }
+    swap_all_trace_headers_endian();
+    swap_data_endian();
+
     outf.close();
 }
 
@@ -241,10 +243,14 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
             if(compatibleSeismogram)
               this->interpolationIntervals[path_index] = compatibleSeismogram->interpolationIntervals[path_index];
             else
-              this->interpolationIntervals[path_index] = (times[num_of_times-1] - times[0]) / (num_of_times - 1);
+            {
+              Scalar averageStep = (times[num_of_times-1] - times[0]) / (std::min(num_of_times, IndexType(65535)) - 1);
+              Scalar roundedStep = std::max(floor(interpolation_multiplier * averageStep * 1e6 + 1.0) / 1e6, 1e-6);
+              this->interpolationIntervals[path_index] = roundedStep;
+            }
 
             std::cout << "interval: " << this->interpolationIntervals[path_index] << std::endl;
-            interpolate_data_on_equal_time_intervals(this->interpolationIntervals[path_index] * interpolation_multiplier);
+            interpolate_data_on_equal_time_intervals(this->interpolationIntervals[path_index]);
             num_of_times = times.size();
             std::cout << "num_of_times: " << num_of_times << std::endl;
             this->interpolationIntervals[path_index] = times[1] - times[0];
@@ -254,7 +260,7 @@ void CombinedSeismogramm<Scalar, dims>::Load(SeismoType type, std::vector<std::s
             // Set binary header data
             // ///////////////////////////////////////
             struct segy_bin_header_data header_data;
-            header_data.sample_interval = static_cast<uint32>(floor(this->interpolationIntervals[path_index] * 1000000.0 + 0.5));
+            header_data.sample_interval = static_cast<uint32>(floor(this->interpolationIntervals[path_index] * 1e6 + 0.5));
             header_data.sample_interval_reel = header_data.sample_interval;
 
 
