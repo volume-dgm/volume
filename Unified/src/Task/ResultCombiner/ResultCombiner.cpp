@@ -296,6 +296,9 @@ private:
 
       combinedSeismogram.Load(CSV, srcScvFiles);
 
+      if(saveSegY)
+        combinedSeismogram.Save(SEG_Y, dstSegyFiles);
+
       if(settings.resultCombiner.velocityRefCsvName != "" && saveSegYDiff)
       {
 
@@ -308,8 +311,7 @@ private:
 
         refSeismogram.Save(SEG_Y, dstSegyDiffFiles);
       }
-      if(saveSegY)
-        combinedSeismogram.Save(SEG_Y, dstSegyFiles);
+
     }
     printf("Done");
   }
