@@ -1,3 +1,6 @@
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
+
 set(ResultCombinerSrc
   ${CMAKE_SOURCE_DIR}/src/Task/ResultCombiner/ResultCombiner.cpp
   ${CMAKE_SOURCE_DIR}/src/Task/ResultCombiner/SampleIO.h
