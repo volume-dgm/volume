@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "3">
+
+  <MeshBuilder>
+    <SalomeFile fileName= "input_meshes/sr8" />
+    <Partition algorithm="METIS_PartMeshNodal" /> 
+    <OutFile fileName= "meshes/sr8[<domain>]" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+
+  <Mesh fileName="meshes/sr8[<domain>].mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.0"> 
+    <MediumParams>
+      <PerSubmesh fileName = "meshes/sr8[<domain>].params">
+        <Submesh index="0" E="1.5e+10" G="5e+9" rho= "7500" fixed = "false" internalContactType= "0"/> 
+        <Submesh index="1" E="5e+9" G="1.87e+9" rho= "920" k= "2.5e+6" alpha="0.1" brittle="false" 
+        internalContactType= "1" maxPlasticDeform="0.012" powderShearMult="0.1" fixed = "false"/> 
+      </PerSubmesh> 
+    </MediumParams>
+
+    <Boundaries>
+      <Fixed interactionType = "0">
+      </Fixed>
+
+      <Free interactionType= "1" dynamicContactInteractionType="2">
+      </Free>
+
+      <Free interactionType= "2">
+      </Free>
+      
+      <Free interactionType= "3" dynamicContactInteractionType= "2" >
+      </Free>
+
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "3"/>
+      <Glue interactionType= "1" dynamicBoundaryInteractionType= "1" maxLongitudinalStress="1.2e+6"/>
+      <Glue interactionType= "2" />
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <Period frames="250" />
+    <Data fileName = "out/sr8/data/sr8_[<domain>]<step>.vti"  writeVelocity="true" writeTension="true">
+      <Box boxPoint1 = "-15.0 -5.0 -1.5" boxPoint2 = "8.0 5 2.5" />
+      <Resolution resolution="230 100 40" />
+    </Data>
+    <Mesh     fileName="out/sr8/mesh/sr8_mesh[<domain>]<step>.vtk" />
+    <!--<Contacts fileName="out/ship3d_circle/ship3d_circle_contacts_full[<domain>]<step>.vtk"/>
+    <Boundaries fileName="out/ship3d_circle/ship3d_circle_boundaries_full[<domain>]<step>.vtk"/>-->
+  </Snapshot>
+
+  <Schedule domainsCount="1"/>
+
+  <Task destinationTime = "2.0">
+    <IniState>
+      <BoxState boxPoint1 = "0.0 -1.5 -0.5" boxPoint2 = "8.0 1.5 1.5" velocity = "-8.0 0.0 0.0"/>
+    </IniState>
+  </Task>
+
+  <Solver polynomialsOrder= "1" precision="double" integrator="DormandPrince" updateCollisionInfoPeriod="10"
+        tolerance="1e-1" maxScale="1e-5" maxTimeStep="1e-4" hierarchyLevelsCount="1"
+        allowMovement="true" allowPlasticity="true" allowDestruction="true"
+        allowContinuousDestruction="true" allowDiscreteDestruction="true"
+        tensionErrorMult="1e-4" velocityErrorMult="1e-0" positionErrorMult="1e-4"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
+        <Erosion cellAspectRatio="6" minHeightRatio="0.0" maxPlasticDeformation="1.004" rhoReduction="6.0"/>
+  </Solver>
+
+</Settings>
