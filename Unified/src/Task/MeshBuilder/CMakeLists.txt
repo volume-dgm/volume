@@ -1,3 +1,4 @@
+
 set(MeshBuilderSrc
   ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshBuilder.cpp
   ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshDistributor.h
@@ -27,23 +28,7 @@ set(TriGeomSrc
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMesh.h
 )
 
-set(BINDIR ${CMAKE_SOURCE_DIR}/.bin)
-
-MAKE_DIRECTORY(${BINDIR})
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BINDIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BINDIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BINDIR})
-
-IF (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    SET(BinaryFileName meshbuilderd)
-ENDIF()
-
-IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    SET(BinaryFileName meshbuilder)
-ENDIF()
-
-add_executable(${BinaryFileName}
+add_executable(meshbuilder
   ${MeshBuilderSrc}
   ${SpecificMeshBuildersSrc}
   ${VtkSrc}
@@ -58,5 +43,16 @@ add_executable(${BinaryFileName}
   ${MetisProgramSrc}
 )
 
-target_link_libraries(${BinaryFileName} ${ZLIB_LIBRARIES}) 
-			
+target_link_libraries(meshbuilder
+    PUBLIC ZLIB::ZLIB 
+    PUBLIC OpenMP::OpenMP_CXX
+    PUBLIC metis
+    PUBLIC tinyxml
+    PUBLIC Eigen3::Eigen
+)
+
+if (COPY_BINARIES_TO_BIN_FOLDER)
+    add_custom_command(TARGET meshbuilder POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/.bin
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:meshbuilder> ${CMAKE_SOURCE_DIR}/.bin/$<TARGET_FILE_BASE_NAME:meshbuilder>-$<CONFIG>$<TARGET_FILE_SUFFIX:meshbuilder>)
+endif()

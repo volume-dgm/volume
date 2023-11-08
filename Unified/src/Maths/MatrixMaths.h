@@ -324,7 +324,7 @@ void MatrixMulMatrix(Scalar *matrix0, Scalar *matrix1, Scalar *resMatrix, IndexT
 {
   memset(resMatrix, 0, matrix0Height * matrix1Width * sizeof(Scalar));
 
-  register Scalar t;
+  Scalar t;
   int i, j, k;
   for (i = 0; i < matrix0Height; ++i)
   {
@@ -342,7 +342,7 @@ void MatrixMulMatrix(Scalar *matrix0, Scalar *matrix1, Scalar *resMatrix, IndexT
 template<typename Scalar, typename IndexType>
 void MatrixMulTransponsedMatrix(Scalar *matrix0, Scalar *matrix1, Scalar *resMatrix, IndexType matrix0Height, IndexType matrix0Width, IndexType matrix1Width)
 {
-  register Scalar t;
+  Scalar t;
   int i, j, k;
   for (i = 0; i < matrix0Height; ++i)
   {

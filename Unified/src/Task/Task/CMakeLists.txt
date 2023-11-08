@@ -1,3 +1,4 @@
+
 set(TaskSrc
   ${CMAKE_SOURCE_DIR}/src/Task/Task/Task.cpp
   ${CMAKE_SOURCE_DIR}/src/Task/Task/Task.h
@@ -84,23 +85,8 @@ set(VolumeMethodSrc
   ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/Cell.h
 )
 
-set(BINDIR ${CMAKE_SOURCE_DIR}/.bin)
 
-MAKE_DIRECTORY(${BINDIR})
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BINDIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BINDIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BINDIR})
-
-IF (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    SET(BinaryFileName taskd)
-ENDIF()
-
-IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    SET(BinaryFileName task)
-ENDIF()
-
-add_executable(${BinaryFileName}
+add_executable(task
   ${TaskSrc}
   ${NetworkSrc}
   ${MathsSrc}
@@ -114,4 +100,17 @@ add_executable(${BinaryFileName}
   ${VolumeMethodSrc}
 )
 
-target_link_libraries(${BinaryFileName} ${ZLIB_LIBRARIES} ${MPI_LIBRARIES}) 
+target_link_libraries(task
+    PRIVATE ZLIB::ZLIB 
+    PRIVATE MPI::MPI_CXX 
+    PRIVATE OpenMP::OpenMP_CXX
+    PRIVATE tinyxml
+    PRIVATE quadrature_integration
+    PRIVATE Eigen3::Eigen
+)
+
+if (COPY_BINARIES_TO_BIN_FOLDER)
+    add_custom_command(TARGET task POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/.bin
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:task> ${CMAKE_SOURCE_DIR}/.bin/$<TARGET_FILE_BASE_NAME:task>-$<CONFIG>$<TARGET_FILE_SUFFIX:task>)
+endif()

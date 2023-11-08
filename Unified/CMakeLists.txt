@@ -1,87 +1,40 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.15)
 project(Volume)
-set(cmake_verbose_makefile off)
-set(CMAKE_C_COMPILER mpicc)
-set(CMAKE_CXX_COMPILER mpic++)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=native -funroll-loops -ftree-vectorize -mfpmath=sse -ffast-math -ftree-vectorizer-verbose=0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -mtune=native -funroll-loops -mfpmath=sse -ffast-math -ftree-vectorize -ftree-vectorizer-verbose=0")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_COLOR_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -mtune=native -funroll-loops -ftree-vectorize -mfpmath=sse -ffast-math -ftree-vectorizer-verbose=0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -funroll-loops -ftree-vectorize -mfpmath=sse -ffast-math -ftree-vectorizer-verbose=0")
+if (MINGW)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj")
+endif()
 
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
-string(TOUPPER ${CMAKE_SYSTEM} BuildPlatform)
-message("Generating makefiles for: " ${BuildPlatform} "\n")
-message("Build type: " ${CMAKE_BUILD_TYPE} "\n")
+message("Generating makefiles for: " ${CMAKE_SYSTEM})
+message("Config: " ${CMAKE_BUILD_TYPE})
 
-SET(CMAKE_COLOR_MAKEFILE ON)
-SET(CMAKE_VERBOSE_MAKEFILE ON)
+option(COPY_BINARIES_TO_BIN_FOLDER "After compiling copy binaries to .bin folder." YES)
 
-FIND_PACKAGE(MPI)
-if (MPI_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MPI_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_FLAGS}")
-  include_directories(${MPI_INCLUDE_PATH})
-  message("MPI is found\n")
-endif(MPI_FOUND)
 
-#FIND_PACKAGE(OpenMP)
-#if (OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-  message("OpenMP is found\n")
-#endif (OPENMP_FOUND)
-
-#ZLIB
-FIND_PACKAGE(ZLIB REQUIRED)
-IF (ZLIB_FOUND)
-    MESSAGE(STATUS "Setting up ZLIB")    
-    include_directories( ${ZLIB_INCLUDE_DIRS} )    
-ENDIF (ZLIB_FOUND)
-
-set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/.bin)
-
-MAKE_DIRECTORY(${CMAKE_SOURCE_DIR}/.bin)
-
-add_definitions(-DTIXML_USE_STL)
-
-set(VtkSrc
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/BasicVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.inl
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/MeshVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/SnapshotVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/VtkReader.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.inl
-  ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.inl
+find_package(MPI REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+target_compile_definitions(Eigen3::Eigen
+    INTERFACE EIGEN_DEFAULT_TO_ROW_MAJOR 
+    INTERFACE EIGEN_DONT_PARALLELIZE 
+    INTERFACE EIGEN_NO_DEBUG 
+    INTERFACE EIGEN_NO_AUTOMATIC_RESIZING 
+    INTERFACE EIGEN_FAST_MATH EIGEN_NO_MALLOC
 )
 
-set(UtilsSrc
-  ${CMAKE_SOURCE_DIR}/src/Utils/Base64.h
-  ${CMAKE_SOURCE_DIR}/src/Utils/Utils.h
-)
-
-set(MathsSrc
-  ${CMAKE_SOURCE_DIR}/src/Maths/AABB2.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/AABB3.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Coordinates2.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Coordinates3.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Matrix2x2.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Matrix3x3.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/MatrixInv.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/MatrixMaths.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Random.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Spaces.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Util.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Vector2.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Vector3.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Tensor2.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Tensor3.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/VectorMaths.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Collisions.h
+set(QuadratureIntegrationSrc
+  ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/tetrahedron_arbq_rule.cpp
+  ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/triangle_fekete_rule.cpp
 )
 
 set(TinyXmlSrc
@@ -91,31 +44,6 @@ set(TinyXmlSrc
   ${CMAKE_SOURCE_DIR}/3rdparty/tinyxml/tinyxmlparser.cpp
   ${CMAKE_SOURCE_DIR}/3rdparty/tinyxml/tinystr.h
   ${CMAKE_SOURCE_DIR}/3rdparty/tinyxml/tinyxml.h
-)
-
-set(DifferentialSolversSrc
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/DifferentialSolver.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/DifferentialSystem.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/AdaptiveRKSolver.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/DormandPrinceSolver.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/EulerSolver.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RK2Solver.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RungeSolver4.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/TrapezoidSolver.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RungeSolver8_10.h
-  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RungeSolver12_14.h
-)
-
-set(NonlinearSolversSrc
-  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/NonlinearSystemSolver.h
-  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/NonlinearFunctionSystem.h
-  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/Solvers/SimpleIterations.h
-  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/Solvers/KrylovProjector.h
-)
-
-set(NetworkSrc
-  ${CMAKE_SOURCE_DIR}/src/Network/NetworkInterface.h
-  ${CMAKE_SOURCE_DIR}/src/Network/NetworkInterface.cpp
 )
 
 set(MetisGKlibSrc
@@ -171,11 +99,6 @@ set(MetisIncludeSrc
   ${CMAKE_SOURCE_DIR}/3rdparty/metis/include/metis.h
 )
 
-set(QuadratureIntegrationSrc
-  ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/tetrahedron_arbq_rule.cpp
-  ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/triangle_fekete_rule.cpp
-)
-
 set(MetisLibSrc
   ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/
   ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/auxapi.c
@@ -228,22 +151,84 @@ set(MetisProgramSrc
   ${CMAKE_SOURCE_DIR}/3rdparty/metis/programs/metisbin.h
 )
 
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/include)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/programs)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/eigen)
+add_library(quadrature_integration STATIC ${QuadratureIntegrationSrc})
+target_include_directories(quadrature_integration PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/)
 
-add_definitions(-DUSE_GKREGEX)
-add_definitions(-DNDEBUG)
-add_definitions(-DNDEBUG2)
-add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
-add_definitions(-DEIGEN_DONT_PARALLELIZE)
+add_library(tinyxml STATIC ${TinyXmlSrc})
+target_compile_definitions(tinyxml PUBLIC TIXML_USE_STL)
 
-add_definitions(-DEIGEN_NO_DEBUG)
-add_definitions(-DEIGEN_NO_AUTOMATIC_RESIZING)
-add_definitions(-DEIGEN_FAST_MATH)
-add_definitions(-DEIGEN_NO_MALLOC)
+
+add_library(metis STATIC ${MetisGKlibSrc} ${MetisIncludeSrc} ${MetisLibSrc})
+target_include_directories(metis 
+    PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib 
+    PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis 
+    INTERFACE ${CMAKE_SOURCE_DIR}/3rdparty/metis/programs
+)
+target_compile_definitions(metis PUBLIC USE_GKREGEX)
+
+
+set(VtkSrc
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/BasicVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.inl
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/MeshVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/SnapshotVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/VtkReader.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.inl
+  ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.h
+  ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.inl
+)
+
+set(UtilsSrc
+  ${CMAKE_SOURCE_DIR}/src/Utils/Base64.h
+  ${CMAKE_SOURCE_DIR}/src/Utils/Utils.h
+)
+
+set(MathsSrc
+  ${CMAKE_SOURCE_DIR}/src/Maths/AABB2.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/AABB3.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Coordinates2.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Coordinates3.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Matrix2x2.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Matrix3x3.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/MatrixInv.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/MatrixMaths.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Random.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Spaces.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Util.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Vector2.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Vector3.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Tensor2.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Tensor3.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/VectorMaths.h
+  ${CMAKE_SOURCE_DIR}/src/Maths/Collisions.h
+)
+
+set(DifferentialSolversSrc
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/DifferentialSolver.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/DifferentialSystem.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/AdaptiveRKSolver.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/DormandPrinceSolver.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/EulerSolver.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RK2Solver.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RungeSolver4.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/TrapezoidSolver.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RungeSolver8_10.h
+  ${CMAKE_SOURCE_DIR}/src/DifferentialSolvers/Solvers/RungeSolver12_14.h
+)
+
+set(NonlinearSolversSrc
+  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/NonlinearSystemSolver.h
+  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/NonlinearFunctionSystem.h
+  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/Solvers/SimpleIterations.h
+  ${CMAKE_SOURCE_DIR}/src/NonlinearSolvers/Solvers/KrylovProjector.h
+)
+
+set(NetworkSrc
+  ${CMAKE_SOURCE_DIR}/src/Network/NetworkInterface.h
+  ${CMAKE_SOURCE_DIR}/src/Network/NetworkInterface.cpp
+)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/Task)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder)

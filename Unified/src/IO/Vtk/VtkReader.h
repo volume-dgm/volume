@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../Utils/Base64.h"
-#include "../../3rdparty/tinyxml/tinyxml.h"
-#include "../../3rdparty/tinyxml/tinystr.h"
+#include "tinyxml.h"
+//#include "tinystr.h"
 #include <zlib.h>
 #include <zconf.h>
 
