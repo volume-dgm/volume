@@ -39,7 +39,6 @@ Thumbs.db
 [Rr]elease/
 x64/
 .build/
-[Bb]in/
 [Oo]bj/
 
 # MSTest test Results
@@ -369,10 +368,9 @@ profiling*.txt
 *.segy
 *.loc
 
-Unified/.bin/
 Unified/.tmp_files
-Unified/bin/meshbuilder
-Unified/bin/task
-Unified/bin/resultcombiner
+meshbuilder
+task
+resultcombiner
 
 .vscode/

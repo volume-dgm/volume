@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount = "3">
+
+  <MeshBuilder>
+    <SalomeFile fileName= "salome/sphere" />
+    <OutFile fileName= "meshes/sphere" />
+  </MeshBuilder>
+
+  <ResultCombiner>
+    <Snapshots count="300000" />
+  </ResultCombiner>
+
+  <Mesh fileName="meshes/sphere.mesh" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth= "0.0"> 
+    <MediumParams>
+      <PerSubmesh fileName = "meshes/test_ind.params">
+        <Submesh index="0" E="5e+9" G="1.87e+9" rho= "920" k= "2.5e+6" alpha="0.1" brittle="false" 
+        internalContactType= "0" maxPlasticDeform="0.012" powderShearMult="0.1" fixed = "false"/> 
+      </PerSubmesh> 
+    </MediumParams>
+
+    <Boundaries>
+      <Free interactionType= "0">
+        <ExternalForce>
+          <HydraulicPressureFunctor fluidRho="1024" g="0 0 -0.981" fluidSurfacePoint="0.0 0.0 0.0"/>
+        </ExternalForce>
+      </Free>
+
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType= "0" dynamicBoundaryInteractionType= "1" maxLongitudinalStress="1.2e+6"  maxShearStress="4.8e+6"/>
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <Period time="1e-2" />
+    <Data fileName = "out/sphere/data_<step>.vti"  writeVelocity="true" writeTension="true">
+      <Box boxPoint1 = "-1.0 -1.0 -1.0" boxPoint2 = "1.0 1.0 3.0" />
+      <Resolution resolution="20 20 30" />
+    </Data>
+    <Mesh     fileName="out/sphere/mesh_<step>.vtk" />
+  </Snapshot>
+
+  <Schedule domainsCount="1"/>
+
+  <Task destinationTime = "2.5">
+    <!--    <IniState>
+      <BoxState boxPoint1 = "9.0 4.5 1.001" boxPoint2 = "12.0 5.5 2.001" velocity = "0.0 0.0 -5.0"/>
+    </IniState> -->
+
+    <SourceTerms>
+      <ConstantAcceleration acceleration="0 0 -0.981"/> 
+    </SourceTerms>  
+  </Task>
+
+  <Solver polynomialsOrder= "1" precision="double" integrator="RK4" updateCollisionInfoPeriod="10"
+        tolerance="1e-1" maxScale="1e-1" maxTimeStep="2.8e-5" hierarchyLevelsCount="1"
+        allowMovement="true" allowPlasticity="true" allowDestruction="true"
+        allowContinuousDestruction="true" allowDiscreteDestruction="true"
+        tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-4"
+        velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0">
+        <Erosion cellAspectRatio="6" minHeightRatio="0.0" maxPlasticDeformation="1.004" rhoReduction="6.0"/>
+  </Solver>
+
+</Settings>

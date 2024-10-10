@@ -1,0 +1,45 @@
+#!/bin/bash
+
+taskname=""
+num_proc=0
+dim_count=3
+build_mesh=0
+
+while [ "$1" != "" ]; do
+  case $1 in  
+    -n | --name )        shift
+                         taskname=$1
+                         ;;
+    -np | --num_procs )  shift
+                         np=$1
+                         ;;
+    -d | --dims )        shift
+                         dim_count=$1
+                         ;;
+    -bm | --build_mesh ) build_mesh=1
+  esac
+  shift
+done
+
+if [ ! -f cfg/$taskname.xml ]; then
+  echo "no config named $taskname found"
+  exit 1
+fi
+
+if [[ -d out/$taskname ]]; then 
+      rm out/$taskname/*
+else
+      mkdir out/$taskname
+fi
+
+if [[ $build_mesh -eq 1 ]]; then
+      ./meshbuilder $dim_count cfg/$taskname.xml
+      echo 
+fi
+
+if [[ ! $np -eq 0 ]]; then 
+  export OMP_NUM_THREADS=$np 
+  export OMP_THREAD_LIMIT=$np
+fi  
+
+./task $dim_count cfg/$taskname.xml
