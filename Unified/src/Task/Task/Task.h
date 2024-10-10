@@ -61,6 +61,8 @@ public:
   // typedef DubinerPrecomputer<Space, QuadratureDecomposer<Space, DubinerSpace<Space, order> > > FunctionSpace;
 
   Task();
+  Task(const char* fileName);
+  
   virtual ~Task();
   void Run();
 
@@ -251,6 +253,7 @@ private:
     const std::vector<Vector>& initialImpulses, Scalar currTime);
 
 protected:
+  const char* settingsFile = nullptr;
   Settings<Space> settings;
   SolverState     solverState;
   std::vector< DifferentialSolver<Scalar>* > solvers;
@@ -350,9 +353,17 @@ void Task<Space, order>::Run()
 
   printf("Node %d network initialized\n", static_cast<int>(network->getID()));
   network->setReceiveListener(this);
-  settings.Parse("task.xml");
 
-  printf("Starting task with config %s in %dd space\n", settings.settingsFileName.c_str(), settings.configDimsCount);
+  if(settingsFile != nullptr) {
+    settings.ParseDirect(settingsFile);
+    printf("Starting task with config %s in %dd space\n", settingsFile, settings.configDimsCount);
+    fflush(stdout);
+  } else {
+    settings.Parse("task.xml");
+    printf("Starting task with config %s in %dd space\n", settings.settingsFileName.c_str(), settings.configDimsCount);
+    fflush(stdout);
+  }
+
   assert(settings.configDimsCount == Space::Dimension);
   LoadNodesSchedule();
 
@@ -494,7 +505,7 @@ void Task<Space, order>::Run()
       continue;
     }
 
-    printf(".");
+    // printf(".");
     phaseAdvanced = true;
     for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
     {
@@ -516,11 +527,19 @@ void Task<Space, order>::Run()
       double startAllPhasesCompleted = MPI_Wtime();
 
       bool globalStepSuccessful = true;
-      printf("\n");
+
+      //printf("\n");
+
       for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
       {
         Scalar localError = distributedElasticMeshes[domainNumber]->solver->GetLastStepError();
-        printf("node %d; domain %d; error %f\n", static_cast<int>(GetNodeId()), static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]), localError);
+        if (localError != Scalar(1.0)) {
+          printf("  node %d; domain %d; error %f\n", static_cast<int>(GetNodeId()), static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]), localError);
+        } else {
+          if (solverState.globalStepIndex % 100 == 0) {
+            printf("  node %d; domain %d; error %f\n", static_cast<int>(GetNodeId()), static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]), localError);
+          }
+        }
 
         bool stepSuccessful = forceStep || (localError < Scalar(2.0));
 
@@ -600,7 +619,7 @@ void Task<Space, order>::Run()
             Scalar desiredStep = fabs(lastSnapshotTimes[snapshotIndex] + settings.snapshots[snapshotIndex].timePeriod - currTime) / MaxHierarchyLevel;
             desiredStep = std::max(desiredStep, settings.solver.maxTimeStep * settings.solver.maxScale / MaxHierarchyLevel);
             timeStep = std::min(timeStep, desiredStep);
-            printf("Time step truncated by snapshot time\n");
+            printf("  Time step truncated by snapshot time\n");
           }
         }
 
@@ -827,7 +846,7 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
       ReplaceSubstring(dataFilename, "<domain>",  std::string(domainString));
       ReplaceSubstring(dataFilename, "<time>",    std::string(timeString));
 
-      printf("saving snapshot, %s\n\n", dataFilename.c_str());
+      printf(" saving data snapshot, %s\n", dataFilename.c_str());
 
       assert(dataFilename.find(".vti") != std::string::npos);
       snapshotWriter.Write(dataFilename.c_str(),
@@ -853,6 +872,8 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
         distributedElasticMeshes[domainNumber]->volumeMesh.nodes, 
         distributedElasticMeshes[domainNumber]->volumeMesh.cells, std::vector< typename AdditionalCellInfo<Space>:: template AuxInfo<char> >(),
         &(distributedElasticMeshes[domainNumber]->volumeMesh.isCellAvailable));
+
+      printf(" saving mesh snapshot, %s\n", meshFilename.c_str());
     }
 
     if(settings.snapshots[snapshotIndex].contacts.used)
@@ -1339,14 +1360,16 @@ void Task<Space, order>::LoadInitialState()
 template<typename Space, unsigned int order>
 void Task<Space, order>::PrintSolverState(const SolverState& solverState, Scalar currTime, Scalar timeStep)
 {
-  if (solverState.hierarchyLevelsCount > 1)
-  {
-    printf("step %d, level %d, phase %d, currTime %f, dt = %.8f\n", 
-      solverState.globalStepIndex, solverState.hierarchyLevel, solverState.hierarchyPhase, currTime, timeStep);
-  } else
-  {
-    printf("step %d, currTime %f, dt = %.8f\n", 
-      solverState.globalStepIndex, currTime, timeStep);
+  if (solverState.globalStepIndex % 100 == 0) {
+    if (solverState.hierarchyLevelsCount > 1)
+    {
+        printf("step %d, level %d, phase %d, currTime %f, dt = %.8f\n", 
+          solverState.globalStepIndex, solverState.hierarchyLevel, solverState.hierarchyPhase, currTime, timeStep);
+    } else
+    {
+      printf("step %d, currTime %f, dt = %.8f\n", 
+        solverState.globalStepIndex, currTime, timeStep);
+    }
   }
 }
 
@@ -1355,6 +1378,14 @@ Task<Space, order>::Task(): NotifyListener(), ReceiveListener(),
   distributedElasticMeshes(0), network(new NetworkInterface()), packetsToReceive(0), snapshotData(nullptr)
 {
 }
+
+template<typename Space, unsigned int order>
+Task<Space, order>::Task(const char* fileName): NotifyListener(), ReceiveListener(),
+  distributedElasticMeshes(0), network(new NetworkInterface()), packetsToReceive(0), snapshotData(nullptr) 
+{
+  settingsFile = fileName;
+};
+
 
 template<typename Space, unsigned int order>
 Task<Space, order>::~Task()

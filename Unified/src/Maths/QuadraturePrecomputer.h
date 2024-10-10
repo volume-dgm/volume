@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../../3rdparty/quadrature_integration/legendre_rule.h"
-#include "../../../3rdparty/quadrature_integration/triangle_fekete_rule.hpp"
-#include "../../../3rdparty/quadrature_integration/tetrahedron_arbq_rule.hpp"
+#include "legendre_rule.h"
+#include "triangle_fekete_rule.hpp"
+#include "tetrahedron_arbq_rule.hpp"
 
 #include "Spaces.h"
 #include <vector>

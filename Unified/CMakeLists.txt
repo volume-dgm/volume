@@ -1,50 +1,55 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.15)
 project(Volume)
-set(cmake_verbose_makefile off)
+
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_C_COMPILER mpicc)
 set(CMAKE_CXX_COMPILER mpic++)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=native -funroll-loops -ftree-vectorize -mfpmath=sse -ffast-math -ftree-vectorizer-verbose=0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -mtune=native -funroll-loops -mfpmath=sse -ffast-math -ftree-vectorize -ftree-vectorizer-verbose=0")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -mtune=native -funroll-loops -ftree-vectorize -mfpmath=sse -ffast-math -g -Wno-ignored-attributes -Wno-switch")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -mtune=native -funroll-loops -mfpmath=sse -ffast-math -ftree-vectorize -g -Wno-ignored-attributes -Wno-switch")
+if(MINGW)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj")
+endif()
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-string(TOUPPER ${CMAKE_SYSTEM} BuildPlatform)
-message("Generating makefiles for: " ${BuildPlatform} "\n")
+message("Generating makefiles for: " ${CMAKE_SYSTEM} "\n")
 message("Build type: " ${CMAKE_BUILD_TYPE} "\n")
 
-SET(CMAKE_COLOR_MAKEFILE ON)
-SET(CMAKE_VERBOSE_MAKEFILE ON)
-
-FIND_PACKAGE(MPI)
+FIND_PACKAGE(MPI REQUIRED)
 if (MPI_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MPI_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_FLAGS}")
-  include_directories(${MPI_INCLUDE_PATH})
-  message("MPI is found\n")
+  #  include_directories(${MPI_INCLUDE_PATH})
 endif(MPI_FOUND)
 
-#FIND_PACKAGE(OpenMP)
-#if (OPENMP_FOUND)
+FIND_PACKAGE(OpenMP REQUIRED)
+if (OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-  message("OpenMP is found\n")
-#endif (OPENMP_FOUND)
+endif (OPENMP_FOUND)
 
-#ZLIB
 FIND_PACKAGE(ZLIB REQUIRED)
-IF (ZLIB_FOUND)
-    MESSAGE(STATUS "Setting up ZLIB")    
-    include_directories( ${ZLIB_INCLUDE_DIRS} )    
-ENDIF (ZLIB_FOUND)
+#IF (ZLIB_FOUND)
+#    MESSAGE(STATUS "Setting up ZLIB")    
+#    include_directories( ${ZLIB_INCLUDE_DIRS} )    
+#ENDIF (ZLIB_FOUND)
+
+FIND_PACKAGE(Eigen3 3.3 REQUIRED NO_MODULE)
+target_compile_definitions(Eigen3::Eigen
+    INTERFACE EIGEN_DEFAULT_TO_ROW_MAJOR 
+    INTERFACE EIGEN_DONT_PARALLELIZE 
+    INTERFACE EIGEN_NO_DEBUG 
+    INTERFACE EIGEN_NO_AUTOMATIC_RESIZING 
+    INTERFACE EIGEN_FAST_MATH EIGEN_NO_MALLOC
+)
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/.bin)
 
 MAKE_DIRECTORY(${CMAKE_SOURCE_DIR}/.bin)
-
-add_definitions(-DTIXML_USE_STL)
 
 set(VtkSrc
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/BasicVtkWriter.h
@@ -118,132 +123,128 @@ set(NetworkSrc
   ${CMAKE_SOURCE_DIR}/src/Network/NetworkInterface.cpp
 )
 
-set(MetisGKlibSrc
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/b64.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/blas.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/csr.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/error.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/evaluate.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/fkvkselect.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/fs.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/getopt.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_arch.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_defs.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_externs.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_getopt.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/GKlib.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_macros.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_mkblas.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_mkmemory.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_mkpqueue2.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_mkpqueue.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_mkrandom.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_mksort.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_mkutils.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_proto.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gkregex.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gkregex.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_struct.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_types.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_graph.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/htable.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/io.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/itemsets.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/mcore.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/memory.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/ms_inttypes.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/ms_stat.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/ms_stdint.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/omp.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/pdb.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/pqueue.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/random.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/rw.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/seq.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/sort.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/string.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/timers.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/tokenizer.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib/gk_util.c
-)
-
-set(MetisIncludeSrc
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/include/metis.h
-)
-
 set(QuadratureIntegrationSrc
   ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/tetrahedron_arbq_rule.cpp
   ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/triangle_fekete_rule.cpp
+  ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/legendre_rule.h
+)
+
+set(GKlibSrc
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/b64.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/blas.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/cache.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/csr.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/error.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/evaluate.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/fkvkselect.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/fs.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/getopt.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_arch.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_defs.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_externs.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_getopt.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/GKlib.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_macros.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_mkblas.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_mkmemory.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_mkpqueue2.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_mkpqueue.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_mkrandom.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_mksort.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_mkutils.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_ms_inttypes.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_ms_stat.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_ms_stdint.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_proto.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gkregex.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gkregex.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_struct.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_types.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/graph.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/htable.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/io.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/itemsets.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/mcore.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/memory.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/pqueue.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/random.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/rw.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/seq.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/sort.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/string.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/timers.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/tokenizer.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/gk_util.c
 )
 
 set(MetisLibSrc
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/auxapi.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/balance.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/bucketsort.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/checkgraph.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/coarsen.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/compress.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/contig.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/debug.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/defs.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/fm.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/fortran.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/frename.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/gklib.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/gklib_defs.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/gklib_rename.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/graph.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/initpart.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/kmetis.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/kwayfm.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/kwayrefine.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/macros.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/mcutil.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/mesh.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/meshpart.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/metislib.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/minconn.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/mincover.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/mmd.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/ometis.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/options.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/parmetis.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/pmetis.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/proto.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/refine.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/rename.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/separator.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/sfm.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/srefine.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/stat.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/stdheaders.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/struct.h
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/timing.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/util.c
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis/wspace.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/auxapi.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/balance.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/bucketsort.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/checkgraph.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/coarsen.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/compress.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/contig.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/debug.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/defs.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/fm.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/fortran.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/frename.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/gklib.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/gklib_defs.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/gklib_rename.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/graph.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/initpart.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/kmetis.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/kwayfm.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/kwayrefine.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/macros.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/mcutil.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/mesh.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/meshpart.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/metislib.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/minconn.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/mincover.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/mmd.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/ometis.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/options.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/parmetis.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/pmetis.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/proto.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/refine.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/rename.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/separator.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/sfm.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/srefine.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/stat.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/stdheaders.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/struct.h
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/timing.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/util.c
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis/wspace.c
 )
 
-set(MetisProgramSrc
-  ${CMAKE_SOURCE_DIR}/3rdparty/metis/programs/metisbin.h
+set(MetisProgram
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/programs/metisbin.h
 )
 
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/GKlib)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/libmetis)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/include)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/metis/programs)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty/eigen)
+set(MetisInclude
+  ${CMAKE_SOURCE_DIR}/3rdparty/METIS/include/metis.h
+)
 
-add_definitions(-DUSE_GKREGEX)
-add_definitions(-DNDEBUG)
-add_definitions(-DNDEBUG2)
-add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
-add_definitions(-DEIGEN_DONT_PARALLELIZE)
+add_library(quadrature_integration STATIC ${QuadratureIntegrationSrc})
+target_include_directories(quadrature_integration PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/)
 
-add_definitions(-DEIGEN_NO_DEBUG)
-add_definitions(-DEIGEN_NO_AUTOMATIC_RESIZING)
-add_definitions(-DEIGEN_FAST_MATH)
-add_definitions(-DEIGEN_NO_MALLOC)
+add_library(tinyxml STATIC ${TinyXmlSrc})
+target_compile_definitions(tinyxml PUBLIC TIXML_USE_STL)
+
+add_library(metis STATIC ${GKlibSrc} ${MetisLibSrc} ${MetisInclude})
+target_include_directories(metis
+  PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis
+  PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/GKlib
+  INTERFACE ${CMAKE_SOURCE_DIR}/3rdparty/METIS/programs
+)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/Task)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder)

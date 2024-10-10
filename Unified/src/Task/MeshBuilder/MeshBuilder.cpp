@@ -26,9 +26,23 @@ template<typename Space>
 struct MeshBuilderTask
 {
 public:
+
+  MeshBuilderTask(){}
+
+  MeshBuilderTask(const char* fileName) 
+  {
+    settingsFile = fileName;
+  }
+
   void Run()
   {
-    settings.Parse("task.xml");
+
+    if (settingsFile == nullptr)
+    {
+      settings.Parse("task.xml");
+    } else {
+      settings.ParseDirect(settingsFile);
+    }
 
     std::string meshFileName = settings.mesh.meshFileName;
     if(settings.meshBuilder.meshFileName != "")
@@ -85,6 +99,7 @@ private:
   std::vector<char>                       globalMediumParams;
 
   std::string meshBaseName;
+  const char* settingsFile = nullptr;
 
   void BuildGeom()
   {
@@ -291,13 +306,13 @@ private:
   }
 };
 
-int main()
+int main(int argc, char* argv[])
 {
-  BasicSettings basicSettings; //Space2 settings reader should read Space3 settings file just fine. probably.
-  basicSettings.Parse("task.xml");
-
   #ifdef SPACE_FROM_SETTINGS
-  {
+  if(argc == 1) {
+    BasicSettings basicSettings; //Space2 settings reader should read Space3 settings file just fine. probably.
+    basicSettings.Parse("task.xml");
+    
     switch(basicSettings.configDimsCount)
     {
       case 2:
@@ -312,6 +327,26 @@ int main()
       }break;
       default: std::cerr << "Wrong dims count in config"; break;
     }
+    
+  } else {
+    int dimCount = std::strtol(argv[1], nullptr, 10);
+    const char *settingsName = argv[2];
+
+    switch(dimCount)
+    {
+      case 2:
+      {
+        MeshBuilderTask<Space2> meshBuilderTask(settingsName);
+        meshBuilderTask.Run();
+      }break;
+      case 3:
+      {
+        MeshBuilderTask<Space3> meshBuilderTask(settingsName);
+        meshBuilderTask.Run();
+      }break;
+      default: std::cerr << "Dims count not provided correctly"; break;
+    }
+
   }
   #else
     MeshBuilderTask<DefaultSpace> meshBuilderTask;

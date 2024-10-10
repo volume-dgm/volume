@@ -4,6 +4,7 @@
 // #include <vld.h>
 
 #include "Task.h"
+#include <cstdlib>
 
 //#define ORDER_FROM_SETTINGS
 #define SPACE_FROM_SETTINGS
@@ -11,7 +12,7 @@
 const unsigned int defaultPolynomialOrder = 1;
 typedef Space2 DefaultSpace;
 
-int main()
+int main(int argc, char* argv[])
 {
   #if(defined(SPACE_FROM_SETTINGS) && defined(ORDER_FROM_SETTINGS))
   {
@@ -62,22 +63,42 @@ int main()
   #endif
   #if(defined(SPACE_FROM_SETTINGS) && !defined(ORDER_FROM_SETTINGS))
   {
-    BasicSettings settings; 
-    settings.Parse("task.xml");
+    if(argc == 1) {
+      BasicSettings settings; 
+      settings.Parse("task.xml");
 
-    switch(settings.configDimsCount)
-    {
-      case 2:
+      switch(settings.configDimsCount)
       {
-        Task<Space2, defaultPolynomialOrder> task;
-        task.Run(); 
-      }break;
-      case 3:
+        case 2:
+        {
+          Task<Space2, defaultPolynomialOrder> task;
+          task.Run(); 
+        }break;
+        case 3:
+        {
+          Task<Space3, defaultPolynomialOrder> task;
+          task.Run(); 
+        }break;
+        default: std::cerr << "Unknown dims count"; break;
+      }
+    } else {
+      int dimCount = std::strtol(argv[1], nullptr, 10);
+      const char* settingsName = argv[2];
+
+      switch(dimCount)
       {
-        Task<Space3, defaultPolynomialOrder> task;
-        task.Run(); 
-      }break;
-      default: std::cerr << "Unknown dims count"; break;
+        case 2:
+        {
+          Task<Space2, defaultPolynomialOrder> task(settingsName);
+          task.Run();
+        }break;
+        case 3:
+        {
+          Task<Space3, defaultPolynomialOrder> task(settingsName);
+          task.Run();
+        }break;
+        default: std::cerr << "Unknown dims count"; break;
+      }
     }
   }
   #endif

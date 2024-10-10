@@ -114,4 +114,11 @@ add_executable(${BinaryFileName}
   ${VolumeMethodSrc}
 )
 
-target_link_libraries(${BinaryFileName} ${ZLIB_LIBRARIES} ${MPI_LIBRARIES}) 
+target_link_libraries(task
+  PRIVATE ZLIB::ZLIB
+  PRIVATE MPI::MPI_CXX
+  PRIVATE OpenMP::OpenMP_CXX
+  PRIVATE tinyxml
+  PRIVATE quadrature_integration
+  PRIVATE Eigen3::Eigen
+)

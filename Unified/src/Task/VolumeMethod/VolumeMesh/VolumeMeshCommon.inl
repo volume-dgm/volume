@@ -566,7 +566,7 @@ void VolumeMeshCommon<Space, FunctionSpace, System>::RebuildTimeHierarchyLevels(
   Scalar minTimeStep = GetTimeStepPrediction();
 
   if (globalStepIndex % 100 == 0)
-    std::cout << "Min timestep: " << minTimeStep << std::endl;
+    std::cout << "  Min timestep: " << minTimeStep << std::endl;
 
   if (GetHierarchyLevelsCount() > 1)
   {

@@ -52,11 +52,16 @@ add_executable(${BinaryFileName}
   ${ElasticSystemSrc}
   ${TriGeomSrc}
   ${TriangleSrc}
-  ${MetisGKlibSrc}
-  ${MetisIncludeSrc}
+  ${GKlibSrc}
+  ${MetisInclude}
   ${MetisLibSrc}
-  ${MetisProgramSrc}
+  ${MetisProgram}
 )
 
-target_link_libraries(${BinaryFileName} ${ZLIB_LIBRARIES}) 
-			
+target_link_libraries(meshbuilder
+    PUBLIC ZLIB::ZLIB 
+    PUBLIC OpenMP::OpenMP_CXX
+    PUBLIC metis
+    PUBLIC tinyxml
+    PUBLIC Eigen3::Eigen
+)

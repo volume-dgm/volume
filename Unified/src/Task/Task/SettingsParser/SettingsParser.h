@@ -75,6 +75,7 @@ struct Settings : public BasicSettings
 
   std::string settingsFileName;
   void Parse(const char* fileName) override;
+  void ParseDirect(const char* fileName);
 
 private:
   void ParseSettingsFile(const char* fileName);
@@ -117,6 +118,12 @@ void Settings<Space>::Parse(const char* fileName)
 {
   this->settingsFileName = ParseSettingsFileName(fileName);
   Settings<Space>::ParseSettingsFile(settingsFileName.c_str());
+}
+
+template<typename Space>
+void Settings<Space>::ParseDirect(const char* fileName) {
+  this->settingsFileName = fileName;
+  Settings<Space>::ParseSettingsFile(fileName);
 }
 
 template<typename Space>

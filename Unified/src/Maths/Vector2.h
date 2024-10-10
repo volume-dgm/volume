@@ -29,7 +29,7 @@ struct Vector2
   inline Vector2<T>(const T& x, const T& y): x(x), y(y) { }
 
   template <typename U>
-  Vector2<T>(const Vector2<U>& other): x(T(other.x)), y(T(other.y)) { }
+  Vector2(const Vector2<U>& other): x(T(other.x)), y(T(other.y)) { }
 
   inline Vector2(const T& value): x(value), y(value)
   {}

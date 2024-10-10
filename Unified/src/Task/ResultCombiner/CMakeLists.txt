@@ -32,5 +32,9 @@ ${ElasticSystemSrc}
 ${TriGeomSrc}
 )
 
-target_link_libraries(${BinaryFileName} ${ZLIB_LIBRARIES}) 
-			
+target_link_libraries(resultcombiner
+  PUBLIC ZLIB::ZLIB 
+  PUBLIC OpenMP::OpenMP_CXX
+  PUBLIC tinyxml
+  PUBLIC Eigen3::Eigen
+)		
