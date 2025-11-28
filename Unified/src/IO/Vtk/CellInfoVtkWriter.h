@@ -31,6 +31,7 @@ public:
       IndexType isCellBroken;
       Scalar plasticDeforms;
       Scalar density;
+      Scalar lambda, mju, young;
     };
     std::vector<CellData> cellData;
   };

@@ -17,6 +17,7 @@ struct ElasticSystem<Space2>: public ElasticSystemCommon<Space2>
 
   using ElasticSystemCommon<Space2>::GetContactDynamicBoundaryType;
 
+  /* Holds values for tension; provides GetPressure(), GetDeviatorSquare() and GetForce(const Vector& normal) methods */
   struct ValueType: public ValueTypeCommon
   {
     using ValueTypeCommon::SetTension;
@@ -68,6 +69,7 @@ struct ElasticSystem<Space3>: public ElasticSystemCommon<Space3>
   using ElasticSystemCommon<Space>::GetContactDynamicBoundaryType;
   typedef ElasticSystemCommon<Space>::MatrixXDim MatrixXDim;
 
+  /* Holds values for tension; provides GetPressure(), GetDeviatorSquare() and GetForce(const Vector& normal) methods */
   struct ValueType: public ValueTypeCommon
   {
     ValueType() : ValueTypeCommon()

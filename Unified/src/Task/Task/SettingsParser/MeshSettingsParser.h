@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ParserUtil.h"
+#include <map>
 #include "../../../Maths/Spaces.h"
 
 template<typename Space>
@@ -57,6 +58,31 @@ struct MeshSettings
       Scalar powderShearMult;
     };
 
+    struct ParamModification //<parDiff>
+    {
+      ParamModification() : axisIndex(10), p1(0.0), p2(0.0), p3(0.0), p4(0.0) { }
+      enum DependencyType 
+      {
+        Linear,
+        Constant
+      };
+
+      enum ParamName
+      {
+        E,
+        Lambda,
+        Mju
+      };
+
+      DependencyType dependencyType;
+      ParamName paramName;
+      IndexType axisIndex;
+      Scalar p1;
+      Scalar p2;
+      Scalar p3;
+      Scalar p4;
+    };
+
     struct PerSubmeshInfo
     {
       std::string fileName;
@@ -68,7 +94,8 @@ struct MeshSettings
         {}
         IndexType submeshIndex;
         IndexType internalContactType;
-        MediumParams params;
+        MediumParams params; 
+        ParamModification modification;
       };
       std::vector<SubmeshParams> submeshParams;
     };
@@ -137,6 +164,37 @@ struct MeshSettings
       ParseVector(element, "flowVelocity", &(params->flowVelocity));
     }
 
+    void ParseParamModification(TiXmlElement *element, ParamModification *params)
+    {
+      std::string paramName;
+      std::string dependencyType;
+      std::string axisName;
+      ParseString(element, "paramName", &paramName);
+      ParseString(element, "dependencyType", &dependencyType);
+      ParseString(element, "axisName", &axisName);
+
+      using DepType = typename ParamModification::DependencyType;
+      using ParName = typename ParamModification::ParamName;
+      static std::unordered_map<std::string, DepType> const typeTable = { 
+        {"linear", DepType::Linear}, {"constant", DepType::Constant} };
+      static std::unordered_map<std::string, ParName> const nameTable = {
+        {"young", ParName::E}, {"lambda", ParName::Lambda}, {"mju", ParName::Mju} };
+      static std::unordered_map<std::string, IndexType> const axisTable = {
+        {"x", static_cast<IndexType>(0)}, {"y", static_cast<IndexType>(1)}, {"z", static_cast<IndexType>(2)} };
+
+      auto typeIterator = typeTable.find(dependencyType);
+      if (typeIterator != typeTable.end()) params->dependencyType = typeIterator->second;
+      auto nameIterator = nameTable.find(paramName);
+      if (nameIterator != nameTable.end()) params->paramName = nameIterator->second;
+      auto axisIterator = axisTable.find(axisName);
+      if (axisIterator != axisTable.end()) params->axisIndex = axisIterator->second;
+
+      ParseScalar(element, "p1", &(params->p1));
+      ParseScalar(element, "p2", &(params->p2));
+      ParseScalar(element, "p3", &(params->p3));
+      ParseScalar(element, "p4", &(params->p4));
+    }
+
     ParamsDescription ParseParamsDescription(TiXmlElement *paramsDescriptionElement)
     {
       ParamsDescription res;
@@ -155,6 +213,10 @@ struct MeshSettings
           ParseUnsigned(submeshElement, "index", &singleSubmeshParams.submeshIndex);
           ParseMediumParams(submeshElement, &singleSubmeshParams.params);
           ParseUnsigned(submeshElement, "internalContactType", &singleSubmeshParams.internalContactType);
+
+          TiXmlElement *modifyElement = submeshElement->FirstChildElement("ModifyParams"); 
+          if (modifyElement) ParseParamModification(modifyElement, &singleSubmeshParams.modification);
+
           perSubmeshInfo.submeshParams.push_back(singleSubmeshParams);
 
           submeshElement = submeshElement->NextSiblingElement("Submesh");
@@ -212,6 +274,7 @@ struct MeshSettings
         Tabulated,
         HydraulicPressure,
         HydrodynamicResistance,
+        TimedImpulse,
         Undefined
       };
 
@@ -318,6 +381,14 @@ struct MeshSettings
       Vector fluidSurfacePoint;
     };
     std::vector<HydraulicPressureFunctorInfo> hydraulicPressureFunctorInfos;
+
+    struct TimedImpulseFunctorInfo
+    {
+      Scalar timeBegin;
+      Scalar timeEnd;
+      Vector value;
+    };
+    std::vector<TimedImpulseFunctorInfo> timedImpulseFunctorInfos;
 
     struct HydrodynamicResistanceFunctorInfo
     {
@@ -512,6 +583,23 @@ struct MeshSettings
 
         hydraulicPressureFunctorInfos.push_back(hydraulicPressureFunctorInfo);
         hydraulicPressureFunctorElement = hydraulicPressureFunctorElement->NextSiblingElement("HydraulicPressureFunctor");
+      }
+
+      TiXmlElement* timedImpulseFunctorElement = vectorFunctorsElement->FirstChildElement("TimedImpulseFunctor");
+      while (timedImpulseFunctorElement)
+      {
+        VectorFunctor newbie;
+        newbie.type = VectorFunctor::TimedImpulse;
+        newbie.infoIndex = timedImpulseFunctorInfos.size();
+        functors.push_back(newbie);
+
+        TimedImpulseFunctorInfo timedImpulseFunctorInfo;
+        ParseScalar(timedImpulseFunctorElement, "timeBegin", &timedImpulseFunctorInfo.timeBegin);
+        ParseScalar(timedImpulseFunctorElement, "timeEnd", &timedImpulseFunctorInfo.timeEnd);
+        ParseVector(timedImpulseFunctorElement, "value", &timedImpulseFunctorInfo.value);
+
+        timedImpulseFunctorInfos.push_back(timedImpulseFunctorInfo);
+        timedImpulseFunctorElement = timedImpulseFunctorElement->NextSiblingElement("TimedImpulseFunctor");
       }
 
       TiXmlElement* hydrodynamicResistanceFunctorElement = vectorFunctorsElement->FirstChildElement("HydrodynamicResistanceFunctor");

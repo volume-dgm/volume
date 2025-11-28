@@ -1,15 +1,13 @@
 #!/bin/bash
 
-rm -r release
-mkdir release
-cd release
+rm -r build
+mkdir build
+cd build
 
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
-      -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ..
-make -j 8  > >(tee build.log) 2> >(tee error.log >&2)
+cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx ..
+#make -j 8  > >(tee build.log) 2> >(tee error.log >&2)
+ninja > >(tee build.log) 
 
-echo "Done"
 
 cd ..
-cp .bin/* bin/
-mv release/*.log ./
+mv build/*.log ./

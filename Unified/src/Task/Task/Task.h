@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <limits>
 #include <sstream>
+#include "SettingsParser/MeshSettingsParser.h"
 #include "assert.h"
 #include <omp.h>
 #include <errno.h>
@@ -66,6 +67,10 @@ public:
   virtual ~Task();
   void Run();
 
+  /* Testing routines */
+  void TestRun();
+  void TestRunDecomposed();
+
 protected:
   void BuildContactDescriptions();
   void BuildBoundaryDescriptions();
@@ -86,8 +91,21 @@ protected:
   void LoadInitialState();
   void FindDestructions(IndexType domainNumber);
   MediumParameters MakeElasticMediumParams(typename MeshSettings<Space>::MediumParamsSection::MediumParams params);
+  MediumParameters MakeElasticMediumParams(typename MeshSettings<Space>::MediumParamsSection::MediumParams params,
+                                           typename MeshSettings<Space>::MediumParamsSection::ParamModification mod,
+                                           DistributedMeshIO<Space>* mesh, IndexType cellIndex);
+
 
 private:
+
+  /***  Testing methods for TestRunDecomposed() ***/
+
+  /* Loads node schedule, creates distributedElasticMeshes for each computational node and applies settings for them */
+  void SetupNodes();
+  /* Loads meshes, builds sources and initial states */
+  void IniState();
+
+
   void SaveProfilingData(const std::string& info, double begin, double end); 
   void ComputePacketsToReceiveCount();
  
@@ -223,6 +241,13 @@ private:
           combinedFunctor->Add(new HydraulicPressureFunctor<Space>(hydraulicPressureInfo.fluidRho,
             hydraulicPressureInfo.g, hydraulicPressureInfo.fluidSurfacePoint));
         } break;
+        case BoundarySection::VectorFunctor::TimedImpulse:
+        {
+          typename BoundarySection::TimedImpulseFunctorInfo timedImpulseInfo = 
+            settings.mesh.boundarySection.timedImpulseFunctorInfos[func.infoIndex];
+          combinedFunctor->Add(new TimedImpulseFunctor<Space>(timedImpulseInfo.value, timedImpulseInfo.timeBegin,
+            timedImpulseInfo.timeEnd));
+        } break;
         case BoundarySection::VectorFunctor::HydrodynamicResistance:
         {
           typename BoundarySection::HydrodynamicResistanceFunctorInfo hydrodynamicResistanceInfo =
@@ -237,6 +262,9 @@ private:
   }
 
   static void PrintSolverState(const SolverState& solverState, Scalar currTime, Scalar timeStep);
+
+  typename ElasticSystem<Space>::ValueType GetPointSolution(Vector poi, bool halfStepSolution = false);
+  void CompareTestSolutionSnapshot(Scalar currTime, IndexType stepIndex, std::string solutionFile);
 
   void UpdateMeshData(char* data);
   void OnNotify() override;
@@ -804,6 +832,40 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
   return res;
 }
 
+// <parDiff> overloaded call for when there is param modification
+template<typename Space, unsigned int order>
+typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMediumParams(
+  typename MeshSettings<Space>::MediumParamsSection::MediumParams params, 
+  typename MeshSettings<Space>::MediumParamsSection::ParamModification mod,
+  DistributedMeshIO<Space> *mesh,
+  IndexType cellIndex)
+{
+  using DepType = typename MeshSettings<Space>::MediumParamsSection::ParamModification::DependencyType;
+  using ParName = typename MeshSettings<Space>::MediumParamsSection::ParamModification::ParamName;
+  typename Space::Vector cellCenter = mesh->GetCellCenter(cellIndex);
+
+  switch (mod.dependencyType) 
+  {
+    case DepType::Linear:
+    {
+      Scalar interpolatedValue = mod.p1 + (cellCenter[mod.axisIndex] - mod.p3)*(mod.p2 - mod.p1)/(mod.p4 - mod.p3);
+      if (mod.paramName == ParName::Mju) {
+        params.mju = interpolatedValue;
+      }
+      if (mod.paramName == ParName::Lambda) {
+        params.lambda = interpolatedValue;
+      }
+      if (mod.paramName == ParName::E) {
+        params.lambda = params.mju*(interpolatedValue - 2*params.mju)/(3*params.mju - interpolatedValue);
+      }
+    }
+    case DepType::Constant:
+    default:
+      return MakeElasticMediumParams(params);
+      break;
+  }
+}
+
 template<typename Space, unsigned int order>
 void Task<Space, order>::FindDestructions(IndexType domainNumber)
 {
@@ -1039,8 +1101,6 @@ void Task<Space, order>::LoadMeshes()
 
     meshes[domainNumber]->Load(meshName);
 
-
-
     IndexType meshCellsCount = meshes[domainNumber]->GetCellsCount();
     cellMediumParams.resize(meshCellsCount);
     internalContactTypes.resize(meshCellsCount);
@@ -1074,9 +1134,17 @@ void Task<Space, order>::LoadMeshes()
 
             for(IndexType submeshNumber = 0; submeshNumber < perSubmeshInfo.submeshParams.size(); ++submeshNumber)
             {
-              if(perSubmeshInfo.submeshParams[submeshNumber].submeshIndex == currCellSubmeshIndex)
+              if(perSubmeshInfo.submeshParams[submeshNumber].submeshIndex == currCellSubmeshIndex) //<parDiff> call modified MakeElasticMediumParams when ModifyParams is present
               {
-                cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo.submeshParams[submeshNumber].params);
+                if (perSubmeshInfo.submeshParams[submeshNumber].modification.axisIndex == 10) 
+                {
+                  cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo.submeshParams[submeshNumber].params);
+                } else {
+                  cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo.submeshParams[submeshNumber].params,
+                                                                        perSubmeshInfo.submeshParams[submeshNumber].modification,
+                                                                        meshes[domainNumber],
+                                                                        cellIndex);
+                }
                 internalContactTypes[cellIndex] = perSubmeshInfo.submeshParams[submeshNumber].internalContactType;
               }
             }
@@ -1360,7 +1428,7 @@ void Task<Space, order>::LoadInitialState()
 template<typename Space, unsigned int order>
 void Task<Space, order>::PrintSolverState(const SolverState& solverState, Scalar currTime, Scalar timeStep)
 {
-  if (solverState.globalStepIndex % 100 == 0) {
+  if (solverState.globalStepIndex % 50 == 0) {
     if (solverState.hierarchyLevelsCount > 1)
     {
         printf("step %d, level %d, phase %d, currTime %f, dt = %.8f\n", 

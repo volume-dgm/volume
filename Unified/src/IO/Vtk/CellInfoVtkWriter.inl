@@ -5,7 +5,7 @@ void CellInfoVtkWriter<Space, FunctionSpace>::Write(const std::string& fileName,
   OutputData outputData = ConstructOutputData(mesh);
   SaveToFile(fileName, outputData);
 }
-
+//<parDiff>: instead write parameters here
 template<typename Space, typename FunctionSpace>
 typename CellInfoVtkWriter<Space, FunctionSpace>::OutputData
 CellInfoVtkWriter<Space, FunctionSpace>::ConstructOutputData(
@@ -29,6 +29,9 @@ CellInfoVtkWriter<Space, FunctionSpace>::ConstructOutputData(
         data.isCellBroken = mesh->isCellBroken[cellIndex] ? 1 : 0;
         data.plasticDeforms = mesh->plasticDeforms.size() ? mesh->plasticDeforms[cellIndex] : 0;
         data.density = Scalar(1.0) / mesh->volumeMesh.cellMediumParameters[cellIndex].invRho;
+        data.lambda = mesh->volumeMesh.cellMediumParameters[cellIndex].lambda;
+        data.mju = mesh->volumeMesh.cellMediumParameters[cellIndex].mju;
+        data.young = data.mju*(3*data.lambda + 2*data.mju)/(data.lambda + data.mju);
         outputData.cells.push_back(mesh->volumeMesh.cells[cellIndex]);
         outputData.cellData.push_back(data);
       }
@@ -117,6 +120,27 @@ void CellInfoVtkWriter<Space, FunctionSpace>::SaveToFile(const std::string& file
   for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
   {
     file << outputData.cellData[cellIndex].density << std::endl;
+  }
+
+  file << "SCALARS LAMBDA float 1\n";
+  file << "LOOKUP_TABLE default\n";
+  for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
+  {
+    file << outputData.cellData[cellIndex].lambda << std::endl;
+  }
+
+  file << "SCALARS MJU float 1\n";
+  file << "LOOKUP_TABLE default\n";
+  for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
+  {
+    file << outputData.cellData[cellIndex].mju << std::endl;
+  }
+
+  file << "SCALARS YOUNG float 1\n";
+  file << "LOOKUP_TABLE default\n";
+  for (IndexType cellIndex = 0; cellIndex < outputData.cellData.size(); ++cellIndex)
+  {
+    file << outputData.cellData[cellIndex].young << std::endl;
   }
 
   file.close();

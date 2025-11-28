@@ -1,6 +1,9 @@
 #pragma once
 
 #include "../../../Utils/Utils.h"
+#include "../../../../3rdparty/tinyxml/tinyxml.h"
+#include "../../../../3rdparty/tinyxml/tinystr.h"
+#include "../../../Maths/Spaces.h"
 
 template<typename Vector>
 int ParseVector(TiXmlElement *element, const std::string name, Vector *vector)

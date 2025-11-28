@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <iostream>
 #include <vector>
 #include "../../Maths/Spaces.h"
 
@@ -289,6 +290,35 @@ struct HydraulicPressureFunctor: public VectorFunctor<Space>
   Scalar  fluidRho;
   Vector g;
   Vector fluidSurfacePoint;
+};
+
+template <typename Space>
+struct TimedImpulseFunctor: public VectorFunctor<Space>
+{
+  SPACE_TYPEDEFS
+
+  TimedImpulseFunctor(Vector constantValue, Scalar timeBegin, Scalar timeEnd)
+  {
+    this->constantValue = constantValue;
+    this->timeBegin = timeBegin;
+    this->timeEnd = timeEnd;
+  }
+
+  Vector operator()(const Vector&, const Vector&, Scalar time) const override
+  {
+    if (time >= timeBegin && time <= timeEnd)
+    {
+      return constantValue;
+    } else 
+    {
+      return Vector::zero();
+    }
+  }
+
+protected:
+  Vector constantValue;
+  Scalar timeBegin;
+  Scalar timeEnd;
 };
 
 template <typename Space>

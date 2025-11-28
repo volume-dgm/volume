@@ -372,5 +372,6 @@ Unified/.tmp_files
 meshbuilder
 task
 resultcombiner
+test
 
 .vscode/

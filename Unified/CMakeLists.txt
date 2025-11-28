@@ -1,13 +1,13 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.30)
 project(Volume)
 
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_C_COMPILER mpicc)
-set(CMAKE_CXX_COMPILER mpic++)
+set(CMAKE_C_COMPILER /usr/bin/mpicc)
+set(CMAKE_CXX_COMPILER /usr/bin/mpicxx)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -mtune=native -funroll-loops -ftree-vectorize -mfpmath=sse -ffast-math -g -Wno-ignored-attributes -Wno-switch")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -mtune=native -funroll-loops -mfpmath=sse -ffast-math -ftree-vectorize -g -Wno-ignored-attributes -Wno-switch")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=native -funroll-loops -g -Wno-ignored-attributes -Wno-switch -Wno-nan-infinity-disabled")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -funroll-loops -g -Wno-ignored-attributes -Wno-switch -Wno-nan-infinity-disabled")
 if(MINGW)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj")
 endif()
@@ -38,18 +38,18 @@ FIND_PACKAGE(ZLIB REQUIRED)
 #    include_directories( ${ZLIB_INCLUDE_DIRS} )    
 #ENDIF (ZLIB_FOUND)
 
-FIND_PACKAGE(Eigen3 3.3 REQUIRED NO_MODULE)
+FIND_PACKAGE(Eigen3 5.0.1 REQUIRED NO_MODULE)
 target_compile_definitions(Eigen3::Eigen
     INTERFACE EIGEN_DEFAULT_TO_ROW_MAJOR 
     INTERFACE EIGEN_DONT_PARALLELIZE 
     INTERFACE EIGEN_NO_DEBUG 
     INTERFACE EIGEN_NO_AUTOMATIC_RESIZING 
-    INTERFACE EIGEN_FAST_MATH EIGEN_NO_MALLOC
+    INTERFACE EIGEN_NO_MALLOC
 )
 
-set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/.bin)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/bin)
 
-MAKE_DIRECTORY(${CMAKE_SOURCE_DIR}/.bin)
+MAKE_DIRECTORY(${CMAKE_SOURCE_DIR}/bin)
 
 set(VtkSrc
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/BasicVtkWriter.h
@@ -237,6 +237,7 @@ add_library(quadrature_integration STATIC ${QuadratureIntegrationSrc})
 target_include_directories(quadrature_integration PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/quadrature_integration/)
 
 add_library(tinyxml STATIC ${TinyXmlSrc})
+target_include_directories(tinyxml PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/tinyxml/)
 target_compile_definitions(tinyxml PUBLIC TIXML_USE_STL)
 
 add_library(metis STATIC ${GKlibSrc} ${MetisLibSrc} ${MetisInclude})
@@ -244,8 +245,11 @@ target_include_directories(metis
   PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis
   PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/GKlib
   INTERFACE ${CMAKE_SOURCE_DIR}/3rdparty/METIS/programs
+  INTERFACE ${CMAKE_SOURCE_DIR}/3rdparty/METIS/include
 )
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/Task)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/ResultCombiner)
+add_subdirectory(${CMAKE_SOURCE_DIR}/3rdparty/googletest)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/Task/Testing)

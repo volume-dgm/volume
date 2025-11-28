@@ -1,0 +1,17 @@
+{
+  "tests": 1,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "InitTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "TestRun",
+          "file": "\/home\/kabe\/base\/dg\/from_git\/volume_\/Unified\/src\/Task\/Testing\/TestMain.cpp",
+          "line": 11
+        }
+      ]
+    }
+  ]
+}

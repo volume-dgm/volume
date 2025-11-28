@@ -143,7 +143,7 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
     mesh.Parse(meshInfoElement);
   } else
   {
-    std::cout << "There is no Mesh section";
+    std::cout << "There is no Mesh section\n";
   }
 
   TiXmlElement* snapshotElement;
@@ -165,7 +165,7 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
       snapshot.contacts  .used = false;
       if (snapshotIndex == 0)
       {
-        std::cout << "There is no Snapshot section";
+        std::cout << "There is no Snapshot section\n";
       }
       break;
     }else
@@ -181,7 +181,7 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
     schedule.Parse(scheduleElement);
   } else
   {
-    std::cout << "There is no Schedule element";
+    std::cout << "There is no Schedule element\n";
   }
     
   TiXmlElement* taskElement = settingsElement->FirstChildElement("Task");
@@ -190,7 +190,7 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
     task.Parse(taskElement);
   } else
   {
-    std::cout << "There is no Task element";
+    std::cout << "There is no Task element\n";
   }
 
   TiXmlElement* solverElement = settingsElement->FirstChildElement("Solver");
@@ -199,7 +199,7 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
     solver.Parse(solverElement);
   } else
   {
-    std::cout << "There is no Solver section";
+    std::cout << "There is no Solver section\n";
   }
 
   TiXmlElement* meshBuilderElement = settingsElement->FirstChildElement("MeshBuilder");
@@ -208,7 +208,7 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
     meshBuilder.Parse(meshBuilderElement);
   } else
   {
-    std::cout << "There is no MeshBuilder section";
+    std::cout << "There is no MeshBuilder section\n";
   }
 
   TiXmlElement* resultCombinerElement = settingsElement->FirstChildElement("ResultCombiner");
@@ -217,7 +217,7 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
     resultCombiner.Parse(resultCombinerElement);
   } else
   {
-    std::cout << "There is no ResultCombiner section";
+    std::cout << "There is no ResultCombiner section\n";
   }
 
 

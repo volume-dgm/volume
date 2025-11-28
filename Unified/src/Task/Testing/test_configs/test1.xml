@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount="2">
+  <MeshBuilder>
+    <SalomeFile fileName="test_meshes/test1" />
+    <OutFile fileName = "meshfiles/test1[<domain>]" />
+  </MeshBuilder>
+
+  <Mesh fileName="meshfiles/test1[<domain>]" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth="0">
+    <MediumParams>
+      <Uniform pSpeed="2.0" sSpeed="1.0" rho="1.0" />
+    </MediumParams>
+
+    <Boundaries>
+      <Free interactionType="0" />
+      <Free interactionType="1" />
+      <Free interactionType="2" />
+      <Free interactionType="3" />
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType = "0" />
+    </Contacts>
+  </Mesh>
+
+  <!--
+  <Snapshot>
+    <Period time="10.01" />
+    <Data fileName="out/test1/test1[<domain>]<step>.vti" writeVelocity="True" writeTension="True">
+      <Frame center = "0.0 0.0" size="2.0 2.0" margin="0" />
+      <Resolution resolution="100 100" />
+    </Data>
+  </Snapshot>
+  -->
+
+  <Schedule domainsCount="1" />
+
+  <Task destinationTime = "1.0">
+    <IniState>
+      <AcousticPlaneWave point="-2.0 -2.0" waveVector="1.0 0.0" waveLength="0.1" />
+    </IniState>
+  </Task>
+
+  <Solver polynomialsOrder="1" precision="double" integrator="RK4"
+          tolerance="1e+1" maxScale="1e-1" maxTimeStep="1e-2" hierarchyLevelsCount="1" 
+          allowMovement="false" allowPlasticity="false" 
+          allowDiscreteDestruction="false" 
+          allowContinuousDestruction="false" 
+          tensionErrorMult="1e+0" velocityErrorMult="1e+0" positionErrorMult="1e-0"
+          velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

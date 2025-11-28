@@ -72,7 +72,6 @@ class SnapshotVtkWriter: public BasicVtkWriter<ElasticSpace>
     }
 };
 
-
 template <typename ElasticSpace>
 void SnapshotVtkWriter<ElasticSpace>::Write(const string& fileName,
                                             Elastic* data,    

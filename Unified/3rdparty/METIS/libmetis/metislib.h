@@ -21,7 +21,7 @@
 #endif
 
 
-#include <metis.h>
+#include "../include/metis.h"
 #include "rename.h"
 #include "gklib_defs.h"
 
