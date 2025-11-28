@@ -367,6 +367,7 @@ profiling*.txt
 *.csv
 *.segy
 *.loc
+cmake*.json
 
 Unified/.tmp_files
 meshbuilder
