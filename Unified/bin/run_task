@@ -4,6 +4,7 @@ taskname=""
 num_proc=0
 dim_count=3
 build_mesh=0
+po=1
 
 while [ "$1" != "" ]; do
   case $1 in  
@@ -15,6 +16,9 @@ while [ "$1" != "" ]; do
                          ;;
     -d | --dims )        shift
                          dim_count=$1
+                         ;;
+    -po | --poly_order ) shift
+                         po=$1
                          ;;
     -bm | --build_mesh ) build_mesh=1
   esac
@@ -42,4 +46,4 @@ if [[ ! $np -eq 0 ]]; then
   export OMP_THREAD_LIMIT=$np
 fi  
 
-./task $dim_count cfg/$taskname.xml
+./task $dim_count $po cfg/$taskname.xml

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Settings dimsCount="2">
+<Settings dimsCount="3">
   <MeshBuilder>
-    <SalomeFile fileName="salome/test_timed" />
-    <OutFile fileName = "meshes/test_timed" />
+    <SalomeFile fileName="salome/glass" />
+    <OutFile fileName = "meshes/glass" />
   </MeshBuilder>
 
-  <Mesh fileName="meshes/test_timed" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth="0.0001">
+  <Mesh fileName="meshes/glass" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth="0.0001">
     <MediumParams>
-      <PerSubmesh fileName="meshes/test_timed.params"> 
+      <PerSubmesh fileName="meshes/glass.params"> 
         <Submesh index="0" E="2.25e+7" G="2.87e+7" rho="2.5e-3" fixed="false" internalContactType="0">
           <!--
             <ModifyParams paramName="mju" dependencyType="linear" axisName="x" p2="1.87e+9" p1="4.68e+8" p3="-5.0" p4="5.0"/>
@@ -19,10 +19,10 @@
     <Boundaries>
       <Free interactionType="0" >
         <ExternalForce>
-          <TimedImpulseFunctor value="0.0 -8.0e+6" timeBegin="0.0" timeEnd="5.0e-6"/>
+          <TimedImpulseFunctor value="0.0 0.0 -8.0e+6" timeBegin="1.0e-9" timeEnd="5.0e-6"/>
         </ExternalForce>
       </Free>
-      <Free interactionType="1" />
+      <Fixed interactionType="1" />
     </Boundaries>
 
     <Contacts>
@@ -32,12 +32,12 @@
 
   <Snapshot>
     <Period frames="10" />
-    <Data fileName="out/test_timed/test_timed[<domain>]<step>.vti" writeVelocity="True" writeTension="True">
-      <Box boxPoint1="-5.0 -5.0" boxPoint2="5.0 5.0" />
-      <Resolution resolution="200 200" />
+    <Data fileName="out/glass/data[<domain>]<step>.vti" writeVelocity="True" writeTension="True">
+      <Box boxPoint1="-0.035 -0.035 -0.02" boxPoint2="0.035 0.035 0.0" />
+      <Resolution resolution="140 140 40" />
     </Data>
-    <Mesh fileName="out/test_timed/mesh[<domain>]<step>.vtk"/>
-    <CellInfos fileName="out/test_timed/cell_info[<domain>]<step>.vtk"/>
+    <Mesh fileName="out/glass/mesh[<domain>]<step>.vtk"/>
+    <CellInfos fileName="out/glass/cell_info[<domain>]<step>.vtk"/>
   </Snapshot>
 
   <Schedule domainsCount="1" />
@@ -51,8 +51,8 @@
     -->
   </Task>
 
-  <Solver polynomialsOrder="4" precision="double" integrator="DormandPrince"
-          tolerance="1e-1" maxScale="1e-2" maxTimeStep="2.00e-9" hierarchyLevelsCount="1" 
+  <Solver polynomialsOrder="1" precision="double" integrator="RK4"
+          tolerance="1e-1" maxScale="1e-2" maxTimeStep="4.87e-9" hierarchyLevelsCount="1" 
           allowMovement="true" allowPlasticity="true" allowDestruction="true"
           allowDiscreteDestruction="true" 
           allowContinuousDestruction="true" 

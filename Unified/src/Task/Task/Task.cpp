@@ -14,6 +14,8 @@ typedef Space2 DefaultSpace;
 
 int main(int argc, char* argv[])
 {
+  #if(defined(USE_OLD_SPACE_ORDER_SETTINGS))
+  {
   #if(defined(SPACE_FROM_SETTINGS) && defined(ORDER_FROM_SETTINGS))
   {
     BasicSettings basicSettings; 
@@ -133,6 +135,61 @@ int main(int argc, char* argv[])
     task.Run();
   }
   #endif
+  }
+  #endif
+
+  if(argc == 1) {
+      BasicSettings settings; 
+      settings.Parse("task.xml");
+
+      switch(settings.configDimsCount)
+      {
+        case 2:
+        {
+          Task<Space2, defaultPolynomialOrder> task;
+          task.Run(); 
+        }break;
+        case 3:
+        {
+          Task<Space3, defaultPolynomialOrder> task;
+          task.Run(); 
+        }break;
+        default: std::cerr << "Unknown dims count"; break;
+      }
+    } else {
+      int dimCount = std::strtol(argv[1], nullptr, 10);
+      int polyOrder = std::strtol(argv[2], nullptr, 10);
+      const char* settingsName = argv[3];
+
+      switch(dimCount)
+      {
+        case 2:
+        {
+          switch (polyOrder)
+          {
+           case 1: {Task<Space2, 1> task(settingsName); task.Run();} break; 
+           case 2: {Task<Space2, 2> task(settingsName); task.Run();} break; 
+           case 3: {Task<Space2, 3> task(settingsName); task.Run();} break; 
+           case 4: {Task<Space2, 4> task(settingsName); task.Run();} break; 
+           case 5: {Task<Space2, 5> task(settingsName); task.Run();} break; 
+           default: std::cerr << "Unknown polynomial order"; break;
+          }
+        }break;
+        case 3:
+        {
+          switch (polyOrder)
+          {
+           case 1: {Task<Space3, 1> task(settingsName); task.Run();} break; 
+           case 2: {Task<Space3, 2> task(settingsName); task.Run();} break; 
+           case 3: {Task<Space3, 3> task(settingsName); task.Run();} break; 
+           case 4: {Task<Space3, 4> task(settingsName); task.Run();} break; 
+           case 5: {Task<Space3, 5> task(settingsName); task.Run();} break; 
+           default: std::cerr << "Unknown polynomial order"; break;
+          }
+        }break;
+        default: std::cerr << "Unknown dims count"; break;
+      }
+    }
 
   return 0;
 }

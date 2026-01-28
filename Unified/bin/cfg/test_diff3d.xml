@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount="3">
+  <MeshBuilder>
+    <SalomeFile fileName="salome/test_diff3d" />
+    <OutFile fileName = "meshes/test_diff3d" />
+  </MeshBuilder>
+
+  <Mesh fileName="meshes/test_diff3d" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth="0.0001">
+    <MediumParams>
+      <PerSubmesh fileName="meshes/test_diff3d.params"> 
+        <Submesh index="0" E="5e+9" G="1.87e+9" rho="920" fixed="false" internalContactType="0">
+          <ModifyParams paramName="mju" dependencyType="linear" axisName="z" p2="1.87e+9" p1="4.68e+8" p3="0.0" p4="10.0"/>
+        </Submesh>
+        <Submesh index="1" E="5e+9" G="1.87e+9" rho="500" fixed="false" internalContactType="1">
+          <!--
+            <ModifyParams paramName="mju" dependencyType="linear" axisName="y" p2="1.87e+9" p1="4.68e+8" p3="-5.0" p4="5.0"/>
+          -->
+        </Submesh>
+      </PerSubmesh>
+    </MediumParams>
+
+    <Boundaries>
+      <Free interactionType="0" dynamicContactInteractionType = "2" />
+      <Free interactionType="1" dynamicContactInteractionType = "2" />
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType = "0" />
+      <Glue interactionType = "1" />
+      <Glide interactionType = "2" />
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <Period time="1e-3" />
+    <Data fileName="out/test_diff3d/test_diff[<domain>]<step>.vti" writeVelocity="True" writeTension="True">
+      <Box boxPoint1="-10.1 0.0 0.0" boxPoint2="10.1 10.0 10.0" />
+      <Resolution resolution="200 100 100" />
+    </Data>
+    <Mesh fileName="out/test_diff3d/mesha[<domain>]<step>.vtk"/>
+    <CellInfos fileName="out/test_diff3d/cell_info[<domain>]<step>.vtk"/>
+    <Contacts fileName="out/test_diff3d/contacts[<domain>]<step>.vtk" faceTypesToDraw="2" />
+  </Snapshot>
+
+  <Schedule domainsCount="1" />
+
+  <Task destinationTime = "0.2">
+    <IniState>
+      <BoxState boxPoint1 = "-10.1 0.0 0.0" boxPoint2 = "0.0 10.0 10.0" velocity = "1.0 0.0 0.0"/>
+      <BoxState boxPoint1 = "0.0 0.0 0.0" boxPoint2 = "10.1 10.0 10.0" velocity = "-1.0 0.0 0.0"/>
+    </IniState>
+  </Task>
+
+  <Solver polynomialsOrder="1" precision="double" integrator="RK4"
+          tolerance="1e-1" maxScale="1e-2" maxTimeStep="3.35e-5" hierarchyLevelsCount="1" 
+          allowMovement="true" allowPlasticity="true" allowDestruction="true"
+          allowDiscreteDestruction="true" 
+          allowContinuousDestruction="true" 
+          tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-4"
+          velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>
