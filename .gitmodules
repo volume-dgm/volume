@@ -1,3 +1,9 @@
 [submodule "Unified/3rdparty/googletest"]
 	path = Unified/3rdparty/googletest
 	url = https://github.com/google/googletest
+[submodule "Unified/3rdparty/GKlib"]
+	path = Unified/3rdparty/GKlib
+	url = https://github.com/KarypisLab/GKlib
+[submodule "Unified/3rdparty/METIS"]
+	path = Unified/3rdparty/METIS
+	url = https://github.com/KarypisLab/METIS
