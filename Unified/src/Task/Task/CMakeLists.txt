@@ -2,12 +2,17 @@ set(TaskSrc
   ${CMAKE_SOURCE_DIR}/src/Task/Task/Task.cpp
   ${CMAKE_SOURCE_DIR}/src/Task/Task/Task.h
   ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/MeshSettingsParser.h
+  ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/LambdaParser.hpp
+  ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/LambdaSettingsParser.hpp
+  ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/MeshSettingsParser.h
+  ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/MeshSettingsGenericDTParser.h
   ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/ParserUtil.h
   ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/ScheduleSettingsParser.h
   ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/SettingsParser.h
   ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/SnapshotSettingsParser.h
   ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/SolverSettingsParser.h
   ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/TaskSettingsParser.h
+  ${CMAKE_SOURCE_DIR}/src/Task/Task/SettingsParser/TaskGenericDTSettingsParser.h
 )
 
 set(ElasticSystemSrc 
@@ -16,7 +21,6 @@ set(ElasticSystemSrc
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/VectorFunctors.h
 
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/ElasticSystem.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/ElasticSystemCommon.inl
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/SourceFunctors.h
 
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/BoundaryInfos.h
@@ -26,16 +30,10 @@ set(ElasticSystemSrc
 
 set(ElasticVolumeMeshSrc
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Local/ElasticVolumeMesh.h
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Local/ElasticVolumeMesh2.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Local/ElasticVolumeMesh3.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Local/ElasticVolumeMeshCommon.inl
 
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh.h
 
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh2.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh3.inl
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Distributed/DistributedElasticVolumeMeshCommon.h
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Distributed/DistributedElasticVolumeMeshCommon.inl
 )
 
 set(GeomMeshSrc
@@ -78,9 +76,6 @@ set(VolumeMethodSrc
   ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/FunctionGetters/BoundaryFunctionGetter.h
 
   ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/VolumeMesh/VolumeMesh.h
-  ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/VolumeMesh/VolumeMesh2.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/VolumeMesh/VolumeMesh3.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/VolumeMesh/VolumeMeshCommon.inl
   ${CMAKE_SOURCE_DIR}/src/Task/VolumeMethod/Cell.h
 )
 

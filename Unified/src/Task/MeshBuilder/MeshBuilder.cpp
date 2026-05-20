@@ -16,12 +16,6 @@
 #include "../Task/SettingsParser/SettingsParser.h"
 #include "../../DifferentialSolvers/SolversFactory.h"
 
-/* don't change. meshbuilder compilation is fast enough and it's extremely 
-difficult to detect Space2/Space3 mismatch because nothing crashes */
-
-#define SPACE_FROM_SETTINGS 
-//typedef Space2 DefaultSpace;
-
 template<typename Space>
 struct MeshBuilderTask
 {
@@ -29,7 +23,7 @@ public:
 
   MeshBuilderTask(){}
 
-  MeshBuilderTask(const char* fileName) 
+  MeshBuilderTask(std::string* fileName) 
   {
     settingsFile = fileName;
   }
@@ -39,9 +33,11 @@ public:
 
     if (settingsFile == nullptr)
     {
-      settings.Parse("task.xml");
-    } else {
-      settings.ParseDirect(settingsFile);
+      std::cerr << "Error with getting task name\n";
+      throw;
+    } else 
+    {
+      settings.Parse(*settingsFile);
     }
 
     std::string meshFileName = settings.mesh.meshFileName;
@@ -61,6 +57,8 @@ public:
     BuildGeom();
 
     meshSplitter    = new MeshSplitter<Space>(mesh, geomMesh);
+    IndexType domainsCount = settings.schedule.domainsCount;
+    domains.resize(domainsCount, DistributedMeshIO<Space>(domainsCount));
 
     BuildGlobalMediumParams(geomMesh);
 
@@ -99,7 +97,7 @@ private:
   std::vector<char>                       globalMediumParams;
 
   std::string meshBaseName;
-  const char* settingsFile = nullptr;
+  std::string* settingsFile = nullptr;
 
   void BuildGeom()
   {
@@ -308,50 +306,28 @@ private:
 
 int main(int argc, char* argv[])
 {
-  #ifdef SPACE_FROM_SETTINGS
-  if(argc == 1) {
-    BasicSettings basicSettings; //Space2 settings reader should read Space3 settings file just fine. probably.
+  int dimCount;
+  std::string taskName;
+
+  if (argc == 1)
+  {
+    BasicSettings basicSettings; 
     basicSettings.Parse("task.xml");
-    
-    switch(basicSettings.configDimsCount)
-    {
-      case 2:
-      {
-        MeshBuilderTask<Space2> meshBuilderTask;
-        meshBuilderTask.Run();
-      }break;
-      case 3:
-      {
-        MeshBuilderTask<Space3> meshBuilderTask;
-        meshBuilderTask.Run();
-      }break;
-      default: std::cerr << "Wrong dims count in config"; break;
-    }
-    
-  } else {
-    int dimCount = std::strtol(argv[1], nullptr, 10);
-    const char *settingsName = argv[2];
 
-    switch(dimCount)
-    {
-      case 2:
-      {
-        MeshBuilderTask<Space2> meshBuilderTask(settingsName);
-        meshBuilderTask.Run();
-      }break;
-      case 3:
-      {
-        MeshBuilderTask<Space3> meshBuilderTask(settingsName);
-        meshBuilderTask.Run();
-      }break;
-      default: std::cerr << "Dims count not provided correctly"; break;
-    }
-
+    dimCount = basicSettings.configDimsCount;
+    taskName = basicSettings.taskName;
+  } else 
+  {
+    dimCount = std::strtol(argv[1], nullptr, 10);
+    taskName = argv[2];
   }
-  #else
-    MeshBuilderTask<DefaultSpace> meshBuilderTask;
-    meshBuilderTask.Run();
-  #endif
-  
+
+  switch(dimCount)
+  {
+    case 2: {MeshBuilderTask<Space2> meshBuilder(&taskName); meshBuilder.Run();} break;
+    case 3: {MeshBuilderTask<Space3> meshBuilder(&taskName); meshBuilder.Run();} break;
+    default: std::cerr << "Unknown dims count\n"; break;
+  }
+
   return 0;
 }

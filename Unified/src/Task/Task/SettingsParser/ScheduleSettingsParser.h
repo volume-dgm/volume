@@ -1,3 +1,7 @@
+#pragma once
+
+#include "ParserUtil.h"
+
 template<typename Space>
 struct ScheduleSettings
 {

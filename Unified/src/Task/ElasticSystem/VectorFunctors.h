@@ -2,6 +2,8 @@
 
 #include <limits>
 #include <iostream>
+#include <fstream>
+#include <type_traits>
 #include <vector>
 #include "../../Maths/Spaces.h"
 
@@ -146,9 +148,10 @@ struct RotatingVectorFunctor: public VectorFunctor<Space>
 {
   SPACE_TYPEDEFS
 
-  RotatingVectorFunctor(const Vector& pos, Angle angularVelocity, Vector linearVelocity, Scalar linearTime):
+  RotatingVectorFunctor(const Vector& pos, Scalar angularVelocity, Vector3 rotationAxis, Vector linearVelocity, Scalar linearTime):
     pos(pos),
     angularVelocity(angularVelocity),
+    rotationAxis(rotationAxis),
     linearVelocity(linearVelocity),
     linearTime(linearTime)
   {
@@ -171,16 +174,25 @@ struct RotatingVectorFunctor: public VectorFunctor<Space>
     }
 
     // TODO: fix for 3d case
-    // Vector tangent = (point - (pos + displacement)).GetPerpendicular();
-    // Vector velocity = currLinearVelocity + tangent * angularVelocity;
+    //Vector tangent = (point - (pos + displacement)).GetPerpendicular();
+    Vector  currPosition  = point - (pos + displacement);
+    Vector3 currPosition3 = Vector3(currPosition.Get(0), currPosition.Get(1), currPosition.Get(2));
+    Vector3 tangent = currPosition3 ^ rotationAxis.GetNorm();
+    Vector t = Vector::zero();
+    if constexpr (std::is_same_v<Vector, Vector2>) {
+      t = Vector(tangent.Get(0), tangent.Get(1));
+    } else {
+      t = tangent;
+    }
+    Vector velocity = currLinearVelocity + t * angularVelocity;
 
-    Vector velocity = Vector::zero();
     return velocity;
   }
 
 private:
   Vector pos;
-  Angle angularVelocity;
+  Scalar angularVelocity;
+  Vector3 rotationAxis;
   Vector linearVelocity;
   Scalar linearTime;
 };

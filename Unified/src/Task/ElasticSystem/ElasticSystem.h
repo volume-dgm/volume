@@ -1,5 +1,6 @@
 #pragma once
-#include "VectorFunctors.h"
+
+#include "../ElasticSystem/VectorFunctors.h"
 #include "../../Maths/Spaces.h"
 #include "ElasticSystemCommon.h"
 

@@ -10,11 +10,12 @@
 #include <algorithm>
 
 template <typename Space>
-struct GeomMesh;
+class GeomMesh;
 
 template <>
-struct GeomMesh<Space2>: public GeomMeshCommon<Space2>
+class GeomMesh<Space2>: public GeomMeshCommon<Space2>
 {
+public:
   SPACE2_TYPEDEFS
   typedef Space2 Space;
 
@@ -58,6 +59,8 @@ struct GeomMesh<Space2>: public GeomMeshCommon<Space2>
   bool IsBoundaryNode(IndexType nodeIndex) const;
 
   void FindNodeGroup(IndexType nodeIndex, IndexType* groupNodeIndices, IndexType& groupNodesCount);
+
+  virtual ~GeomMesh() {}
 
 private:
   void BuildCellAdditionalTopology(IndexType *internalContactTypes);
@@ -160,6 +163,8 @@ public:
   Vector GetFaceExternalNormal(Vector* faceGlobalVertices) const;
 
   void GetGhostCellVertices(IndexType cellIndex, IndexType boundaryFaceNumber, Vector* ghostCellVertices) const;
+
+  virtual ~GeomMesh() {}
 
 private:
   void BuildSubmeshInfos(IndexType* submeshNodesCount, IndexType submeshesCount);

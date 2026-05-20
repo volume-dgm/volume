@@ -3,6 +3,7 @@
 #include <limits>
 #include <stdexcept>
 #include "../../Maths/Spaces.h"
+#include "../Task/SettingsParser/LambdaSettingsParser.hpp"
 
 template<typename ElasticSpace>
 class IniStateMaker
@@ -16,7 +17,13 @@ public:
 
   // point, lambda, mju, invRho have to be dimensionless
   virtual typename ElasticSpace::Elastic GetValue(const Vector& point,
-    const Scalar lambda, const Scalar mju, const Scalar invRho) = 0;
+    const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType submeshIndex) = 0;
+
+  LambdaSettings<Space>* genericDTParser = nullptr;
+  void loadParser(LambdaSettings<Space>* genericDTParser)
+  {
+    this->genericDTParser = genericDTParser;
+  }
 };
 
 
@@ -42,7 +49,7 @@ public:
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -121,7 +128,7 @@ public:
     this->waveLength /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar , const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar , const Scalar invRho, const IndexType) override
   {
     MediumParameters mediumParameters(lambda, Scalar(0.0), invRho);
     Elastic          elastic;
@@ -182,7 +189,7 @@ public:
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -291,7 +298,7 @@ public:
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -369,7 +376,7 @@ public:
     this->wavelength /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -432,7 +439,7 @@ public:
     this->velocityMagnitude /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     MediumParameters mediumParameters(lambda, mju, invRho);
     Elastic elastic;
@@ -498,7 +505,7 @@ public:
     this->wavelength /= velocityDimensionlessMult; 
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     Scalar pSpeed = sqrt((lambda + Scalar(2.0) * mju) * invRho);
     Scalar sSpeed = sqrt(mju * invRho);
@@ -541,32 +548,95 @@ public:
   typedef typename ElasticSpace::Elastic                   Elastic;
   typedef typename ElasticSpace::MediumParametersType      MediumParameters;
 
-  BoxIniStateMaker(Vector velocity, const AABB& fullBoundary)
+  BoxIniStateMaker(GenericDataType& velocity, const AABB& fullBoundary, IndexType submeshToApply)
   {
     this->velocity = velocity;
     this->fullBoundary = fullBoundary;
+    this->submeshToApply = submeshToApply;
   }
 
   void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
   {
-    this->velocity                        /= velocityDimensionlessMult;
+    //this->velocity                        /= velocityDimensionlessMult;
     this->fullBoundary.boxPoint1          /= velocityDimensionlessMult;
     this->fullBoundary.boxPoint2          /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType submeshIndex) override
   {
     Elastic res;
     res.SetZeroValues();
 
-    if (fullBoundary.Includes(point))
+    if (fullBoundary.Includes(point) && this->submeshToApply == submeshIndex)
     {
+      if (this->genericDTParser)
+      {
+        Vector velo = this->genericDTParser->LambdaToVector(&velocity, point);
+        res.SetVelocity(velo);
+      } 
+    }
+    return res;
+  }
+private:
+  IndexType submeshToApply;
+  GenericDataType velocity;
+  AABB fullBoundary;
+};
+
+template<typename ElasticSpace>
+class BoxRotationIniStateMaker: public IniStateMaker<ElasticSpace>
+{
+public:
+  typedef typename ElasticSpace::SpaceType                 Space;
+  SPACE_TYPEDEFS
+
+  typedef typename ElasticSpace::Elastic                   Elastic;
+  typedef typename ElasticSpace::MediumParametersType      MediumParameters;
+
+  BoxRotationIniStateMaker(const AABB& fullBoundary, IndexType submeshToApply, const Vector& pos, const Scalar& angularVelocity, const Vector3& rotationAxis, const Vector& linearSpeed)
+  {
+    this->fullBoundary = fullBoundary;
+    this->submeshToApply = submeshToApply;
+    this->pos = pos;
+    this->angularVelocity = angularVelocity;
+    this->rotationAxis = rotationAxis;
+    this->linearSpeed = linearSpeed;
+  }
+
+  void MakeParamsDimensionless(Scalar tensionDimensionlessMult, Scalar velocityDimensionlessMult) override
+  {
+    this->fullBoundary.boxPoint1          /= velocityDimensionlessMult;
+    this->fullBoundary.boxPoint2          /= velocityDimensionlessMult;
+    this->pos                             /= velocityDimensionlessMult;
+  }
+
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType submeshIndex) override
+  {
+    Elastic res;
+    res.SetZeroValues();
+
+    if (fullBoundary.Includes(point) && this->submeshToApply == submeshIndex)
+    {
+      Vector currPosition = point - pos;
+      Vector3 currPosition3 = Vector3(currPosition.Get(0), currPosition.Get(1), currPosition.Get(2));
+      Vector3 tangent = currPosition3 ^ rotationAxis.GetNorm();
+      Vector t = Vector::zero();
+      if constexpr (std::is_same_v<Vector, Vector2>) {
+        t = Vector(tangent.Get(0), tangent.Get(1));
+      } else {
+        t = tangent;
+      }
+      Vector velocity = linearSpeed + t * angularVelocity;
       res.SetVelocity(velocity);
     }
     return res;
   }
 private:
-  Vector velocity;
+  IndexType submeshToApply;
+  Vector pos;
+  Scalar angularVelocity;
+  Vector3 rotationAxis;
+  Vector linearSpeed;
   AABB fullBoundary;
 };
 
@@ -595,7 +665,7 @@ public:
     k             *= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     Elastic res; 
     /*
@@ -666,7 +736,7 @@ public:
     velocity   /= velocityDimensionlessMult;
   }
 
-  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho) override
+  Elastic GetValue(const Vector& point, const Scalar lambda, const Scalar mju, const Scalar invRho, const IndexType) override
   {
     Elastic res;
 

@@ -2,29 +2,49 @@
 
 #include "../../../../3rdparty/tinyxml/tinyxml.h"
 #include "../../../../3rdparty/tinyxml/tinystr.h"
+#include <cstddef>
 #include <limits>
 #include <sstream>
+#include <filesystem>
 #include "ParserUtil.h"
-#include "MeshSettingsParser.h"
+#include "MeshSettingsGenericDTParser.h"
 #include "ScheduleSettingsParser.h"
 #include "SnapshotSettingsParser.h"
 #include "SolverSettingsParser.h"
-#include "TaskSettingsParser.h"
+#include "TaskGenericDTSettingsParser.h"
 #include "MeshBuilderSettingsParser.h"
 #include "ResultCombinerSettingsParser.h"
+#include "LambdaSettingsParser.hpp"
+
+namespace fs = std::filesystem;
 
 struct BasicSettings
 {
   virtual ~BasicSettings() = default;
-  //std::string fileName;
-  int configDimsCount; //dimsCount would probably conflict with Space::dimsCount
+  std::string taskName;
+  fs::path configFilePath;
+  fs::path outDirPath;
+  int configDimsCount; 
+  int configPolyOrder;
 
-  virtual void Parse(const char* fileName);
-  static std::string ParseSettingsFileName(const char* fileName);
+  virtual void Parse(const std::string& fileName);
 
 protected:
-  void ParseSettingsFile(const char* fileName);
-  static TiXmlElement* GetSettingXmlElement(TiXmlDocument& taskFile, const char* fileName)
+  void SetupPaths(const std::string& inputString) 
+  {
+    if (inputString.find(".xml") == std::string::npos)
+    {
+      this->taskName = inputString;
+      this->configFilePath = "config/" + inputString + ".xml";
+    } else 
+    {
+      this->taskName = fs::path(inputString).stem().string();
+      this->configFilePath = inputString;
+    }
+    this->outDirPath = "out/" + this->taskName;
+  }
+
+  static TiXmlElement* GetSettingXmlElement(TiXmlDocument& taskFile, const std::string& fileName)
   {
     bool taskLoadOkay = taskFile.LoadFile(fileName);
 
@@ -44,18 +64,6 @@ protected:
     }
     return settingsElement;
   }
-
-  static std::string GetPath(const std::string& fileName)
-  {
-    std::string path;
-
-    size_t pos = fileName.find_last_of("\\/");
-    if (pos != std::string::npos)
-    {
-      path = fileName.substr(0, pos + 1);
-    }
-    return path;
-  }
 };
 
 
@@ -64,78 +72,62 @@ struct Settings : public BasicSettings
 {
   SPACE_TYPEDEFS
 
-  MeshSettings            <Space>   mesh;
+  LambdaSettings          <Space>   lambdaParser;
+  MeshSettings            <Space>   mesh{&lambdaParser};
   ScheduleSettings        <Space>   schedule;
-  TaskSettings            <Space>   task;
+  TaskSettings            <Space>   task{&lambdaParser};
   SolverSettings          <Space>   solver;
   DetectorsSettings       <Space>   detectors;
   MeshBuilderSettings     <Space>   meshBuilder;
   ResultCombinerSettings  <Space>   resultCombiner;
   std::vector< SnapshotSettings<Space> > snapshots;
 
-  std::string settingsFileName;
-  void Parse(const char* fileName) override;
-  void ParseDirect(const char* fileName);
+  void Parse(const std::string& fileName) override;
 
 private:
-  void ParseSettingsFile(const char* fileName);
+  void ParseSettingsFile();
 };
 
-std::string BasicSettings::ParseSettingsFileName(const char* fileName)
+void BasicSettings::Parse(const std::string& fileName)
 {
   TiXmlDocument taskFile;
   TiXmlElement* settingsElement = GetSettingXmlElement(taskFile, fileName);
+  ParseString(settingsElement, "fileName", &taskName);
+  ParseUnsigned(settingsElement, "dimsCount", &configDimsCount);
+  ParseUnsigned(settingsElement, "polynomialsOrder", &configPolyOrder);
 
-  std::string settingsFileName;
-  ParseString(settingsElement, "fileName", &settingsFileName);
-  if (settingsFileName.empty())
+  if (taskName.empty())
   {
     std::cerr << "You should choose settings file to compute\n";
     throw;
   }
-  return settingsFileName;
 }
 
-void BasicSettings::Parse(const char* fileName)
+template<typename Space>
+void Settings<Space>::Parse(const std::string& fileName)
 {
-  std::string settingsFileName = ParseSettingsFileName(fileName);
-  BasicSettings::ParseSettingsFile(settingsFileName.c_str());
+  SetupPaths(fileName);
+  Settings<Space>::ParseSettingsFile();
 }
 
-void BasicSettings::ParseSettingsFile(const char* fileName)
+template<typename Space>
+void Settings<Space>::ParseSettingsFile()
 {
   TiXmlDocument settingsFile;
-  TiXmlElement* settingsElement = GetSettingXmlElement(settingsFile, fileName);
+  TiXmlElement* settingsElement = GetSettingXmlElement(settingsFile, configFilePath);
 
   if(settingsElement->QueryIntAttribute("dimsCount", &configDimsCount) != TIXML_SUCCESS)
   {
-    configDimsCount = 2;
+    std::cerr << "dimsCount not provided in Settings element in config" << std::endl;
+    std::cerr << "exiting just in case (don't know and don't wan to check whether it will break anything)" << std::endl;
+    throw;
   }
-}
 
-template<typename Space>
-void Settings<Space>::Parse(const char* fileName)
-{
-  this->settingsFileName = ParseSettingsFileName(fileName);
-  Settings<Space>::ParseSettingsFile(settingsFileName.c_str());
-}
-
-template<typename Space>
-void Settings<Space>::ParseDirect(const char* fileName) {
-  this->settingsFileName = fileName;
-  Settings<Space>::ParseSettingsFile(fileName);
-}
-
-template<typename Space>
-void Settings<Space>::ParseSettingsFile(const char* fileName)
-{
-  TiXmlDocument settingsFile;
-  TiXmlElement* settingsElement = GetSettingXmlElement(settingsFile, fileName);
-
-  if(settingsElement->QueryIntAttribute("dimsCount", &configDimsCount) != TIXML_SUCCESS)
+  TiXmlElement* lambdaParserElement = settingsElement->FirstChildElement("LambdaParser");
+  if (lambdaParserElement)
   {
-    configDimsCount = 2;
-  }
+    lambdaParser.Parse(lambdaParserElement);
+  } 
 
   TiXmlElement* meshInfoElement = settingsElement->FirstChildElement("Mesh");
   if (meshInfoElement)
@@ -219,7 +211,6 @@ void Settings<Space>::ParseSettingsFile(const char* fileName)
   {
     std::cout << "There is no ResultCombiner section\n";
   }
-
 
   detectors.Parse(settingsElement);
 }

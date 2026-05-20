@@ -6,7 +6,6 @@
 const unsigned int defaultPolynomialOrder = 1;
 
 #include "TestRun.inl"
-#include "TestRunDecomposed.inl"
 
 TEST(InitTest, TestRun) {
   int dimCount = 2;

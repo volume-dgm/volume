@@ -83,14 +83,15 @@ void TimeHierarchyLevelsManager<Space>::Initialize(IndexType cellsCount, IndexTy
     maxNeighbourCellsCount += perimeterCells;
   }
 
-  threadsCount = 1;
-  #pragma omp parallel
-  {
-    if (omp_get_thread_num() == 0)
-    {
-      threadsCount = omp_get_num_threads();
-    }
-  }
+  //threadsCount = 1;
+  //#pragma omp parallel 
+  //{
+    //if (omp_get_thread_num() == 0)
+    //{
+    IndexType threadsLimit = omp_get_thread_limit();
+    threadsCount = omp_get_max_threads() > threadsLimit ? threadsLimit : omp_get_max_threads();
+    //}
+  //}
 
   cellNeighboursInfos.resize(cellsCount);
   isCellUsed.resize(threadsCount * cellsCount, 0);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ParserUtil.h"
-#include "../../../Maths/Spaces.h"
 
 template <typename Space>
 struct ResultCombinerSettings

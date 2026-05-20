@@ -53,6 +53,7 @@ add_executable(${BinaryFileName}
   ${TriGeomSrc}
   ${TriangleSrc}
   ${GKlibSrc}
+  ${GKlibInclude}
   ${MetisInclude}
   ${MetisLibSrc}
   ${MetisProgram}

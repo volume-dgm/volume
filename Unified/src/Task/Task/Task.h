@@ -1,16 +1,20 @@
 #pragma once
 
+#include <filesystem>
+#include <string>
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <limits>
 #include <sstream>
-#include "SettingsParser/MeshSettingsParser.h"
+#include "SettingsParser/LambdaParser.hpp"
+#include "SettingsParser/MeshSettingsGenericDTParser.h"
 #include "assert.h"
 #include <omp.h>
 #include <errno.h>
 #include <ctime>
+#include <optional>
 
 #include "../../Network/NetworkInterface.h"
 #include "../../Utils/Utils.h"
@@ -35,7 +39,9 @@
 
 #include "../ElasticSystem/SourceFunctors.h"
 #include "../ElasticSystem/VectorFunctors.h"
+
 #include "SettingsParser/SettingsParser.h"
+#include "SettingsParser/LambdaSettingsParser.hpp"
 #include "../GeomMesh/MeshIO/Distributed/DistributedMeshIO.h"
 #include "../../Maths/Spaces.h"
 
@@ -62,14 +68,14 @@ public:
   // typedef DubinerPrecomputer<Space, QuadratureDecomposer<Space, DubinerSpace<Space, order> > > FunctionSpace;
 
   Task();
-  Task(const char* fileName);
+  Task(std::string* name);
   
   virtual ~Task();
   void Run();
 
   /* Testing routines */
   void TestRun();
-  void TestRunDecomposed();
+  void TestConfig();
 
 protected:
   void BuildContactDescriptions();
@@ -77,6 +83,7 @@ protected:
 
   void LoadMeshes();
   void SaveVtkSnapshot(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, bool halfStepSolution = false);
+  void PrepareOutput();
 
   void AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space2>);
   void AnalyzeSnapshotData(Scalar currTime, IndexType snapshotIndex, IndexType stepIndex, Overload<Space3>);
@@ -86,25 +93,14 @@ protected:
 
   void BuildSourceTerms();
   void BuildPointSources();
-  void AllocateSnapshotData();
   void BuildIniStateMakers();
   void LoadInitialState();
   void FindDestructions(IndexType domainNumber);
   MediumParameters MakeElasticMediumParams(typename MeshSettings<Space>::MediumParamsSection::MediumParams params);
-  MediumParameters MakeElasticMediumParams(typename MeshSettings<Space>::MediumParamsSection::MediumParams params,
-                                           typename MeshSettings<Space>::MediumParamsSection::ParamModification mod,
+  MediumParameters MakeElasticMediumParams(typename MeshSettings<Space>::MediumParamsSection::MediumParams& params,
                                            DistributedMeshIO<Space>* mesh, IndexType cellIndex);
 
-
 private:
-
-  /***  Testing methods for TestRunDecomposed() ***/
-
-  /* Loads node schedule, creates distributedElasticMeshes for each computational node and applies settings for them */
-  void SetupNodes();
-  /* Loads meshes, builds sources and initial states */
-  void IniState();
-
 
   void SaveProfilingData(const std::string& info, double begin, double end); 
   void ComputePacketsToReceiveCount();
@@ -205,7 +201,7 @@ private:
         case BoundarySection::VectorFunctor::Box:
         {
           typename BoundarySection::BoxFunctorInfo boxInfo = settings.mesh.boundarySection.boxFunctorInfos[func.infoIndex];
-          combinedFunctor->Add(new BoxVectorFunctor<Space>(AABB(boxInfo.boxPoint1, boxInfo.boxPoint2), boxInfo.value, boxInfo.aabbVelocity));
+          combinedFunctor->Add(new BoxVectorFunctor<Space>(AABB(boxInfo.boxPoint1, boxInfo.boxPoint2), boxInfo.vectorValue, boxInfo.aabbVelocity));
         }break;
         case BoundarySection::VectorFunctor::Const:
         {
@@ -222,7 +218,7 @@ private:
         {
           typename BoundarySection::RotatingFunctorInfo rotatingInfo = settings.mesh.boundarySection.rotatingFunctorInfos[func.infoIndex];
           combinedFunctor->Add(new RotatingVectorFunctor<Space>(
-            rotatingInfo.pos, rotatingInfo.angularVelocity, rotatingInfo.linearVelocity, rotatingInfo.linearTime));
+            rotatingInfo.pos, rotatingInfo.angularVelocity, rotatingInfo.rotationAxis, rotatingInfo.linearVelocity, rotatingInfo.linearTime));
         }break;
         case BoundarySection::VectorFunctor::Rieker:
         {
@@ -245,7 +241,7 @@ private:
         {
           typename BoundarySection::TimedImpulseFunctorInfo timedImpulseInfo = 
             settings.mesh.boundarySection.timedImpulseFunctorInfos[func.infoIndex];
-          combinedFunctor->Add(new TimedImpulseFunctor<Space>(timedImpulseInfo.value, timedImpulseInfo.timeBegin,
+          combinedFunctor->Add(new TimedImpulseFunctor<Space>(timedImpulseInfo.vectorValue, timedImpulseInfo.timeBegin,
             timedImpulseInfo.timeEnd));
         } break;
         case BoundarySection::VectorFunctor::HydrodynamicResistance:
@@ -254,7 +250,7 @@ private:
             settings.mesh.boundarySection.hydrodynamicResistanceFunctorInfos[func.infoIndex];
           combinedFunctor->Add(new HydrodynamicResistanceFunctor<Space>(
             AABB(hydrodynamicResistanceInfo.boxPoint1, hydrodynamicResistanceInfo.boxPoint2), hydrodynamicResistanceInfo.mediumRho,
-            hydrodynamicResistanceInfo.flowVelocity, hydrodynamicResistanceInfo.alpha, hydrodynamicResistanceInfo.beta));
+            hydrodynamicResistanceInfo.vectorFlowVelocity, hydrodynamicResistanceInfo.alpha, hydrodynamicResistanceInfo.beta));
         } break;
       }
     }
@@ -281,7 +277,7 @@ private:
     const std::vector<Vector>& initialImpulses, Scalar currTime);
 
 protected:
-  const char* settingsFile = nullptr;
+  std::string* taskName = nullptr;
   Settings<Space> settings;
   SolverState     solverState;
   std::vector< DifferentialSolver<Scalar>* > solvers;
@@ -382,22 +378,17 @@ void Task<Space, order>::Run()
   printf("Node %d network initialized\n", static_cast<int>(network->getID()));
   network->setReceiveListener(this);
 
-  if(settingsFile != nullptr) {
-    settings.ParseDirect(settingsFile);
-    printf("Starting task with config %s in %dd space\n", settingsFile, settings.configDimsCount);
-    fflush(stdout);
-  } else {
-    settings.Parse("task.xml");
-    printf("Starting task with config %s in %dd space\n", settings.settingsFileName.c_str(), settings.configDimsCount);
-    fflush(stdout);
+  if(taskName == nullptr) 
+  {
+    std::cerr << "Error with getting task name\n";
+    throw;
   }
+  settings.Parse(*taskName);
+  printf("Starting task %s with config %s in %dd space\n", settings.taskName.c_str(), settings.configFilePath.c_str(), settings.configDimsCount);
+  fflush(stdout);
 
   assert(settings.configDimsCount == Space::Dimension);
   LoadNodesSchedule();
-
-  char profilingFileName[100];
-  sprintf(profilingFileName, "out/profiling[%d].txt", int(GetNodeId()));
-  profilingDataFile.open(profilingFileName, std::fstream::out);
 
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
   {
@@ -431,23 +422,11 @@ void Task<Space, order>::Run()
   BuildIniStateMakers();
   LoadInitialState();
 
-  snapshotsSizes.resize(settings.snapshots.size());
-  AllocateSnapshotData();
+  snapshotsSizes.resize(settings.snapshots.size()); 
+  IndexType snapshotSize = FindSnapshotSize();
+  snapshotData = new Elastic[snapshotSize];
 
-  {
-    char filename[1024];
-    sprintf(filename, "out/SnapshotCollection[%d].pvd" , static_cast<int>(GetNodeId()));
-    snapshotCollectionFile.open(filename, fstream::out);
-  }
-
-  if (snapshotCollectionFile.fail())
-  {
-    std::cerr << "Can`t open SnapshotCollection.pvd";
-    throw;
-  } else
-  {
-    snapshotWriter.WriteSnapsotCollectionHeader(snapshotCollectionFile);
-  }
+  PrepareOutput();
 
   Scalar timeStep = settings.solver.maxTimeStep * settings.solver.maxScale;
   bool forceStep  = false;
@@ -463,7 +442,7 @@ void Task<Space, order>::Run()
   const IndexType MaxHierarchyLevel = 1 << (settings.solver.hierarchyLevelsCount - 1);
   bool phaseAdvanced = true;
 
-  printf("Entering main cycle\n");
+  printf("==================Entering main cycle==================\n");
   PrintSolverState(solverState, currTime, timeStep);
 
   for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
@@ -533,7 +512,6 @@ void Task<Space, order>::Run()
       continue;
     }
 
-    // printf(".");
     phaseAdvanced = true;
     for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
     {
@@ -561,20 +539,16 @@ void Task<Space, order>::Run()
       for (IndexType domainNumber = 0; domainNumber < GetCurrentNodeDomainsCount(); ++domainNumber)
       {
         Scalar localError = distributedElasticMeshes[domainNumber]->solver->GetLastStepError();
-        if (localError != Scalar(1.0)) {
+        if (solverState.globalStepIndex <= 10 || solverState.globalStepIndex % 100 == 0) {
           printf("  node %d; domain %d; error %f\n", static_cast<int>(GetNodeId()), static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]), localError);
-        } else {
-          if (solverState.globalStepIndex % 100 == 0) {
-            printf("  node %d; domain %d; error %f\n", static_cast<int>(GetNodeId()), static_cast<int>(nodesSchedule[GetNodeId()].domainsIndices[domainNumber]), localError);
-          }
         }
 
         bool stepSuccessful = forceStep || (localError < Scalar(2.0));
 
         if(!stepSuccessful)
         {
-          printf("domain %d at node %d error is too large, recomputing global step\n",
-            (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber], (int)GetNodeId());
+          printf("  step %d: domain %d at node %d error %f is too large, recomputing global step\n",
+            solverState.globalStepIndex, (int)nodesSchedule[GetNodeId()].domainsIndices[domainNumber], (int)GetNodeId(), localError);
         }
         // notify everyone about stepSuccessful received from others
         globalStepSuccessful = network->template Negotiate<bool, LogicSumComparator>(stepSuccessful, logicSumComparator);
@@ -647,7 +621,7 @@ void Task<Space, order>::Run()
             Scalar desiredStep = fabs(lastSnapshotTimes[snapshotIndex] + settings.snapshots[snapshotIndex].timePeriod - currTime) / MaxHierarchyLevel;
             desiredStep = std::max(desiredStep, settings.solver.maxTimeStep * settings.solver.maxScale / MaxHierarchyLevel);
             timeStep = std::min(timeStep, desiredStep);
-            printf("  Time step truncated by snapshot time\n");
+            //printf("  Time step truncated by snapshot time\n");
           }
         }
 
@@ -752,7 +726,6 @@ void Task<Space, order>::BuildBoundaryDescriptions()
   {
     ElasticSystem<Space> *system = distributedElasticMeshes[domainNumber]->GetSystem();
     typename MeshSettings<Space>::BoundarySection boundarySection = settings.mesh.boundarySection;
-    typedef typename MeshSettings<Space>::BoundarySection BoundarySection;
     typedef typename MeshSettings<Space>::BoundarySection::Boundary Boundary;
     for(IndexType boundaryIndex = 0; boundaryIndex < boundarySection.boundaries.size(); ++boundaryIndex)
     {
@@ -832,44 +805,94 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
   return res;
 }
 
-// <parDiff> overloaded call for when there is param modification
 template<typename Space, unsigned int order>
 typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMediumParams(
-  typename MeshSettings<Space>::MediumParamsSection::MediumParams params, 
-  typename MeshSettings<Space>::MediumParamsSection::ParamModification mod,
+  typename MeshSettings<Space>::MediumParamsSection::MediumParams& params, 
   DistributedMeshIO<Space> *mesh,
   IndexType cellIndex)
 {
-  using DepType = typename MeshSettings<Space>::MediumParamsSection::ParamModification::DependencyType;
-  using ParName = typename MeshSettings<Space>::MediumParamsSection::ParamModification::ParamName;
+  typename ElasticSystem<Space>::MediumParameters res;
   typename Space::Vector cellCenter = mesh->GetCellCenter(cellIndex);
 
-  switch (mod.dependencyType) 
+  res.initialRho = settings.lambdaParser.LambdaToScalar(&params.rho, cellCenter);
+  res.invRho  = Scalar(1.0) / res.initialRho;
+
+  if (params.lambda.has_value() && params.mju.has_value())
   {
-    case DepType::Linear:
+    res.lambda  = settings.lambdaParser.LambdaToScalar(&params.lambda.value(), cellCenter);
+    res.mju     = settings.lambdaParser.LambdaToScalar(&params.mju.value(), cellCenter);
+  } else 
+  {
+    Scalar E, nu, G, rho;
+    if (params.E.has_value() && params.nu.has_value())
     {
-      Scalar interpolatedValue = mod.p1 + (cellCenter[mod.axisIndex] - mod.p3)*(mod.p2 - mod.p1)/(mod.p4 - mod.p3);
-      if (mod.paramName == ParName::Mju) {
-        params.mju = interpolatedValue;
-      }
-      if (mod.paramName == ParName::Lambda) {
-        params.lambda = interpolatedValue;
-      }
-      if (mod.paramName == ParName::E) {
-        params.lambda = params.mju*(interpolatedValue - 2*params.mju)/(3*params.mju - interpolatedValue);
-      }
+      E  = settings.lambdaParser.LambdaToScalar(&params.E.value(), cellCenter);
+      nu = settings.lambdaParser.LambdaToScalar(&params.nu.value(), cellCenter);
+      res.SetFromYoungModuleAndNju(E, nu);
     }
-    case DepType::Constant:
-    default:
-      return MakeElasticMediumParams(params);
-      break;
+    if (params.E.has_value() && params.G.has_value())
+    {
+      E = settings.lambdaParser.LambdaToScalar(&params.E.value(), cellCenter);
+      G = settings.lambdaParser.LambdaToScalar(&params.G.value(), cellCenter);
+      Scalar pv = sqrt(E / res.initialRho);
+      Scalar sv = sqrt(G / res.initialRho);
+      res.SetFromVelocities(pv, sv, res.initialRho);
+    }
+    if (params.pSpeed.has_value() && params.sSpeed.has_value())
+    {
+      Scalar pv = settings.lambdaParser.LambdaToScalar(&params.pSpeed.value(), cellCenter);
+      Scalar sv = settings.lambdaParser.LambdaToScalar(&params.sSpeed.value(), cellCenter);
+      res.SetFromVelocities(pv, sv, res.initialRho);
+    }
   }
+
+  res.plasticity.k0 = settings.lambdaParser.LambdaToScalar(&params.k, cellCenter);
+  res.plasticity.a = settings.lambdaParser.LambdaToScalar(&params.alpha, cellCenter);;
+  res.plasticity.brittle = params.brittle;
+  res.fixed = params.fixed;
+  res.plasticity.maxPlasticDeform = settings.lambdaParser.LambdaToScalar(&params.maxPlasticDeform, cellCenter);;
+  res.plasticity.powderShearMult = params.powderShearMult;
+
+  // grad(flowVelocity) must be equiled 0. it`s standart divergence-free condition
+  res.flowVelocity = params.flowVelocity;
+  res.MakeDimensionless(settings.solver.tensionDimensionlessMult, settings.solver.velocityDimensionlessMult);
+  return res;
 }
 
 template<typename Space, unsigned int order>
 void Task<Space, order>::FindDestructions(IndexType domainNumber)
 {
   distributedElasticMeshes[domainNumber]->FindDestructions(&distributedElasticMeshes[domainNumber]->isCellBroken);
+}
+
+template<typename Space, unsigned int order>
+void Task<Space, order>::PrepareOutput()
+{
+  if (fs::exists(settings.outDirPath))
+  {
+    fs::path backupPath = settings.outDirPath.string() + "_backup";
+    printf("%s already exists; saving the contents in %s just in case...\n", settings.outDirPath.c_str(), backupPath.c_str());
+    if (fs::exists(backupPath)) fs::remove_all(backupPath);
+    fs::copy(settings.outDirPath, backupPath, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+    fs::remove_all(settings.outDirPath);
+  }
+  
+  fs::create_directories(settings.outDirPath);
+
+  #ifdef PROFILING
+  profilingDataFile.open(settings.outDirPath / "profiling[" + std::to_string(GetNodeId()) + "].txt", std::fstream::out);
+  #endif
+
+  snapshotCollectionFile.open(settings.outDirPath / fs::path("SnapshotCollection[" + std::to_string(GetNodeId()) + "].pvd"), fstream::out);
+
+  if (snapshotCollectionFile.fail())
+  {
+    std::cerr << "Can`t open SnapshotCollection.pvd";
+    throw;
+  } else
+  {
+    snapshotWriter.WriteSnapsotCollectionHeader(snapshotCollectionFile);
+  }
 }
 
 template<typename Space, unsigned int order>
@@ -901,17 +924,19 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
     sprintf(domainString, "%.3d", static_cast<int>(domainIndex));
     sprintf(timeString, "%.5f", currTime);
 
+    std::string stepInfo = "[<domain>]_<step>";
+    ReplaceSubstring(stepInfo, "<step>",    std::string(stepString));
+    ReplaceSubstring(stepInfo, "<domain>",  std::string(domainString));
+    ReplaceSubstring(stepInfo, "<time>",    std::string(timeString));
+    printf("saving snapshots at %s: ", stepInfo.c_str());
+
     if(settings.snapshots[snapshotIndex].data.used)
     {
-      std::string dataFilename = settings.snapshots[snapshotIndex].data.filename;
-      ReplaceSubstring(dataFilename, "<step>",    std::string(stepString));
-      ReplaceSubstring(dataFilename, "<domain>",  std::string(domainString));
-      ReplaceSubstring(dataFilename, "<time>",    std::string(timeString));
+      fs::path dataFilePath = settings.outDirPath / fs::path("data" + stepInfo + ".vti");
 
-      printf(" saving data snapshot, %s\n", dataFilename.c_str());
+      printf("data ", dataFilePath.c_str());
 
-      assert(dataFilename.find(".vti") != std::string::npos);
-      snapshotWriter.Write(dataFilename.c_str(),
+      snapshotWriter.Write(dataFilePath.c_str(),
         snapshotData,
         origin, spacing,
         AABB(boxPoint1, boxPoint2),
@@ -919,59 +944,54 @@ void Task<Space, order>::SaveVtkSnapshot(Scalar currTime,
         settings.snapshots[snapshotIndex].data.writeVelocity,
         settings.snapshots[snapshotIndex].data.writeTension,
         settings.snapshots[snapshotIndex].data.writeWaves);
-      snapshotCollectionFile << "<DataSet timestep=\"" << currTime << "\" group=\"\" part=\"0\" file=\"" << dataFilename << "\"/>\n";
+      snapshotCollectionFile << "<DataSet timestep=\"" << currTime << "\" group=\"\" part=\"0\" file=\"" << dataFilePath << "\"/>\n";
       snapshotCollectionFile.flush();
     }
 
     if(settings.snapshots[snapshotIndex].mesh.used)
     {
-      std::string meshFilename = settings.snapshots[snapshotIndex].mesh.filename;
-      ReplaceSubstring(meshFilename, "<step>",    std::string(stepString));
-      ReplaceSubstring(meshFilename, "<domain>",  std::string(domainString));
-      ReplaceSubstring(meshFilename, "<time>",    std::string(timeString));
+      fs::path meshFilePath = settings.outDirPath / fs::path("mesh" + stepInfo + ".vtk");
 
-      meshWriter.Write(meshFilename.c_str(), 
+      meshWriter.Write(meshFilePath.c_str(), 
         distributedElasticMeshes[domainNumber]->volumeMesh.nodes, 
         distributedElasticMeshes[domainNumber]->volumeMesh.cells, std::vector< typename AdditionalCellInfo<Space>:: template AuxInfo<char> >(),
         &(distributedElasticMeshes[domainNumber]->volumeMesh.isCellAvailable));
 
-      printf(" saving mesh snapshot, %s\n", meshFilename.c_str());
+      printf(" mesh ");
     }
 
     if(settings.snapshots[snapshotIndex].contacts.used)
     {
-      std::string contactsFilename = settings.snapshots[snapshotIndex].contacts.filename;
-      ReplaceSubstring(contactsFilename, "<step>",    std::string(stepString));
-      ReplaceSubstring(contactsFilename, "<domain>",  std::string(domainString));
-      ReplaceSubstring(contactsFilename, "<time>",    std::string(timeString));
-      contactsWriter.Write(contactsFilename,
+      fs::path contactsFilePath = settings.outDirPath / fs::path("contacts" + stepInfo + ".vtk");
+
+      contactsWriter.Write(contactsFilePath,
         distributedElasticMeshes[domainNumber], 
         settings.snapshots[snapshotIndex].contacts.faceTypesToDraw, 
         ContactVtkWriter<Space, FunctionSpace>::Contact);
+
+      printf(" contacts ");
     }
 
     if (settings.snapshots[snapshotIndex].boundaries.used)
     {
-      std::string boundariesFilename = settings.snapshots[snapshotIndex].boundaries.fileName;
-      ReplaceSubstring(boundariesFilename, "<step>", std::string(stepString));
-      ReplaceSubstring(boundariesFilename, "<domain>", std::string(domainString));
-      ReplaceSubstring(boundariesFilename, "<time>", std::string(timeString));
+      fs::path boundariesFilePath = settings.outDirPath / fs::path("boundaries" + stepInfo + ".vtk");
 
-      contactsWriter.Write(boundariesFilename,
+      contactsWriter.Write(boundariesFilePath,
         distributedElasticMeshes[domainNumber], 
         settings.snapshots[snapshotIndex].boundaries.faceTypesToDraw,
         ContactVtkWriter<Space, FunctionSpace>::Boundary);
+
+      printf(" boundaries ");
     }
 
     if (settings.snapshots[snapshotIndex].cellInfos.used)
     {
-      std::string cellInfosFilename = settings.snapshots[snapshotIndex].cellInfos.fileName;
-      ReplaceSubstring(cellInfosFilename, "<step>", std::string(stepString));
-      ReplaceSubstring(cellInfosFilename, "<domain>", std::string(domainString));
-      ReplaceSubstring(cellInfosFilename, "<time>", std::string(timeString));
+      fs::path cellInfosFilePath = settings.outDirPath / fs::path("cellInfos" + stepInfo + ".vtk");
 
-      cellInfosWriter.Write(cellInfosFilename, distributedElasticMeshes[domainNumber]);
+      cellInfosWriter.Write(cellInfosFilePath, distributedElasticMeshes[domainNumber]);
+      printf(" cellInfos ");
     }
+    printf("\n");
   }
 }
 
@@ -1111,10 +1131,10 @@ void Task<Space, order>::LoadMeshes()
     {
       case ParamsDescription::PerSubmesh:
       {
-        typename MediumParamsSection::PerSubmeshInfo perSubmeshInfo =
-          settings.mesh.mediumParamsSection.perSubmeshInfos[paramsDesc.infoIndex];
+        typename MediumParamsSection::PerSubmeshInfo* perSubmeshInfo =
+          &settings.mesh.mediumParamsSection.perSubmeshInfos[paramsDesc.infoIndex];
 
-        std::string paramsFileName = perSubmeshInfo.fileName;
+        std::string paramsFileName = perSubmeshInfo->fileName;
         if(paramsFileName == "")
         {
           paramsFileName = settings.mesh.meshFileName;
@@ -1132,20 +1152,15 @@ void Task<Space, order>::LoadMeshes()
             IndexType bytesRead = fread(&currCellSubmeshIndex, sizeof(char), 1, paramsFile);
             assert(bytesRead == 1);
 
-            for(IndexType submeshNumber = 0; submeshNumber < perSubmeshInfo.submeshParams.size(); ++submeshNumber)
+            for(IndexType submeshNumber = 0; submeshNumber < perSubmeshInfo->submeshParams.size(); ++submeshNumber)
             {
-              if(perSubmeshInfo.submeshParams[submeshNumber].submeshIndex == currCellSubmeshIndex) //<parDiff> call modified MakeElasticMediumParams when ModifyParams is present
+              if(perSubmeshInfo->submeshParams[submeshNumber].submeshIndex == currCellSubmeshIndex) 
               {
-                if (perSubmeshInfo.submeshParams[submeshNumber].modification.axisIndex == 10) 
-                {
-                  cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo.submeshParams[submeshNumber].params);
-                } else {
-                  cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo.submeshParams[submeshNumber].params,
-                                                                        perSubmeshInfo.submeshParams[submeshNumber].modification,
-                                                                        meshes[domainNumber],
-                                                                        cellIndex);
-                }
-                internalContactTypes[cellIndex] = perSubmeshInfo.submeshParams[submeshNumber].internalContactType;
+                cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo->submeshParams[submeshNumber].params,
+                                                                      meshes[domainNumber],
+                                                                      cellIndex);
+                cellMediumParams[cellIndex].submeshIndex = currCellSubmeshIndex;
+                internalContactTypes[cellIndex] = perSubmeshInfo->submeshParams[submeshNumber].internalContactType;
               }
             }
           }
@@ -1155,48 +1170,6 @@ void Task<Space, order>::LoadMeshes()
           printf("Can`t open %s file: %s\n", paramsFileName.c_str(), strerror(errno));
           assert(0);
         }
-      } break;
-
-      case ParamsDescription::Uniform:
-      {
-        typename MediumParamsSection::UniformInfo uniformInfo =
-          settings.mesh.mediumParamsSection.uniformInfos[paramsDesc.infoIndex];
-
-        for(IndexType cellIndex = 0; cellIndex < meshCellsCount; ++cellIndex)
-        {
-          cellMediumParams[cellIndex] = MakeElasticMediumParams(uniformInfo.params);
-          internalContactTypes[cellIndex] = uniformInfo.internalContactType;
-        }
-      } break;
-
-      case ParamsDescription::PerCell:
-      {
-        typename MediumParamsSection::PerCellInfo perCellInfo =
-          settings.mesh.mediumParamsSection.perCellInfos[paramsDesc.infoIndex];
-
-        std::string paramsFileName = AddExtensionToFileName(perCellInfo.fileName, ".params");
-        
-        if(paramsFileName == "")
-        {
-          paramsFileName = AddExtensionToFileName(settings.mesh.meshFileName, ".params");
-        }
-        ReplaceSubstring(paramsFileName, "<domain>", domainString);
-
-        FILE *paramsFile = fopen(paramsFileName.c_str(), "rb");
-
-        for(IndexType cellIndex = 0; cellIndex < meshCellsCount; ++cellIndex)
-        {
-          IndexType currCellSubmeshIndex = IndexType(-1);
-
-          typename MediumParamsSection::MediumParams params;
-          IndexType bytesRead = fread(&params, sizeof(params), 1, paramsFile);
-          assert(bytesRead == 1);
-
-          cellMediumParams[cellIndex] = MakeElasticMediumParams(params);
-          internalContactTypes[cellIndex] = IndexType(0); //TODO: left only for binary compatibility with currently existing per cell info files. Should be changed to from file as well.
-        }
-
-        fclose(paramsFile);
       } break;
     }
 
@@ -1263,13 +1236,6 @@ void Task<Space, order>::LoadMeshes()
 }
 
 template<typename Space, unsigned int order>
-void Task<Space, order>::AllocateSnapshotData()
-{
-  IndexType snapshotSize = FindSnapshotSize();
-  snapshotData = new Elastic[snapshotSize];
-}
-
-template<typename Space, unsigned int order>
 void Task<Space, order>::BuildIniStateMakers()
 {
   for (IndexType stateIndex = 0; stateIndex < settings.task.iniStates.size(); ++stateIndex)
@@ -1280,7 +1246,17 @@ void Task<Space, order>::BuildIniStateMakers()
       case TaskSettings<Space>::IniState::Box:
       {
         typename TaskSettings<Space>::BoxStateInfo boxInfo = settings.task.boxStateInfos[infoIndex];
-        stateMakers.push_back(new BoxIniStateMaker<ElasticSpace>(boxInfo.velocity, AABB(boxInfo.boxPoint1, boxInfo.boxPoint2)));
+        BoxIniStateMaker<ElasticSpace>* BoxIniSt = new BoxIniStateMaker<ElasticSpace>(boxInfo.vectorVelocity, AABB(boxInfo.boxPoint1, boxInfo.boxPoint2), boxInfo.submeshToApply);
+        BoxIniSt->loadParser(&settings.lambdaParser);
+        stateMakers.push_back(BoxIniSt);
+      }break;
+      case TaskSettings<Space>::IniState::BoxRotation:
+      {
+        typename TaskSettings<Space>::BoxRotationStateInfo boxRotationInfo = settings.task.boxRotationStateInfos[infoIndex];
+        BoxRotationIniStateMaker<ElasticSpace>* BoxRotationIniSt = 
+          new BoxRotationIniStateMaker<ElasticSpace>(AABB(boxRotationInfo.boxPoint1, boxRotationInfo.boxPoint2), boxRotationInfo.submeshToApply,
+          boxRotationInfo.pos, boxRotationInfo.angularVelocity, boxRotationInfo.rotationAxis, boxRotationInfo.linearSpeed);
+        stateMakers.push_back(BoxRotationIniSt);
       }break;
       case TaskSettings<Space>::IniState::Berlage:
       {
@@ -1448,10 +1424,10 @@ Task<Space, order>::Task(): NotifyListener(), ReceiveListener(),
 }
 
 template<typename Space, unsigned int order>
-Task<Space, order>::Task(const char* fileName): NotifyListener(), ReceiveListener(),
+Task<Space, order>::Task(std::string* name): NotifyListener(), ReceiveListener(),
   distributedElasticMeshes(0), network(new NetworkInterface()), packetsToReceive(0), snapshotData(nullptr) 
 {
-  settingsFile = fileName;
+  taskName = name;
 };
 
 
@@ -1478,7 +1454,9 @@ Task<Space, order>::~Task()
   {
     delete stateMakers[stateMakerIndex];
   }
+  #ifdef PROFILING
   profilingDataFile.close();
+  #endif
 }
 
 template<typename Space, unsigned int order>
