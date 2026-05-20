@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings dimsCount="2">
+  <MeshBuilder>
+    <SalomeFile fileName="salome/test_diff" />
+    <OutFile fileName = "meshes/test_diff" />
+  </MeshBuilder>
+
+  <LambdaParser>
+    <AssignGlobal name="it" value="5.0"/>
+    <AssignGlobal name="ib" value="-5.0"/>
+    <AssignGlobal name="Gmax" value="1.87e+9"/>
+    <AssignGlobal name="Gmin" value="lambda global . / (get global 'Gmax') 8 "/>
+    <AssignGlobal name="iniSpeed" value="10,0"/>
+  </LambdaParser>
+
+  <Mesh fileName="meshes/test_diff" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth="0.000001">
+    <MediumParams>
+      <PerSubmesh fileName="meshes/test_diff.params"> 
+      <Submesh index="0" E="5e+9" G="lambda global x y . (+ (get global 'Gmin') (/ (* (- y (get global 'ib')) (- (get global 'Gmax') (get global 'Gmin'))) (- (get global 'it') (get global 'ib'))))" rho="920" fixed="false" internalContactType="0"/>
+      
+      <!--   <Submesh index="0" E="5e+9" G="lambda global . get global 'Gmax'" rho="920" fixed="false" internalContactType="0"/>-->
+        <Submesh index="1" E="5e+9" G="lambda global . get global 'Gmax'" 
+          rho="920" fixed="false" internalContactType="1">
+        </Submesh>
+      </PerSubmesh>
+    </MediumParams>
+
+    <Boundaries>
+      <Fixed interactionType="0" dynamicContactInteractionType = "2" >
+        <ExternalVelocity>
+          <RotatingFunctor pos="-5 0" rotationAxis="0 0 1" angularVelocity="5" linearVelocity="2 0" linearTime="10"/>
+        </ExternalVelocity>
+      </Fixed>
+      <Free interactionType="1" dynamicContactInteractionType = "2" />
+    </Boundaries>
+
+    <Contacts>
+      <Glue interactionType = "0" />
+      <Glue interactionType = "1" />
+      <Glide interactionType = "2" />
+    </Contacts>
+  </Mesh>
+
+  <Snapshot>
+    <Period time="5e-4" />
+    <Data  writeVelocity="True" writeTension="True">
+      <Box boxPoint1="-10.1 -5.0" boxPoint2="10.1 5.0" />
+      <Resolution resolution="402 200" />
+    </Data>
+    <Mesh/>
+    <CellInfos/>
+  </Snapshot>
+
+  <Schedule domainsCount="1" />
+
+  <Task destinationTime = "0.05">
+    <IniState>
+      <BoxRotationState boxPoint1 = "-100.0 -50.0" boxPoint2 = "100.1 50.0" submeshToApply="0" pos="-5 0" rotationAxis="0 0 1" angularVelocity="5" linearVelocity="2 0" />
+        <BoxState boxPoint1 = "0.0 -50.0" boxPoint2 = "100.1 50.0" velocity = "lambda global x y . (get global 'Vector2') -2 0" submeshToApply="1"/>
+      <BoxState boxPoint1 = "-10.1 -5.0" boxPoint2 = "0.0 5.0" velocity = "lambda global x y . (get global 'Vector2') (get global 'iniSpeed') 0"/>
+        <BoxState boxPoint1 = "0.0 -5.0" boxPoint2 = "10.1 5.0" velocity = "lambda global x y . (get global 'Vector2') 0 0"/>
+    </IniState>
+  </Task>
+
+  <Solver precision="double" integrator="RK4"
+          tolerance="1e-1" maxScale="1e-2" maxTimeStep="4.6e-5" hierarchyLevelsCount="1" 
+          allowMovement="true" allowPlasticity="true" allowDestruction="true"
+          allowDiscreteDestruction="true" 
+          allowContinuousDestruction="true" 
+          tensionErrorMult="1e-10" velocityErrorMult="1e-2" positionErrorMult="1e-4"
+          velocityDimensionlessMult="1e+0" tensionDimensionlessMult="1e+0"/>
+</Settings>

@@ -376,3 +376,5 @@ resultcombiner
 test
 
 .vscode/
+legacy_files/*
+.clangd

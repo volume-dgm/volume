@@ -5,16 +5,19 @@
     <OutFile fileName = "meshes/test_diff3d" />
   </MeshBuilder>
 
-  <Mesh fileName="meshes/test_diff3d" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth="0.0001">
+  <LambdaParser>
+    <AssignGlobal name="it" value="10.0"/>
+    <AssignGlobal name="ib" value="0.0"/>
+    <AssignGlobal name="Gmax" value="1.87e+9"/>
+    <AssignGlobal name="Gmin" value="lambda global . / (get global 'Gmax') 8 "/>
+    <AssignGlobal name="iniSpeed" value="2,0"/>
+  </LambdaParser>
+
+  <Mesh fileName="meshes/test_diff3d" unfoldIterationsCount="0" minGridHeight="2e-4" moveMassCenter="false" collisionWidth="0.00001">
     <MediumParams>
       <PerSubmesh fileName="meshes/test_diff3d.params"> 
-        <Submesh index="0" E="5e+9" G="1.87e+9" rho="920" fixed="false" internalContactType="0">
-          <ModifyParams paramName="mju" dependencyType="linear" axisName="z" p2="1.87e+9" p1="4.68e+8" p3="0.0" p4="10.0"/>
-        </Submesh>
+      <Submesh index="0" E="5e+9" G="lambda global x y z . (+ (get global 'Gmin') (/ (* (- z (get global 'ib')) (- (get global 'Gmax') (get global 'Gmin'))) (- (get global 'it') (get global 'ib'))))" rho="920" fixed="false" internalContactType="0"/>
         <Submesh index="1" E="5e+9" G="1.87e+9" rho="500" fixed="false" internalContactType="1">
-          <!--
-            <ModifyParams paramName="mju" dependencyType="linear" axisName="y" p2="1.87e+9" p1="4.68e+8" p3="-5.0" p4="5.0"/>
-          -->
         </Submesh>
       </PerSubmesh>
     </MediumParams>
@@ -27,7 +30,7 @@
     <Contacts>
       <Glue interactionType = "0" />
       <Glue interactionType = "1" />
-      <Glide interactionType = "2" />
+      <Friction interactionType="2" frictionCoeff="0.1"/>
     </Contacts>
   </Mesh>
 
@@ -37,22 +40,21 @@
       <Box boxPoint1="-10.1 0.0 0.0" boxPoint2="10.1 10.0 10.0" />
       <Resolution resolution="200 100 100" />
     </Data>
-    <Mesh fileName="out/test_diff3d/mesha[<domain>]<step>.vtk"/>
-    <CellInfos fileName="out/test_diff3d/cell_info[<domain>]<step>.vtk"/>
-    <Contacts fileName="out/test_diff3d/contacts[<domain>]<step>.vtk" faceTypesToDraw="2" />
+    <Mesh />
+    <CellInfos />
   </Snapshot>
 
   <Schedule domainsCount="1" />
 
   <Task destinationTime = "0.2">
     <IniState>
-      <BoxState boxPoint1 = "-10.1 0.0 0.0" boxPoint2 = "0.0 10.0 10.0" velocity = "1.0 0.0 0.0"/>
-      <BoxState boxPoint1 = "0.0 0.0 0.0" boxPoint2 = "10.1 10.0 10.0" velocity = "-1.0 0.0 0.0"/>
+      <BoxState boxPoint1 = "-10.1 0.0 0.0" boxPoint2 = "0.0 10.0 10.0" velocity = "lambda global x y z . (get global 'Vector3') (get global 'iniSpeed') 0 0"/>
+      <BoxState boxPoint1 = "0.0 0.0 0.0" boxPoint2 = "10.1 10.0 10.0" velocity = "lambda global x y z . (get global 'Vector3') (* -1 (get global 'iniSpeed')) 0 0"/>
     </IniState>
   </Task>
 
   <Solver polynomialsOrder="1" precision="double" integrator="RK4"
-          tolerance="1e-1" maxScale="1e-2" maxTimeStep="3.35e-5" hierarchyLevelsCount="1" 
+          tolerance="1e-1" maxScale="1e-1" maxTimeStep="3.35e-5" hierarchyLevelsCount="1" 
           allowMovement="true" allowPlasticity="true" allowDestruction="true"
           allowDiscreteDestruction="true" 
           allowContinuousDestruction="true" 

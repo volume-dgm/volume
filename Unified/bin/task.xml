@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Settings fileName="cfg/_3_smooth.xml"/>
+<Settings fileName="test_diff" dimsCount="2" polynomialsOrder="2"/>
 
