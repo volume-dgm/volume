@@ -317,6 +317,29 @@ class FunctionEntry {
         },
         "takes square root of number"
         ));
+      res.push_back(FunctionEntry(
+        "exp",
+        [](std::shared_ptr<Thunk> x) -> GenericDataType {
+          GenericDataType xval = x -> force();
+          if (xval.myType == GenericDataType::NUMBER) {
+            return GenericDataType(std::exp(xval.num_val));
+          }
+          throw std::runtime_error("exp must be called with number");
+        },
+        "takes e to the power of x"
+        ));
+      res.push_back(FunctionEntry(
+        "pow",
+        getCurriedFunction([](std::shared_ptr<Thunk> x, std::shared_ptr<Thunk> y) -> GenericDataType {
+          GenericDataType xval = x -> force();
+          GenericDataType yval = y -> force();
+          if (xval.myType == GenericDataType::NUMBER && yval.myType == GenericDataType::NUMBER) {
+            return GenericDataType(std::pow(xval.num_val, yval.num_val));
+          }
+          throw std::runtime_error("pow must be called with numbers");
+        }),
+        "takes x to the power of y"
+        ));
       // COMPARE
       res.push_back(FunctionEntry(
         ">",
