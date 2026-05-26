@@ -128,18 +128,9 @@ template<typename Space>
 void LambdaSettings<Space>::Parse(TiXmlElement* lambdaParserElement)
 {
   std::string tmpName;
-  if (ParseString(lambdaParserElement, "loadFromFile", &tmpName) == TIXML_SUCCESS)
+  if (ParseString(lambdaParserElement, "LoadFromFile", &tmpName) == TIXML_SUCCESS)
   {
     LoadGlobals(tmpName);
-  }
-
-  TiXmlElement* globalsFileElement = lambdaParserElement->FirstChildElement("LoadGlobals");
-  while(globalsFileElement)
-  {
-    ParseString(globalsFileElement, "filename", &tmpName);
-    LoadGlobals(tmpName);
-
-    globalsFileElement = globalsFileElement->NextSiblingElement("LoadGlobals");
   }
 
   TiXmlElement* assignGlobalElement = lambdaParserElement->FirstChildElement("AssignGlobal");
@@ -159,6 +150,15 @@ void LambdaSettings<Space>::Parse(TiXmlElement* lambdaParserElement)
     }
 
     assignGlobalElement = assignGlobalElement->NextSiblingElement("AssignGlobal");
+  }
+
+  TiXmlElement* globalsFileElement = lambdaParserElement->FirstChildElement("LoadGlobals");
+  while(globalsFileElement)
+  {
+    ParseString(globalsFileElement, "fileName", &tmpName);
+    LoadGlobals(tmpName);
+
+    globalsFileElement = globalsFileElement->NextSiblingElement("LoadGlobals");
   }
 }
 

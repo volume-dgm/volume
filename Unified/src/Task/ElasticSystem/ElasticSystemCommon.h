@@ -1067,9 +1067,9 @@ ElasticSystemCommon<Space>::MediumParameters::MediumParameters(
 template <typename Space>
 void ElasticSystemCommon<Space>::MediumParameters::SetFromVelocities(Scalar pSpeed, Scalar sSpeed, Scalar rho)
 {
-  mju = Sqr(sSpeed) * rho;
-  lambda = (Sqr(pSpeed) - 2.0 * Sqr(sSpeed)) * rho;
-  invRho = 1 / rho;
+  this->mju = Sqr(sSpeed) * rho;
+  this->lambda = (Sqr(pSpeed) - 2.0 * Sqr(sSpeed)) * rho;
+  //invRho = 1 / rho;
 }
 
 template <typename Space>
@@ -1091,7 +1091,7 @@ void ElasticSystemCommon<Space>::MediumParameters::SetFromYoungModuleAndNju(Scal
 template <typename Space>
 void ElasticSystemCommon<Space>::MediumParameters::SetFromYoungModuleAndG(Scalar youngModule, Scalar G)
 {
-  this->lambda = (youngModule - Scalar(2)*G)/(Scalar(3)*G - youngModule)*G; // result bad likely due to some numerical errors with big numbers
+  this->lambda = (youngModule - Scalar(2)*G)/(Scalar(3)*G - youngModule)*G; 
   this->mju    = G;
   //invRho = 1 / rho;
 }

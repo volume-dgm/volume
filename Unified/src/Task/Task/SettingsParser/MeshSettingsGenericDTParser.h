@@ -196,7 +196,7 @@ struct MeshSettings
     {
       ConstFunctorInfo() {}
       
-      Scalar value;
+      Vector value;
     };
     std::vector<ConstFunctorInfo> constFunctorInfos;
 
@@ -374,7 +374,7 @@ struct MeshSettings
         functors.push_back(newbie);
 
         ConstFunctorInfo constFunctorInfo;
-        ParseScalar(constFunctorElement, "value", &constFunctorInfo.value);
+        ParseVector(constFunctorElement, "value", &constFunctorInfo.value);
         constFunctorInfos.push_back(constFunctorInfo);
 
         constFunctorElement = constFunctorElement->NextSiblingElement("ConstFunctor");

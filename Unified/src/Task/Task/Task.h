@@ -834,9 +834,12 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
     {
       E = settings.lambdaParser.LambdaToScalar(&params.E.value(), cellCenter);
       G = settings.lambdaParser.LambdaToScalar(&params.G.value(), cellCenter);
+      res.SetFromYoungModuleAndG(E, G);
+      /*
       Scalar pv = sqrt(E / res.initialRho);
       Scalar sv = sqrt(G / res.initialRho);
       res.SetFromVelocities(pv, sv, res.initialRho);
+      */
     }
     if (params.pSpeed.has_value() && params.sSpeed.has_value())
     {

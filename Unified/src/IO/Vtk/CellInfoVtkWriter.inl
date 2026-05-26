@@ -31,7 +31,7 @@ CellInfoVtkWriter<Space, FunctionSpace>::ConstructOutputData(
         data.density = Scalar(1.0) / mesh->volumeMesh.cellMediumParameters[cellIndex].invRho;
         data.lambda = mesh->volumeMesh.cellMediumParameters[cellIndex].lambda;
         data.mju = mesh->volumeMesh.cellMediumParameters[cellIndex].mju;
-        data.young = data.mju*(3*data.lambda + 2*data.mju)/(data.lambda + data.mju);
+        data.young = (3*data.lambda + 2*data.mju)/(data.lambda/data.mju + 1.0);
         outputData.cells.push_back(mesh->volumeMesh.cells[cellIndex]);
         outputData.cellData.push_back(data);
       }
