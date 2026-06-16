@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 #include "Solvers/EulerSolver.h"
 #include "Solvers/DormandPrinceSolver.h"

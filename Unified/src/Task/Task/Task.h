@@ -27,7 +27,7 @@
 #include "../VolumeMethod/Spaces/FourierSpace2.h"
 #include "../VolumeMethod/Spaces/LagrangeSpace.h"
 
-#include "../ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh.h"
+#include "../ElasticVolumeMesh/DistributedElasticVolumeMesh.h"
 
 #include "../../IO/Vtk/BasicVtkWriter.h"
 #include "../../IO/Vtk/SnapshotVtkWriter.h"
@@ -1130,50 +1130,44 @@ void Task<Space, order>::LoadMeshes()
     typedef typename MeshSettings<Space>::MediumParamsSection MediumParamsSection;
     typedef typename MediumParamsSection::ParamsDescription ParamsDescription;
     ParamsDescription paramsDesc = settings.mesh.mediumParamsSection.paramsDescription;
-    switch (paramsDesc.type)
+
+    typename MediumParamsSection::PerSubmeshInfo* perSubmeshInfo =
+      &settings.mesh.mediumParamsSection.perSubmeshInfos[paramsDesc.infoIndex];
+
+    std::string paramsFileName = perSubmeshInfo->fileName;
+    if(paramsFileName == "")
     {
-      case ParamsDescription::PerSubmesh:
+      paramsFileName = settings.mesh.meshFileName;
+    }
+    paramsFileName = AddExtensionToFileName(paramsFileName, ".params");
+    ReplaceSubstring(paramsFileName, "<domain>", domainString);
+
+    FILE* paramsFile = fopen(paramsFileName.c_str(), "rb");
+    if (paramsFile)
+    {
+      for(IndexType cellIndex = 0; cellIndex < meshCellsCount; ++cellIndex)
       {
-        typename MediumParamsSection::PerSubmeshInfo* perSubmeshInfo =
-          &settings.mesh.mediumParamsSection.perSubmeshInfos[paramsDesc.infoIndex];
+        char currCellSubmeshIndex = char(-1);
+        IndexType bytesRead = fread(&currCellSubmeshIndex, sizeof(char), 1, paramsFile);
+        assert(bytesRead == 1);
 
-        std::string paramsFileName = perSubmeshInfo->fileName;
-        if(paramsFileName == "")
+        for(IndexType submeshNumber = 0; submeshNumber < perSubmeshInfo->submeshParams.size(); ++submeshNumber)
         {
-          paramsFileName = settings.mesh.meshFileName;
-        }
-        paramsFileName = AddExtensionToFileName(paramsFileName, ".params");
-
-        ReplaceSubstring(paramsFileName, "<domain>", domainString);
-
-        FILE* paramsFile = fopen(paramsFileName.c_str(), "rb");
-        if (paramsFile)
-        {
-          for(IndexType cellIndex = 0; cellIndex < meshCellsCount; ++cellIndex)
+          if(perSubmeshInfo->submeshParams[submeshNumber].submeshIndex == currCellSubmeshIndex) 
           {
-            char currCellSubmeshIndex = char(-1);
-            IndexType bytesRead = fread(&currCellSubmeshIndex, sizeof(char), 1, paramsFile);
-            assert(bytesRead == 1);
-
-            for(IndexType submeshNumber = 0; submeshNumber < perSubmeshInfo->submeshParams.size(); ++submeshNumber)
-            {
-              if(perSubmeshInfo->submeshParams[submeshNumber].submeshIndex == currCellSubmeshIndex) 
-              {
-                cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo->submeshParams[submeshNumber].params,
-                                                                      meshes[domainNumber],
-                                                                      cellIndex);
-                cellMediumParams[cellIndex].submeshIndex = currCellSubmeshIndex;
-                internalContactTypes[cellIndex] = perSubmeshInfo->submeshParams[submeshNumber].internalContactType;
-              }
-            }
+            cellMediumParams[cellIndex] = MakeElasticMediumParams(perSubmeshInfo->submeshParams[submeshNumber].params,
+                                                                  meshes[domainNumber],
+                                                                  cellIndex);
+            cellMediumParams[cellIndex].submeshIndex = currCellSubmeshIndex;
+            internalContactTypes[cellIndex] = perSubmeshInfo->submeshParams[submeshNumber].internalContactType;
           }
-          fclose(paramsFile);
-        } else
-        {
-          printf("Can`t open %s file: %s\n", paramsFileName.c_str(), strerror(errno));
-          assert(0);
         }
-      } break;
+      }
+      fclose(paramsFile);
+    } else
+    {
+      printf("Can`t open %s file: %s\n", paramsFileName.c_str(), strerror(errno));
+      assert(0);
     }
 
     for (IndexType vertexIndex = 0; vertexIndex < meshes[domainNumber]->vertices.size(); ++vertexIndex)

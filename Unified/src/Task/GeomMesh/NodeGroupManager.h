@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "../../Maths/Spaces.h"
 
 template <typename Space, typename VolumeMeshType>
 class NodeGroupManager

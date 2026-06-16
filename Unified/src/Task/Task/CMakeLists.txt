@@ -19,21 +19,16 @@ set(ElasticSystemSrc
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/ElasticSystem.h
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/IniStates.h
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/VectorFunctors.h
-
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/ElasticSystem.inl
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/SourceFunctors.h
-
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/BoundaryInfos.h
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/ContactInfos.h
   ${CMAKE_SOURCE_DIR}/src/Task/ElasticSystem/ElasticSystemCommon.h
 )
 
 set(ElasticVolumeMeshSrc
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Local/ElasticVolumeMesh.h
-
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Distributed/DistributedElasticVolumeMesh.h
-
-  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/Distributed/DistributedElasticVolumeMeshCommon.h
+  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/ElasticVolumeMesh.h
+  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/DistributedElasticVolumeMesh.h
+  ${CMAKE_SOURCE_DIR}/src/Task/ElasticVolumeMesh/DistributedElasticVolumeMeshCommon.h
 )
 
 set(GeomMeshSrc
@@ -44,23 +39,13 @@ set(GeomMeshSrc
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/TopologyReconstructor.h
 
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Distributed/DistributedMeshIO.h
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Distributed/DistributedMeshIO.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Distributed/DistributedMeshIO2.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Distributed/DistributedMeshIO3.inl
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Distributed/TransitionInfo.h
 
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Local/MeshIO.h
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Local/MeshIO.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Local/MeshIO2.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Local/MeshIO3.inl
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/MeshIO/Local/MeshIOBase.h
 
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMeshCommon.inl
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMeshCommon.h
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMeshBase.inl
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMeshBase.h
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMesh3.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMesh2.inl
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/GeomMesh.h
   ${CMAKE_SOURCE_DIR}/src/Task/GeomMesh/GeomMesh/AdditionalCellInfo.h
 )

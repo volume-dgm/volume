@@ -3,9 +3,6 @@ set(MeshBuilderSrc
   ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshDistributor.h
   ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshSplitter/MeshSplitter.h
   ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshSplitter/MeshSplitterCommon.h
-  ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshSplitter/MeshSplitter2.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshSplitter/MeshSplitter3.inl
-  ${CMAKE_SOURCE_DIR}/src/Task/MeshBuilder/MeshSplitter/MeshSplitterCommon.inl
 )
 
 set(SpecificMeshBuildersSrc

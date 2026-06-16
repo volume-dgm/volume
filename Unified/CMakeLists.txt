@@ -43,12 +43,6 @@ FIND_PACKAGE(ZLIB REQUIRED)
 #    include_directories( ${ZLIB_INCLUDE_DIRS} )    
 #ENDIF (ZLIB_FOUND)
 
-#FIND_PACKAGE(Eigen REQUIRED NO_MODULE HINTS "${CMAKE_SOURCE_DIR}/3rdparty/eigen-5.0.0/cmake")
-#IF (EIGEN_FOUND)
-#   MESSAGE(STATUS "Setting up eigen")    
-#ENDIF (EIGEN_FOUND)
-
-
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/bin)
 
 MAKE_DIRECTORY(${CMAKE_SOURCE_DIR}/bin)
@@ -56,14 +50,11 @@ MAKE_DIRECTORY(${CMAKE_SOURCE_DIR}/bin)
 set(VtkSrc
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/BasicVtkWriter.h
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/ContactVtkWriter.inl
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/MeshVtkWriter.h
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/SnapshotVtkWriter.h
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/VtkReader.h
   ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Vtk/CellInfoVtkWriter.inl
   ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.h
-  ${CMAKE_SOURCE_DIR}/src/IO/Segy/SegySeismo.inl
 )
 
 set(UtilsSrc
@@ -78,9 +69,7 @@ set(MathsSrc
   ${CMAKE_SOURCE_DIR}/src/Maths/Coordinates3.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Matrix2x2.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Matrix3x3.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/MatrixInv.h
   ${CMAKE_SOURCE_DIR}/src/Maths/MatrixMaths.h
-  ${CMAKE_SOURCE_DIR}/src/Maths/Random.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Spaces.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Util.h
   ${CMAKE_SOURCE_DIR}/src/Maths/Vector2.h
@@ -239,39 +228,39 @@ set(MetisInclude
 )
 
 set(EigenSrc
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Dense}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Householder}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/LU}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/PaStiXSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseCholesky}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SPQRSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SuperLUSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Version}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Cholesky}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Eigen}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/IterativeLinearSolvers}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/MetisSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Core}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/QR}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseCore}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/StdDeque}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SVD}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/CholmodSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Eigenvalues}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Jacobi}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/OrderingMethods}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/QtAlignedMalloc}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseLU}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/ThreadPool}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/StdList}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/AccelerateSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/UmfPackSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/StdVector}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/KLUSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/PardisoSupport}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseQR}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Sparse}
-  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Geometry}
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Dense
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Householder
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/LU
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/PaStiXSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseCholesky
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SPQRSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SuperLUSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Version
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Cholesky
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Eigen
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/IterativeLinearSolvers
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/MetisSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Core
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/QR
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseCore
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/StdDeque
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SVD
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/CholmodSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Eigenvalues
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Jacobi
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/OrderingMethods
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/QtAlignedMalloc
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseLU
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/ThreadPool
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/StdList
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/AccelerateSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/UmfPackSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/StdVector
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/KLUSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/PardisoSupport
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/SparseQR
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Sparse
+  ${CMAKE_SOURCE_DIR}/3rdparty/eigen5/Eigen/Geometry
 )
 
 add_library(quadrature_integration STATIC ${QuadratureIntegrationSrc})
@@ -284,10 +273,10 @@ target_include_directories(tinyxml PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/tinyxml/)
 add_library(metis STATIC ${GKlibSrc} ${GKlibInclude} ${MetisLibSrc} ${MetisInclude})
 target_include_directories(metis
   PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/METIS/libmetis
-  INTERFACE ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/include
+  PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/include
   PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/GKlib/src
-  INTERFACE ${CMAKE_SOURCE_DIR}/3rdparty/METIS/programs
-  INTERFACE ${CMAKE_SOURCE_DIR}/3rdparty/METIS/include
+  PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/METIS/programs
+  PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/METIS/include
 )
 target_compile_definitions(metis
     PUBLIC IDXTYPEWIDTH=32

@@ -25,19 +25,8 @@ while [ "$1" != "" ]; do
   shift
 done
 
-if [ ! -f cfg/$taskname.xml ]; then
-  echo "no config named $taskname found"
-  exit 1
-fi
-
-if [[ -d out/$taskname ]]; then 
-      rm out/$taskname/*
-else
-      mkdir out/$taskname
-fi
-
 if [[ $build_mesh -eq 1 ]]; then
-      ./meshbuilder $dim_count cfg/$taskname.xml
+      ./meshbuilder $dim_count $taskname
       echo 
 fi
 
@@ -46,4 +35,4 @@ if [[ ! $np -eq 0 ]]; then
   export OMP_THREAD_LIMIT=$np
 fi  
 
-./task $dim_count $po cfg/$taskname.xml
+./task $dim_count $po $taskname

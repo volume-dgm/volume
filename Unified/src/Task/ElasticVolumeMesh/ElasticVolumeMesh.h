@@ -2,13 +2,13 @@
 
 #include <limits>
 #include <algorithm>
-#include "../../ElasticSystem/ElasticSystem.h"
-#include "../../ElasticSystem/IniStates.h"
-#include "../../../IO/Vtk/BasicVtkWriter.h"
-#include "../../../Maths/Spaces.h"
-#include "../../VolumeMethod/VolumeMesh/VolumeMesh.h"
-#include "../../Task/SettingsParser/SolverSettingsParser.h"
-#include "../../GeomMesh/NodeGroupManager.h"
+#include "../ElasticSystem/ElasticSystem.h"
+#include "../ElasticSystem/IniStates.h"
+#include "../../IO/Vtk/BasicVtkWriter.h"
+#include "../../Maths/Spaces.h"
+#include "../VolumeMethod/VolumeMesh/VolumeMesh.h"
+#include "../Task/SettingsParser/SolverSettingsParser.h"
+#include "../GeomMesh/NodeGroupManager.h"
 
 template<typename Space, typename FunctionSpace>
 struct ElasticVolumeMeshCommon: public DifferentialSystem<typename Space::Scalar>
@@ -1013,6 +1013,9 @@ typename Space::Scalar ElasticVolumeMeshCommon<Space, FunctionSpace>::GetDamping
   return damping;
 }
 
+/*
+  checks whether plastic mode has started for elastic; recomputes tension if updateElastic is true
+*/
 template<typename Space, typename FunctionSpace>
 bool ElasticVolumeMeshCommon<Space, FunctionSpace>::ProcessPlasticity(const Scalar k, Elastic& elastic, bool updateElastic)
 {
@@ -1328,6 +1331,7 @@ void ElasticVolumeMeshCommon<Space, FunctionSpace>::FindDestructions(std::vector
   if (allowContinuousDestruction)
   {
     HandleContinuousDestruction();
+    #pragma omp parallel for
     for (IndexType cellIndex = 0; cellIndex < volumeMesh.cellMediumParameters.size(); ++cellIndex)
     {
       (*isCellBroken)[cellIndex] = volumeMesh.cellMediumParameters[cellIndex].destroyed;

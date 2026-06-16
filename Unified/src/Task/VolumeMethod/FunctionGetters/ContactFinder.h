@@ -27,13 +27,11 @@ struct ContactProcessor
     if (contactFinder->TryCell(cellIndex, neighbourCellIndex))
     {
       assert(!(contactedCellsCount && *contactedCellsCount + 1 >= maxContactCellsCount)); //max number of contacts per cell exceeded, usually means something went terribly wrong
-      if (contactedCellsCount && *contactedCellsCount + 1 < maxContactCellsCount)
-      {
-        if (contactedCells)
-          contactedCells[*contactedCellsCount] = neighbourCellIndex;
-
-        ++(*contactedCellsCount);
-      }
+      //if (contactedCellsCount && *contactedCellsCount + 1 < maxContactCellsCount) <--- this is already asserted
+      //{
+      if (contactedCells) contactedCells[*contactedCellsCount] = neighbourCellIndex;
+      ++(*contactedCellsCount);
+      //}
     }
   }
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Util.h"
-#include "Spaces.h"
 #include <string>
 #include <sstream>
 
@@ -25,8 +24,8 @@ struct Vector2
     return i < 2 ? *(&x + i) : T(0.0);
   }
 
-  inline Vector2<T>() {}
-  inline Vector2<T>(const T& x, const T& y): x(x), y(y) { }
+  inline Vector2() {}
+  inline Vector2(const T& x, const T& y): x(x), y(y) { }
 
   template <typename U>
   Vector2(const Vector2<U>& other): x(T(other.x)), y(T(other.y)) { }
@@ -294,7 +293,7 @@ bool ProjectPointAgainstLine(const Vector2<T> &t1, const Vector2<T> &t2, const V
   {
     return 1;
   }
-    else
+  else
   {
     return 0;
   }

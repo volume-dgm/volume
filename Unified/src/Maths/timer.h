@@ -1,4 +1,6 @@
 #pragma once
+#ifdef WIN32
+
 #include <windows.h>
 class PerformanceTimer
 {
@@ -45,3 +47,4 @@ private:
 	__int64 startTime;
 	double frequency;
 };
+#endif

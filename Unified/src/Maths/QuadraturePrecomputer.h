@@ -52,8 +52,7 @@ void QuadraturePrecomputer::BuildQuadrature<Space2>(int order, std::vector<Space
   while (rule <= 7 && order > Precisions[rule - 1])
     rule++;
 
-  int rule_num = ::fekete_rule_num();
-  assert(rule <= rule_num);
+  assert(rule <= ::fekete_rule_num());
 
   int order_num = ::fekete_order_num(rule);
 

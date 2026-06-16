@@ -2,6 +2,7 @@
 
 #include "../NonlinearSystemSolver.h"
 #include "../../Maths/MatrixMaths.h"
+#include "assert.h"
 
 template <typename Scalar, typename IndexType>
 struct KrylovProjectorSolver: public NonlinearSystemSolver<Scalar, IndexType>

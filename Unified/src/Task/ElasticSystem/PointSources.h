@@ -1,4 +1,7 @@
 #pragma once
+
+#include "../../Maths/Spaces.h"
+
 #include <limits>
 
 template <typename Space>

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../../Maths/Spaces.h"
+
 template <typename GhostCellFunctionGetter>
 struct CollisionProcessor
 {

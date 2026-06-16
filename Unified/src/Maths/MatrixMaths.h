@@ -1,4 +1,7 @@
 #pragma once
+
+#include <vector>
+
 template<typename Scalar, typename IndexType>
 void GaussSeidelIterate(const Scalar *matrix, const Scalar *rightVector, Scalar *currSolution, IndexType dimsCount)
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../Utils/Base64.h"
+#include "../../Maths/Spaces.h"
 #include <tinyxml.h>
 #include <tinystr.h>
 #include <zlib.h>
