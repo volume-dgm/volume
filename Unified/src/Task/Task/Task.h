@@ -848,6 +848,10 @@ typename Task<Space, order>::MediumParameters Task<Space, order>::MakeElasticMed
       res.SetFromVelocities(pv, sv, res.initialRho);
     }
   }
+  if (res.lambda < 0 || res.mju < 0) 
+  {
+    std::cout << "!!!!!! Warning: one of Lame params is less than zero; generally leads to failure, proceed with caution (cell " << cellIndex << ")\n";
+  }
 
   res.plasticity.k0 = settings.lambdaParser.LambdaToScalar(&params.k, cellCenter);
   res.plasticity.a = settings.lambdaParser.LambdaToScalar(&params.alpha, cellCenter);;
